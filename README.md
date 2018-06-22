@@ -17,7 +17,7 @@ It is part of the [nmslib](https://github.com/nmslib/nmslib]) project.
 ### RcppHNSW
 
 An R package that interfaces with HNSW, taking enormous amounts of inspiration from 
-[Dirk EddelBuettel](https://github.com/eddelbuettel)'s 
+[Dirk Eddelbuettel](https://github.com/eddelbuettel)'s 
 [RcppAnnoy](https://github.com/eddelbuettel/rcppannoy) package which did the same for
 the [Annoy](https://github.com/spotify/annoy) ANN C++ library. 
 
