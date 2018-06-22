@@ -43,9 +43,9 @@ data <- as.matrix(iris[, -5])
 ann <- methods::new(RcppHNSW::HnswL2, nc = ncol(data), nr = nrow(data), 
                     ef = 200, M = 16)
 
-# Add item to index
+# Add items to index
 for (i in 1:nr) {
-  ann$addItem(data[1, ])
+  ann$addItem(data[i, ])
 }
 
 # Find 4 nearest neighbors of row 1
@@ -53,7 +53,7 @@ for (i in 1:nr) {
 res <- ann$getNNsList(data[1, ], k = 4, include_distances = TRUE)
 
 # function interface returns results for all rows in nr x k matrices
-all_knn <- get_knn(data, k = 4)
+all_knn <- RcppHNSW::get_knn(data, k = 4)
 ```
 
 ### Note
