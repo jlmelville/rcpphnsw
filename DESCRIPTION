@@ -1,0 +1,16 @@
+Package: RcppHNSW
+Title: 'Rcpp' Bindings for HNSW, a Library for Approximate Nearest Neighbors
+Version: 0.0.0.9000
+Authors@R: person("James", "Melville", email = "jlmelville@gmail.com", role = c("aut", "cre"))
+Description: 'HNSW' is a C++ library for Approximate Nearest Neighbors. This 
+ package provides a minimal R interface by relying on the 'Rcpp' package, using 
+ 'RcppAnnoy' as a template. See <https://github.com/nmslib/hnsw> formore on 'HNSW'.
+ 'HNSW' is released under Version 2.0 of the Apache License.
+Depends: R (>= 3.5.0)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports: methods, Rcpp (>= 0.11.3)
+LinkingTo: Rcpp
+RoxygenNote: 6.0.1
+
