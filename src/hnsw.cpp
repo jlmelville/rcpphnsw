@@ -24,7 +24,7 @@
 #include <Rcpp.h>
 
 
-template<typename dist_t>
+template<typename dist_t, typename Distance>
 class Hnsw {
 public:
 
@@ -38,10 +38,9 @@ public:
   Hnsw(const int dim, const size_t maxElements, const size_t M = 16, const size_t efConstruction = 200) :
     dim(dim), cur_l(0)
   {
-    l2space = new hnswlib::L2Space(dim);
+    l2space = new Distance(dim);
     appr_alg = new hnswlib::HierarchicalNSW<dist_t>(l2space, maxElements, M, efConstruction);
   }
-
 
   void addItem(Rcpp::NumericVector& dv)
   {
@@ -131,10 +130,10 @@ public:
   int dim;
   hnswlib::labeltype cur_l;
   hnswlib::HierarchicalNSW<dist_t> *appr_alg;
-  hnswlib::L2Space *l2space;
+  hnswlib::SpaceInterface<float> *l2space;
 };
 
-typedef Hnsw<float> HnswL2;
+typedef Hnsw<float, hnswlib::L2Space> HnswL2;
 
 RCPP_EXPOSED_CLASS_NODECL(HnswL2)
 RCPP_MODULE(HnswL2) {
