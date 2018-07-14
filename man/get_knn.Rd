@@ -7,7 +7,8 @@
 get_knn(X, k = 10, include_self = TRUE, M = 200, ef = 16)
 }
 \arguments{
-\item{X}{a numeric matrix of data to add. Each of the n rows is an item in the index.}
+\item{X}{a numeric matrix of data to add. Each of the n rows is an item in
+the index.}
 
 \item{k}{Number of neighbors to return.}
 
@@ -26,18 +27,19 @@ recall at the expense of longer build time. Suggested range: 100-2000
 a list containing:
 \itemize{
   \item \code{idx} an n by k matrix containing the nearest neighbor indices.
-  \item \code{dist} an n by k matrix containing the nearest neighbor Euclidean
-     distances.
+  \item \code{dist} an n by k matrix containing the nearest neighbor
+  Euclidean distances.
 }
 }
 \description{
-A k-nearest neighbor algorithm using the HNSW library (\url{https://github.com/nmslib/hnsw}).
+A k-nearest neighbor algorithm using the HNSW library
+(\url{https://github.com/nmslib/hnsw}).
 }
 \details{
-This function also demonstrates how to use the minimal interface to HNSW to do something
-non-trivial. The class used, "HnswL2", uses the "Squared L2" distance, which is the square
-of the Euclidean distance. This function takes care of the square root for you, so returns
-actual Euclidean distances.
+This function also demonstrates how to use the minimal interface to HNSW to
+do something non-trivial. The class used, "HnswL2", uses the "Squared L2"
+distance, which is the square of the Euclidean distance. This function takes
+care of the square root for you, so returns actual Euclidean distances.
 }
 \examples{
 get_knn(as.matrix(iris[, -5]), k = 10)

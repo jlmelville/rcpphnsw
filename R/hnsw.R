@@ -3,14 +3,16 @@ Rcpp::loadModule("HnswL2", TRUE)
 
 #' Find Nearest Neighbors and Euclidean Distances
 #'
-#' A k-nearest neighbor algorithm using the HNSW library (\url{https://github.com/nmslib/hnsw}).
+#' A k-nearest neighbor algorithm using the HNSW library
+#' (\url{https://github.com/nmslib/hnsw}).
 #'
-#' This function also demonstrates how to use the minimal interface to HNSW to do something
-#' non-trivial. The class used, "HnswL2", uses the "Squared L2" distance, which is the square
-#' of the Euclidean distance. This function takes care of the square root for you, so returns
-#' actual Euclidean distances.
+#' This function also demonstrates how to use the minimal interface to HNSW to
+#' do something non-trivial. The class used, "HnswL2", uses the "Squared L2"
+#' distance, which is the square of the Euclidean distance. This function takes
+#' care of the square root for you, so returns actual Euclidean distances.
 #'
-#' @param X a numeric matrix of data to add. Each of the n rows is an item in the index.
+#' @param X a numeric matrix of data to add. Each of the n rows is an item in
+#'   the index.
 #' @param k Number of neighbors to return.
 #' @param include_self If \code{TRUE}, return the item itself as one of its
 #'   \code{k}-neighbors.
@@ -23,8 +25,8 @@ Rcpp::loadModule("HnswL2", TRUE)
 #' @return a list containing:
 #' \itemize{
 #'   \item \code{idx} an n by k matrix containing the nearest neighbor indices.
-#'   \item \code{dist} an n by k matrix containing the nearest neighbor Euclidean
-#'      distances.
+#'   \item \code{dist} an n by k matrix containing the nearest neighbor
+#'   Euclidean distances.
 #' }
 #' @examples
 #' get_knn(as.matrix(iris[, -5]), k = 10)
@@ -59,7 +61,7 @@ get_knn <- function(X, k = 10, include_self = TRUE,
     # Neighbors are queried by passing the vector back in
     # To get distances as well as indices, use include_distances = TRUE
     res <- ann$getNNsList(X[i, ], k, include_distances = TRUE)
-   idx[i, ] <- res$item
+    idx[i, ] <- res$item
     dist[i, ] <- res$distance
   }
 
