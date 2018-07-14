@@ -45,6 +45,7 @@ namespace hnswlib {
 
         virtual void *get_dist_func_param() = 0;
 
+        virtual ~SpaceInterface() {}
     };
 
     template<typename dist_t>
