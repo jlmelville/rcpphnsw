@@ -42,6 +42,14 @@ public:
     appr_alg = new hnswlib::HierarchicalNSW<dist_t>(l2space, maxElements, M, efConstruction);
   }
 
+  Hnsw(const int dim, const std::string& path_to_index) :
+  dim(dim), cur_l(0)
+  {
+    l2space = new Distance(dim);
+    appr_alg = new hnswlib::HierarchicalNSW<dist_t>(l2space, path_to_index);
+    cur_l = appr_alg->cur_element_count;
+  }
+
   void addItem(Rcpp::NumericVector& dv)
   {
     std::vector<dist_t> fv(dv.size());
@@ -121,6 +129,10 @@ public:
     }
   }
 
+  void callSave(const std::string &path_to_index) {
+    appr_alg->saveIndex(path_to_index);
+  }
+
   ~Hnsw()
   {
     delete l2space;
@@ -139,7 +151,9 @@ RCPP_EXPOSED_CLASS_NODECL(HnswL2)
 RCPP_MODULE(HnswL2) {
   Rcpp::class_<HnswL2>("HnswL2")
   .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, ef, M")
+  .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
   .method("addItem",    &HnswL2::addItem,    "add item")
+  .method("save",       &HnswL2::callSave,   "save index to file")
   .method("getNNs",     &HnswL2::getNNs,     "retrieve Nearest Neigbours given vector")
   .method("getNNsList", &HnswL2::getNNsList, "retrieve Nearest Neigbours given vector")
   ;
