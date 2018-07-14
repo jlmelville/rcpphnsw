@@ -1,6 +1,7 @@
 ## RcppHNSW
 [![Travis-CI Build Status](https://travis-ci.org/jlmelville/rcpphnsw.svg?branch=master)](https://travis-ci.org/jlmelville/rcpphnsw)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/jlmelville/rcpphnsw?branch=master&svg=true)](https://ci.appveyor.com/project/jlmelville/rcpphnsw)
+[![Coverage Status](https://img.shields.io/codecov/c/github/jlmelville/rcpphnsw/master.svg)](https://codecov.io/github/jlmelville/rcpphnsw?branch=master)
 
 Rcpp bindings for [HNSW](https://github.com/nmslib/hnsw).
 
