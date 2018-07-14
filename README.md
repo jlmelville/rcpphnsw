@@ -56,11 +56,76 @@ res <- ann$getNNsList(data[1, ], k = 4, include_distances = TRUE)
 all_knn <- RcppHNSW::get_knn(data, k = 4)
 ```
 
+Here's a rough equivalent of the serialization/deserialization example from
+the [hnsw README](https://github.com/nmslib/hnsw#python-bindings-example), but 
+without any multithreading:
+
+```R
+library("RcppHNSW")
+
+dim <- 16
+num_elements <- 10000
+
+# Generate sample data
+data <- matrix(stats::runif(num_elements * dim), nrow = num_elements)
+
+# Create index
+p <- new(HnswL2, dim, num_elements, ef = 10, M = 16)
+
+# Split data into two batches
+data1 <- data[1:(num_elements / 2), ]
+data2 <- data[(num_elements / 2 + 1):num_elements, ]
+
+message("Adding first batch of ", nrow(data1), " elements")
+for (i in 1:nrow(data1)) {
+  p$addItem(data1[i, ])
+}
+
+# Query the elements for themselves and measure recall:
+idx <- rep(0, nrow(data1))
+for (i in 1:nrow(data1)) {
+  idx[i] <- p$getNNs(data1[i, ], k = 1)
+}
+
+message("Recall for the first batch: ", formatC(mean(idx == 0:(nrow(data1) - 1))))
+
+filename <- "first_half.bin"
+# Serialize index
+p$save(filename)
+
+# Reinitialize and load the index
+rm(p)
+message("Loading index from ", filename)
+p <- new(HnswL2, dim, filename)
+
+message("Adding the second batch of ", nrow(data2), " elements")
+for (i in 1:nrow(data2)) {
+  p$addItem(data2[i, ])
+}
+
+# Query the elements for themselves and measure recall:
+idx <- rep(0, num_elements)
+for (i in 1:num_elements) {
+  # Neighbors are queried by passing the vector back in
+  idx[i] <- p$getNNs(data[i, ], k = 1)
+}
+message("Recall for two batches: ", formatC(mean(idx == 0:(num_elements - 1))))
+```
+
+### Differences from Python Bindings
+
+* No multi-threading support.
+* You can only add and retrieve items one at a time, i.e. to add or retrieve
+results for a matrix of data, you will need to manually loop over it.
+* Arbitrary integer labelling is not supported. Items are labelled 
+`0, 1, 2 ... N`.
+* The interface roughly follows the Python one but deviates with naming and also
+rolls the declaration and initialization of the index into one call.
+
 ### Note
 
 I had to add a non-portable flag to `PKG_CPPFLAGS` (`-march=native`). This should be
 the only status warning in `R CMD check`.
-
 
 ### License
 
