@@ -1,3 +1,4 @@
 useDynLib(RcppHNSW, .registration = TRUE)
 import(methods, Rcpp)
-exportPattern("^[[:alpha:]]+")          # export all identifiers starting with letters
+export("get_knn")
+export("HnswL2")
