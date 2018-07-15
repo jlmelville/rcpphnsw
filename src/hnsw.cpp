@@ -42,7 +42,7 @@ public:
     appr_alg = new hnswlib::HierarchicalNSW<dist_t>(l2space, maxElements, M, efConstruction);
   }
 
-  Hnsw(const int dim, const std::string& path_to_index) :
+  Hnsw(const int dim, const std::string path_to_index) :
   dim(dim), cur_l(0)
   {
     l2space = new Distance(dim);
@@ -50,7 +50,7 @@ public:
     cur_l = appr_alg->cur_element_count;
   }
 
-  void addItem(Rcpp::NumericVector& dv)
+  void addItem(const std::vector<dist_t> dv)
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
@@ -58,7 +58,7 @@ public:
     ++cur_l;
   }
 
-  std::vector<hnswlib::labeltype> getNNs(Rcpp::NumericVector& dv, size_t k)
+  std::vector<hnswlib::labeltype> getNNs(const std::vector<dist_t> dv, size_t k)
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
@@ -82,12 +82,13 @@ public:
     return items;
   }
 
-  Rcpp::List getNNsList(Rcpp::NumericVector& dv, size_t k, bool include_distances)
+  Rcpp::List getNNsList(const std::vector<dist_t> dv, size_t k,
+                        bool include_distances)
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
 
-    std::priority_queue<std::pair<dist_t, hnswlib::labeltype >> result =
+    std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
       appr_alg->searchKnn(&fv[0], k);
 
     if (result.size() != k) {
@@ -129,7 +130,7 @@ public:
     }
   }
 
-  void callSave(const std::string &path_to_index) {
+  void callSave(const std::string path_to_index) {
     appr_alg->saveIndex(path_to_index);
   }
 
