@@ -17,14 +17,33 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 #include <algorithm>
 #include <iostream>
 #include "hnswlib.h"
 #include <Rcpp.h>
 
+template <typename dist_t, bool DoNormalize = false>
+struct Normalizer {
+  static void normalize(std::vector<dist_t>& v) {}
+};
 
-template<typename dist_t, typename Distance>
+template <typename dist_t>
+struct Normalizer<dist_t, true> {
+  static void normalize(std::vector<dist_t>& v) {
+    const size_t dim = v.size();
+    float norm = 0.0f;
+    for (size_t i = 0; i < dim; i++) {
+      norm += v[i] * v[i];
+    }
+    norm = 1.0 / std::sqrt(norm);
+
+    for (size_t i = 0; i < dim; i++) {
+      v[i] *= norm;
+    }
+  }
+};
+
+template<typename dist_t, typename Distance, bool DoNormalize = false>
 class Hnsw {
 public:
 
@@ -35,18 +54,20 @@ public:
   // M - Controls maximum number of neighbors in the zero and above-zero layers. Higher values lead to
   //  better recall and shorter retrieval times, at the expense of longer indexing time.
   //  Suggested range: 5-100 (default: 16).
-  Hnsw(const int dim, const size_t maxElements, const size_t M = 16, const size_t efConstruction = 200) :
+  Hnsw(const int dim, const size_t maxElements, const size_t M = 16,
+       const size_t efConstruction = 200) :
     dim(dim), cur_l(0)
   {
-    l2space = new Distance(dim);
-    appr_alg = new hnswlib::HierarchicalNSW<dist_t>(l2space, maxElements, M, efConstruction);
+    space = new Distance(dim);
+    appr_alg = new hnswlib::HierarchicalNSW<dist_t>(space, maxElements, M,
+                                                    efConstruction);
   }
 
   Hnsw(const int dim, const std::string path_to_index) :
   dim(dim), cur_l(0)
   {
-    l2space = new Distance(dim);
-    appr_alg = new hnswlib::HierarchicalNSW<dist_t>(l2space, path_to_index);
+    space = new Distance(dim);
+    appr_alg = new hnswlib::HierarchicalNSW<dist_t>(space, path_to_index);
     cur_l = appr_alg->cur_element_count;
   }
 
@@ -54,6 +75,9 @@ public:
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
+
+    Normalizer<dist_t, DoNormalize>::normalize(fv);
+
     appr_alg->addPoint(&fv[0], (size_t) cur_l);
     ++cur_l;
   }
@@ -62,6 +86,8 @@ public:
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
+
+    Normalizer<dist_t, DoNormalize>::normalize(fv);
 
     std::priority_queue<std::pair<dist_t, hnswlib::labeltype >> result =
       appr_alg->searchKnn(&fv[0], k);
@@ -87,6 +113,8 @@ public:
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
+
+    Normalizer<dist_t, DoNormalize>::normalize(fv);
 
     std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
       appr_alg->searchKnn(&fv[0], k);
@@ -136,17 +164,20 @@ public:
 
   ~Hnsw()
   {
-    delete l2space;
+    delete space;
     delete appr_alg;
   }
 
   int dim;
+  bool normalize;
   hnswlib::labeltype cur_l;
   hnswlib::HierarchicalNSW<dist_t> *appr_alg;
-  hnswlib::SpaceInterface<float> *l2space;
+  hnswlib::SpaceInterface<float> *space;
 };
 
-typedef Hnsw<float, hnswlib::L2Space> HnswL2;
+typedef Hnsw<float, hnswlib::L2Space, false> HnswL2;
+typedef Hnsw<float, hnswlib::InnerProductSpace, true> HnswCosine;
+typedef Hnsw<float, hnswlib::InnerProductSpace, false> HnswIp;
 
 RCPP_EXPOSED_CLASS_NODECL(HnswL2)
 RCPP_MODULE(HnswL2) {
@@ -159,3 +190,27 @@ RCPP_MODULE(HnswL2) {
   .method("getNNsList", &HnswL2::getNNsList, "retrieve Nearest Neigbours given vector")
   ;
 }
+
+RCPP_EXPOSED_CLASS_NODECL(HnswCosine)
+RCPP_MODULE(HnswCosine) {
+  Rcpp::class_<HnswCosine>("HnswCosine")
+  .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, ef, M")
+  .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
+  .method("addItem",    &HnswCosine::addItem,    "add item")
+  .method("save",       &HnswCosine::callSave,   "save index to file")
+  .method("getNNs",     &HnswCosine::getNNs,     "retrieve Nearest Neigbours given vector")
+  .method("getNNsList", &HnswCosine::getNNsList, "retrieve Nearest Neigbours given vector")
+  ;
+}
+
+RCPP_EXPOSED_CLASS_NODECL(HnswIp)
+  RCPP_MODULE(HnswIp) {
+    Rcpp::class_<HnswIp>("HnswIp")
+    .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, ef, M")
+    .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
+    .method("addItem",    &HnswIp::addItem,    "add item")
+    .method("save",       &HnswIp::callSave,   "save index to file")
+    .method("getNNs",     &HnswIp::getNNs,     "retrieve Nearest Neigbours given vector")
+    .method("getNNsList", &HnswIp::getNNsList, "retrieve Nearest Neigbours given vector")
+    ;
+  }

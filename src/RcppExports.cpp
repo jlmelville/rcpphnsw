@@ -7,9 +7,13 @@ using namespace Rcpp;
 
 
 RcppExport SEXP _rcpp_module_boot_HnswL2();
+RcppExport SEXP _rcpp_module_boot_HnswCosine();
+RcppExport SEXP _rcpp_module_boot_HnswIp();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_HnswL2", (DL_FUNC) &_rcpp_module_boot_HnswL2, 0},
+    {"_rcpp_module_boot_HnswCosine", (DL_FUNC) &_rcpp_module_boot_HnswCosine, 0},
+    {"_rcpp_module_boot_HnswIp", (DL_FUNC) &_rcpp_module_boot_HnswIp, 0},
     {NULL, NULL, 0}
 };
 

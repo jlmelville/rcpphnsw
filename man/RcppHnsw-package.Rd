@@ -5,13 +5,17 @@
 \alias{RcppHnsw-package}
 \alias{HnswL2}
 \alias{Rcpp_HnswL2-class}
+\alias{HnswCosine}
+\alias{Rcpp_HnswCosine-class}
+\alias{HnswIp}
+\alias{Rcpp_HnswIp-class}
 \title{Rcpp bindings for the HNSW C++ library for approximate nearest neighbors.}
 \description{
 HNSW is a library implementing the Hierarchical Navigable Small World method
 for approximate nearest neighbor search.
 }
 \details{
-Details about Annoy are available at the reference listed below.
+Details about HNSW are available at the reference listed below.
 }
 \references{
 \url{https://github.com/nmslib/hnsw}

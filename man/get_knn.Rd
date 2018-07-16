@@ -4,13 +4,24 @@
 \alias{get_knn}
 \title{Find Nearest Neighbors and Euclidean Distances}
 \usage{
-get_knn(X, k = 10, include_self = TRUE, M = 200, ef = 16)
+get_knn(X, k = 10, distance = "euclidean", include_self = TRUE, M = 200,
+  ef = 16)
 }
 \arguments{
 \item{X}{a numeric matrix of data to add. Each of the n rows is an item in
 the index.}
 
 \item{k}{Number of neighbors to return.}
+
+\item{distance}{Type of distance to calculate. One of:
+\itemize{
+  \item \code{"l2"} Squared L2, i.e. squared Euclidean.
+  \item \code{"euclidean"} Euclidean.
+  \item \code{"cosine"} Cosine.
+  \item \code{"ip"} Inner product: 1 - sum(ai * bi), i.e. the cosine distance
+  where the vectors are not normalized. This can lead to negative distances
+  and other non-metric behavior.
+}}
 
 \item{include_self}{If \code{TRUE}, return the item itself as one of its
 \code{k}-neighbors.}

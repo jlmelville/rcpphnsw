@@ -3,11 +3,11 @@
 #' HNSW is a library implementing the Hierarchical Navigable Small World method
 #' for approximate nearest neighbor search.
 #'
-#' Details about Annoy are available at the reference listed below.
+#' Details about HNSW are available at the reference listed below.
 #'
 #' @docType package
 #' @name RcppHnsw-package
-#' @aliases HnswL2 Rcpp_HnswL2-class
+#' @aliases HnswL2 Rcpp_HnswL2-class HnswCosine Rcpp_HnswCosine-class HnswIp Rcpp_HnswIp-class
 #' @references
 #' \url{https://github.com/nmslib/hnsw}
 #' @author James Melville for the R inteface; Yury Malkov for HNSW itself.
