@@ -7,8 +7,8 @@ Rcpp bindings for [HNSW](https://github.com/nmslib/hnsw).
 
 ### Status
 
-Don't get too excited. Barely any of HNSW has been exposed so far. But it can
-calculate nearest neighbors via Euclidean distance.
+Support for serialization/deserialization and Cosine (and Inner Product) 
+distances has been added.
 
 ### HNSW
 
@@ -38,13 +38,13 @@ devtools::install_github("jlmelville/RcppHNSW")
 ### Example
 
 ```R
+library(RcppHNSW)
 data <- as.matrix(iris[, -5])
 
 # Create a new index using the L2 (squared Euclidean) distance
 # nr and nc are the number of rows and columns of the data to be added, respectively
 # ef and M determines speed vs accuracy trade off
-ann <- methods::new(RcppHNSW::HnswL2, nc = ncol(data), nr = nrow(data), 
-                    ef = 200, M = 16)
+ann <- new(HnswL2, nc = ncol(data), nr = nrow(data), ef = 200, M = 16)
 
 # Add items to index
 for (i in 1:nr) {
@@ -56,7 +56,12 @@ for (i in 1:nr) {
 res <- ann$getNNsList(data[1, ], k = 4, include_distances = TRUE)
 
 # function interface returns results for all rows in nr x k matrices
-all_knn <- RcppHNSW::get_knn(data, k = 4)
+all_knn <- RcppHNSW::get_knn(data, k = 4, distance = "l2")
+# other distance options: "euclidean", "cosine" and "ip" (inner product distance)
+
+# other distance classes:
+# Cosine: HnswCosine
+# Inner Product: HnswIP
 ```
 
 Here's a rough equivalent of the serialization/deserialization example from
