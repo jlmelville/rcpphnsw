@@ -7,8 +7,8 @@ Rcpp bindings for [HNSW](https://github.com/nmslib/hnsw).
 
 ### Status
 
-Support for serialization/deserialization and Cosine (and Inner Product) 
-distances has been added.
+Multithreading support for index searching (using 
+[RcppParallel](https://cran.r-project.org/package=RcppParallel)) has been added.
 
 ### HNSW
 
@@ -19,10 +19,10 @@ It is part of the [nmslib](https://github.com/nmslib/nmslib]) project.
 
 ### RcppHNSW
 
-An R package that interfaces with HNSW, taking enormous amounts of inspiration from 
-[Dirk Eddelbuettel](https://github.com/eddelbuettel)'s 
-[RcppAnnoy](https://github.com/eddelbuettel/rcppannoy) package which did the same for
-the [Annoy](https://github.com/spotify/annoy) ANN C++ library. 
+An R package that interfaces with HNSW, taking enormous amounts of inspiration
+from [Dirk Eddelbuettel](https://github.com/eddelbuettel)'s
+[RcppAnnoy](https://github.com/eddelbuettel/rcppannoy) package which did the
+same for the [Annoy](https://github.com/spotify/annoy) ANN C++ library.
 
 One difference is that I use
 [roxygen2](https://cran.r-project.org/package=roxygen2) to generate the man
@@ -115,13 +115,45 @@ idx <- p$getAllNNs(data, k = 1)
 message("Recall for two batches: ", formatC(mean(idx == 0:(num_elements - 1))))
 ```
 
+### API
+
+* `new(HnswL2, dim, max_elements, ef = 200, M = 16)` creates a new index using
+the squared L2 distance (i.e. square of the Euclidean distance), with `dim`
+dimensions and a maximum size of `max_elements` items. `ef` and `M` determine
+the speed vs accuracy trade off. Other classes for different distances are:
+`HnswCosine` for the cosine distance and `HnswIp` for the "Inner Product"
+distance (like the cosine distance without normalizing).
+* `new(HnswL2, dim, filename)` load a previously saved index (see `save` below) 
+with `dim` dimensions from the specified `filename`.
+* `addItem(v)` add vector `v` to the index.
+* `addItems(m)` add the row vectors of the matrix `m` to the index.
+* `save(filename)` saves an index to the specified `filename`. To load an index,
+use the `new(HnswL2, dim, filename)` constructor (see above).
+* `getNNs(v, k)` return a vector of the indices of the `k`-nearest neighbors of
+the vector `v`. Indices are numbered from zero.
+* `getNNsByList(v, k, include_distances)` return a list containing a
+vector named `item` with the indices of the `k`-nearest neighbors of
+the vector `v`. Indices are numbered from zero. If `include_distances = TRUE`
+then also return a vector `distance` containing the distances.
+* `getAllNNs(m, k)` return a matrix of the indices of the `k`-nearest neighbors
+of each row vector in `m`. Indices are numbered from zero. This can be
+configured to use `nthreads` threads by calling
+`RcppParallel::setThreadOptions(numThreads = nthreads)` prior to calling this
+method.
+* `getAllNNsByList(m, k, include_distances)` return a list containing a
+matrix named `item` with the indices of the `k`-nearest neighbors of each row
+vector in `m`. Indices are numbered from zero. If `include_distances = TRUE`
+then also return a matrix `distance` containing the distances. This can be
+configured to use `nthreads` threads by calling
+`RcppParallel::setThreadOptions(numThreads = nthreads)` prior to calling this
+method.
+
 ### Differences from Python Bindings
 
 * Multi-threading support is available only when searching the index, i.e.
 through `getAllNNs` or `getAllNNsList`. It's not currently turned on for 
 building the index (`addItems`) because this gave disastrously bad results 
-during my testing. Call `RcppParallel::setThreadOptions(numThreads = nthreads)` 
-to use `nthreads` during the index search.
+during my testing.
 * Arbitrary integer labelling is not supported. Items are labelled 
 `0, 1, 2 ... N`.
 * The interface roughly follows the Python one but deviates with naming and also
@@ -129,8 +161,8 @@ rolls the declaration and initialization of the index into one call.
 
 ### Note
 
-I had to add a non-portable flag to `PKG_CPPFLAGS` (`-march=native`). This should be
-the only status warning in `R CMD check`.
+I had to add a non-portable flag to `PKG_CPPFLAGS` (`-march=native`). This
+should be the only status warning in `R CMD check`.
 
 ### License
 
