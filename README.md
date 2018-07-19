@@ -131,7 +131,7 @@ with `dim` dimensions from the specified `filename`.
 use the `new(HnswL2, dim, filename)` constructor (see above).
 * `getNNs(v, k)` return a vector of the indices of the `k`-nearest neighbors of
 the vector `v`. Indices are numbered from zero.
-* `getNNsByList(v, k, include_distances)` return a list containing a
+* `getNNsByList(v, k, include_distances = FALSE)` return a list containing a
 vector named `item` with the indices of the `k`-nearest neighbors of
 the vector `v`. Indices are numbered from zero. If `include_distances = TRUE`
 then also return a vector `distance` containing the distances.
@@ -140,7 +140,7 @@ of each row vector in `m`. Indices are numbered from zero. This can be
 configured to use `nthreads` threads by calling
 `RcppParallel::setThreadOptions(numThreads = nthreads)` prior to calling this
 method.
-* `getAllNNsByList(m, k, include_distances)` return a list containing a
+* `getAllNNsByList(m, k, include_distances = FALSE)` return a list containing a
 matrix named `item` with the indices of the `k`-nearest neighbors of each row
 vector in `m`. Indices are numbered from zero. If `include_distances = TRUE`
 then also return a matrix `distance` containing the distances. This can be
