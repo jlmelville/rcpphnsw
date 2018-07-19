@@ -1,3 +1,5 @@
 CXX_STD = CXX11
 
 PKG_CPPFLAGS = -I../inst/include/ -march=native
+
+PKG_LIBS += $(shell ${R_HOME}/bin/Rscript -e "RcppParallel::RcppParallelLibs()")

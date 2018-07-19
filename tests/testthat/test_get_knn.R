@@ -1,69 +1,17 @@
 library(RcppHNSW)
 context("get_knn")
 
-nn_index <- matrix(c(
-    6,   10,    3,    7,
-    7,    3,    5,    8,
-    7,    5,    2,    8,
-    9,    8,    2,    5,
-    8,    3,    7,    2,
-    1,    3,   10,    7,
-    3,    2,    5,    8,
-    5,    4,    7,    3,
-    4,    8,    2,    5,
-    6,    1,    3,    7
-), nrow = 10, byrow = TRUE)
-
-nn_dist <- matrix(c(
- 0.3464102, 0.6782330, 0.7000000, 0.8124038,
- 0.3000000, 0.4242641, 0.4795832, 0.4898979,
- 0.2236068, 0.3316625, 0.4242641, 0.4690416,
- 0.3464102, 0.4242641, 0.5477226, 0.5567764,
- 0.1732051, 0.3316625, 0.3464102, 0.4795832,
- 0.3464102, 0.5000000, 0.5830952, 0.6782330,
- 0.2236068, 0.3000000, 0.3464102, 0.4582576,
- 0.1732051, 0.4242641, 0.4582576, 0.4690416,
- 0.3464102, 0.5830952, 0.6164414, 0.7280110,
- 0.5830952, 0.6782330, 1.0440307, 1.2328828
-), nrow = 10, byrow = TRUE)
-
 res <- get_knn(ui10, k = 4, include_self = FALSE)
-expect_equal(res$idx, nn_index, check.attributes = FALSE)
-expect_equal(res$dist, nn_dist, check.attributes = FALSE, tol = 1e-6)
+expect_equal(res$idx, nn_index4, check.attributes = FALSE)
+expect_equal(res$dist, nn_dist4, check.attributes = FALSE, tol = 1e-6)
 
 res <- get_knn(ui10, k = 4, distance = "l2", include_self = FALSE)
-expect_equal(res$idx, nn_index, check.attributes = FALSE)
-expect_equal(res$dist, nn_dist ^ 2, check.attributes = FALSE, tol = 1e-6)
+expect_equal(res$idx, nn_index4, check.attributes = FALSE)
+expect_equal(res$dist, nn_dist4 ^ 2, check.attributes = FALSE, tol = 1e-6)
 
-
-self_nn_index <- matrix(c(
-  1,    6,   10,    3,
-  2,    7,    3,    5,
-  3,    7,    5,    2,
-  4,    9,    8,    2,
-  5,    8,    3,    7,
-  6,    1,    3,   10,
-  7,    3,    2,    5,
-  8,    5,    4,    7,
-  9,    4,    8,    2,
-  10,    6,    1,    3
-), nrow = 10, byrow = TRUE)
-
-self_nn_dist <- matrix(c(
-  0, 0.3464102, 0.6782330, 0.7000000,
-  0, 0.3000000, 0.4242641, 0.4795832,
-  0, 0.2236068, 0.3316625, 0.4242641,
-  0, 0.3464102, 0.4242641, 0.5477226,
-  0, 0.1732051, 0.3316625, 0.3464102,
-  0, 0.3464102, 0.5000000, 0.5830952,
-  0, 0.2236068, 0.3000000, 0.3464102,
-  0, 0.1732051, 0.4242641, 0.4582576,
-  0, 0.3464102, 0.5830952, 0.6164414,
-  0, 0.5830952, 0.6782330, 1.0440307
-), nrow = 10, byrow = TRUE)
 
 res <- get_knn(ui10, k = 4, include_self = TRUE)
-expect_equal(res$idx, self_nn_index, check.attributes = FALSE)
-expect_equal(res$dist, self_nn_dist, check.attributes = FALSE, tol = 1e-6)
+expect_equal(res$idx, self_nn_index4, check.attributes = FALSE)
+expect_equal(res$dist, self_nn_dist4, check.attributes = FALSE, tol = 1e-6)
 
 

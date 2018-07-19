@@ -19,8 +19,20 @@
 
 #include <algorithm>
 #include <iostream>
+#include <limits>
 #include "hnswlib.h"
 #include <Rcpp.h>
+// [[Rcpp::depends(RcppParallel)]]
+#include <RcppParallel.h>
+
+template<typename dist_t, typename Distance, bool DoNormalize = false>
+struct AddItemWorker;
+
+template<typename dist_t, typename Distance, bool DoNormalize = false>
+struct FindNNWorker;
+
+template<typename dist_t, typename Distance, bool DoNormalize = false>
+struct FindNNListWorker;
 
 template <typename dist_t, bool DoNormalize = false>
 struct Normalizer {
@@ -71,25 +83,44 @@ public:
     cur_l = appr_alg->cur_element_count;
   }
 
-  void addItem(const std::vector<dist_t> dv)
+  void addItem(const std::vector<dist_t>& dv)
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
 
-    Normalizer<dist_t, DoNormalize>::normalize(fv);
+    addItemNoCopy(fv);
+  }
 
-    appr_alg->addPoint(&fv[0], (size_t) cur_l);
+  void addItemNoCopy(std::vector<dist_t>& dv)
+  {
+    Normalizer<dist_t, DoNormalize>::normalize(dv);
+
+    appr_alg->addPoint(&dv[0], (size_t) cur_l);
     ++cur_l;
   }
 
-  std::vector<hnswlib::labeltype> getNNs(const std::vector<dist_t> dv, size_t k)
+  void addItems(Rcpp::NumericMatrix items) {
+    AddItemWorker<dist_t, Distance, DoNormalize> worker(this, items);
+    // add items is implemented through the RcppParallel worker but seems to
+    // give disastrous results, so by setting fourth argument grain size to a
+    // large number, forces the use of a single thread for all data sizes
+    RcppParallel::parallelFor(0, items.nrow(), worker,
+                              std::numeric_limits<std::size_t>::max());
+  }
+
+  std::vector<hnswlib::labeltype> getNNs(const std::vector<dist_t>& dv, size_t k)
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
 
+    return getNNsNoCopy(fv, k);
+  }
+
+  std::vector<hnswlib::labeltype> getNNsNoCopy(std::vector<dist_t>& fv, size_t k)
+  {
     Normalizer<dist_t, DoNormalize>::normalize(fv);
 
-    std::priority_queue<std::pair<dist_t, hnswlib::labeltype >> result =
+    std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
       appr_alg->searchKnn(&fv[0], k);
 
     if (result.size() != k) {
@@ -108,12 +139,29 @@ public:
     return items;
   }
 
-  Rcpp::List getNNsList(const std::vector<dist_t> dv, size_t k,
+  Rcpp::IntegerMatrix getAllNNs(Rcpp::NumericMatrix fm, size_t k)
+  {
+    Rcpp::IntegerMatrix output(fm.nrow(), k);
+
+    FindNNWorker<dist_t, Distance, DoNormalize> worker(this, fm, output, k);
+    RcppParallel::parallelFor(0, fm.nrow(), worker);
+
+    return output;
+  }
+
+
+  Rcpp::List getNNsList(const std::vector<dist_t>& dv, size_t k,
                         bool include_distances)
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
 
+    return getNNsListNoCopy(fv, k, include_distances);
+  }
+
+  Rcpp::List getNNsListNoCopy(std::vector<dist_t>& fv, size_t k,
+                        bool include_distances)
+  {
     Normalizer<dist_t, DoNormalize>::normalize(fv);
 
     std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
@@ -158,6 +206,21 @@ public:
     }
   }
 
+  Rcpp::List getAllNNsList(Rcpp::NumericMatrix fm, size_t k, bool include_distances)
+  {
+    Rcpp::IntegerMatrix items(fm.nrow(), k);
+    Rcpp::NumericMatrix distance(fm.nrow(), k);
+
+    FindNNListWorker<dist_t, Distance, DoNormalize> worker(this, fm, items,
+                                                           distance, k,
+                                                           include_distances);
+    RcppParallel::parallelFor(0, fm.nrow(), worker);
+
+    return Rcpp::List::create(
+      Rcpp::Named("item") = items,
+      Rcpp::Named("distance") = distance);
+  }
+
   void callSave(const std::string path_to_index) {
     appr_alg->saveIndex(path_to_index);
   }
@@ -175,6 +238,92 @@ public:
   hnswlib::SpaceInterface<float> *space;
 };
 
+template<typename dist_t, typename Distance, bool DoNormalize>
+struct AddItemWorker : public RcppParallel::Worker
+{
+  Hnsw<dist_t, Distance, DoNormalize>* hnsw;
+  const RcppParallel::RMatrix<double> input;
+
+  AddItemWorker(Hnsw<dist_t, Distance, DoNormalize> *hnsw,
+                const Rcpp::NumericMatrix input)
+    : hnsw(hnsw), input(input) {}
+
+  void operator()(std::size_t begin, std::size_t end) {
+    for (std::size_t i = begin; i < end; i++) {
+      RcppParallel::RMatrix<double>::Row row = input.row(i);
+      std::vector<dist_t> dv(row.size());
+      std::copy(row.begin(), row.end(), dv.begin());
+      hnsw->addItemNoCopy(dv);
+    }
+  }
+};
+
+template<typename dist_t, typename Distance, bool DoNormalize>
+struct FindNNWorker : public RcppParallel::Worker
+{
+  Hnsw<dist_t, Distance, DoNormalize>* hnsw;
+  const RcppParallel::RMatrix<double> input;
+  RcppParallel::RMatrix<int> output;
+  const size_t search_k;
+
+  FindNNWorker(Hnsw<dist_t, Distance, DoNormalize> *hnsw,
+                const Rcpp::NumericMatrix input,
+                Rcpp::IntegerMatrix output,
+                size_t search_k)
+    : hnsw(hnsw), input(input), output(output), search_k(search_k) {}
+
+  void operator()(std::size_t begin, std::size_t end) {
+    for (std::size_t i = begin; i < end; i++) {
+      RcppParallel::RMatrix<double>::Row row = input.row(i);
+      std::vector<dist_t> dv(row.size());
+      std::copy(row.begin(), row.end(), dv.begin());
+      std::vector<hnswlib::labeltype> result = hnsw->getNNsNoCopy(dv, search_k);
+
+      for (size_t k = 0; k < result.size(); k++) {
+        output(i, k) = result[k];
+      }
+    }
+  }
+};
+
+template<typename dist_t, typename Distance, bool DoNormalize>
+struct FindNNListWorker : public RcppParallel::Worker
+{
+  Hnsw<dist_t, Distance, DoNormalize>* hnsw;
+  const RcppParallel::RMatrix<double> input;
+  RcppParallel::RMatrix<int> index;
+  RcppParallel::RMatrix<double> distance;
+  const size_t search_k;
+  bool include_distances;
+
+  FindNNListWorker(Hnsw<dist_t, Distance, DoNormalize> *hnsw,
+               const Rcpp::NumericMatrix input,
+               Rcpp::IntegerMatrix index,
+               Rcpp::NumericMatrix distance,
+               size_t search_k,
+               bool include_distances)
+    : hnsw(hnsw), input(input), index(index), distance(distance),
+      search_k(search_k),
+      include_distances(include_distances) {}
+
+  void operator()(std::size_t begin, std::size_t end) {
+    for (std::size_t i = begin; i < end; i++) {
+      RcppParallel::RMatrix<double>::Row row = input.row(i);
+      std::vector<dist_t> dv(row.size());
+      std::copy(row.begin(), row.end(), dv.begin());
+      Rcpp::List result =
+        hnsw->getNNsListNoCopy(dv, search_k, include_distances);
+      std::vector<hnswlib::labeltype> items = result["item"];
+      std::vector<dist_t> dist = result["distance"];
+
+      for (size_t k = 0; k < items.size(); k++) {
+        index(i, k) = items[k];
+        distance(i, k) = dist[k];
+      }
+    }
+  }
+};
+
 typedef Hnsw<float, hnswlib::L2Space, false> HnswL2;
 typedef Hnsw<float, hnswlib::InnerProductSpace, true> HnswCosine;
 typedef Hnsw<float, hnswlib::InnerProductSpace, false> HnswIp;
@@ -185,9 +334,12 @@ RCPP_MODULE(HnswL2) {
   .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, ef, M")
   .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
   .method("addItem",    &HnswL2::addItem,    "add item")
+  .method("addItems",   &HnswL2::addItems,   "add items")
   .method("save",       &HnswL2::callSave,   "save index to file")
   .method("getNNs",     &HnswL2::getNNs,     "retrieve Nearest Neigbours given vector")
   .method("getNNsList", &HnswL2::getNNsList, "retrieve Nearest Neigbours given vector")
+  .method("getAllNNs",  &HnswL2::getAllNNs,  "retrieve Nearest Neigbours given matrix")
+  .method("getAllNNsList",  &HnswL2::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
   ;
 }
 
@@ -197,9 +349,12 @@ RCPP_MODULE(HnswCosine) {
   .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, ef, M")
   .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
   .method("addItem",    &HnswCosine::addItem,    "add item")
+  .method("addItems",   &HnswCosine::addItems,   "add items")
   .method("save",       &HnswCosine::callSave,   "save index to file")
   .method("getNNs",     &HnswCosine::getNNs,     "retrieve Nearest Neigbours given vector")
   .method("getNNsList", &HnswCosine::getNNsList, "retrieve Nearest Neigbours given vector")
+  .method("getAllNNs",  &HnswCosine::getAllNNs,  "retrieve Nearest Neigbours given matrix")
+  .method("getAllNNsList",  &HnswCosine::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
   ;
 }
 
@@ -209,8 +364,11 @@ RCPP_EXPOSED_CLASS_NODECL(HnswIp)
     .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, ef, M")
     .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
     .method("addItem",    &HnswIp::addItem,    "add item")
+    .method("addItems",   &HnswIp::addItems,   "add items")
     .method("save",       &HnswIp::callSave,   "save index to file")
     .method("getNNs",     &HnswIp::getNNs,     "retrieve Nearest Neigbours given vector")
     .method("getNNsList", &HnswIp::getNNsList, "retrieve Nearest Neigbours given vector")
+    .method("getAllNNs",  &HnswIp::getAllNNs,  "retrieve Nearest Neigbours given matrix")
+    .method("getAllNNsList",  &HnswIp::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
     ;
   }
