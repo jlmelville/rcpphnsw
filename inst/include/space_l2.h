@@ -181,7 +181,6 @@ namespace hnswlib {
             return &dim_;
         }
 
-        virtual ~L2Space() {}
     };
 
     static int
