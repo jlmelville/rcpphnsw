@@ -131,7 +131,7 @@ public:
     items.reserve(k);
     for (size_t i = 0; i < k; i++) {
       auto &result_tuple = result.top();
-      items.push_back(result_tuple.second);
+      items.push_back(result_tuple.second + 1);
       result.pop();
     }
     std::reverse(items.begin(), items.end());
@@ -181,7 +181,7 @@ public:
       for (size_t i = 0; i < k; i++) {
         auto &result_tuple = result.top();
         distances.push_back(result_tuple.first);
-        items.push_back(result_tuple.second);
+        items.push_back(result_tuple.second + 1);
         result.pop();
       }
 
@@ -195,7 +195,7 @@ public:
     else {
       for (size_t i = 0; i < k; i++) {
         auto &result_tuple = result.top();
-        items.push_back(result_tuple.second);
+        items.push_back(result_tuple.second + 1);
         result.pop();
       }
 
@@ -206,7 +206,8 @@ public:
     }
   }
 
-  Rcpp::List getAllNNsList(Rcpp::NumericMatrix fm, size_t k, bool include_distances)
+  Rcpp::List getAllNNsList(Rcpp::NumericMatrix fm, size_t k,
+                           bool include_distances = true)
   {
     Rcpp::IntegerMatrix items(fm.nrow(), k);
     Rcpp::NumericMatrix distance(fm.nrow(), k);
@@ -216,9 +217,15 @@ public:
                                                            include_distances);
     RcppParallel::parallelFor(0, fm.nrow(), worker);
 
-    return Rcpp::List::create(
-      Rcpp::Named("item") = items,
-      Rcpp::Named("distance") = distance);
+    if (include_distances) {
+      return Rcpp::List::create(
+        Rcpp::Named("item") = items,
+        Rcpp::Named("distance") = distance);
+    }
+    else {
+      return Rcpp::List::create(
+        Rcpp::Named("item") = items);
+    }
   }
 
   void callSave(const std::string path_to_index) {
@@ -314,11 +321,19 @@ struct FindNNListWorker : public RcppParallel::Worker
       Rcpp::List result =
         hnsw->getNNsListNoCopy(dv, search_k, include_distances);
       std::vector<hnswlib::labeltype> items = result["item"];
-      std::vector<dist_t> dist = result["distance"];
 
-      for (size_t k = 0; k < items.size(); k++) {
-        index(i, k) = items[k];
-        distance(i, k) = dist[k];
+      if (include_distances) {
+        std::vector<dist_t> dist = result["distance"];
+
+        for (size_t k = 0; k < items.size(); k++) {
+          index(i, k) = items[k];
+          distance(i, k) = dist[k];
+        }
+      }
+      else {
+        for (size_t k = 0; k < items.size(); k++) {
+          index(i, k) = items[k];
+        }
       }
     }
   }

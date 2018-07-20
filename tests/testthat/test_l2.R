@@ -15,7 +15,7 @@ for (i in 1:num_elements) {
   idx[i] <- p$getNNs(uirism[i, ], k = 1)
 }
 
-recall <- mean(idx == 0:(num_elements - 1))
+recall <- mean(idx == 1:num_elements)
 expect_equal(recall, 1)
 
 
@@ -41,5 +41,5 @@ idx <- rep(0, num_elements)
 for (i in 1:num_elements) {
   idx[i] <- p$getNNs(uirism[i, ], k = 1)
 }
-serde_recall <- mean(idx == 0:(num_elements - 1))
+serde_recall <- mean(idx == 1:num_elements)
 expect_equal(serde_recall, recall)

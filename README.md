@@ -92,7 +92,7 @@ p$addItems(data1)
 
 # Query the elements for themselves and measure recall:
 idx <- p$getAllNNs(data1, k = 1)
-message("Recall for the first batch: ", formatC(mean(idx == 0:(nrow(data1) - 1))))
+message("Recall for the first batch: ", formatC(mean(idx == 1:nrow(data1))))
 
 filename <- "first_half.bin"
 # Serialize index
@@ -112,7 +112,7 @@ idx <- p$getAllNNs(data, k = 1)
 # res <- p$getAllNNsList(data, k = 1, include_distances = TRUE)
 # res$dist contains the distance matrix, res$item stores the indexes
 
-message("Recall for two batches: ", formatC(mean(idx == 0:(num_elements - 1))))
+message("Recall for two batches: ", formatC(mean(idx == 1:num_elements)))
 ```
 
 ### API
@@ -130,19 +130,19 @@ with `dim` dimensions from the specified `filename`.
 * `save(filename)` saves an index to the specified `filename`. To load an index,
 use the `new(HnswL2, dim, filename)` constructor (see above).
 * `getNNs(v, k)` return a vector of the indices of the `k`-nearest neighbors of
-the vector `v`. Indices are numbered from zero.
+the vector `v`. Indices are numbered from one.
 * `getNNsByList(v, k, include_distances = FALSE)` return a list containing a
 vector named `item` with the indices of the `k`-nearest neighbors of
-the vector `v`. Indices are numbered from zero. If `include_distances = TRUE`
+the vector `v`. Indices are numbered from one. If `include_distances = TRUE`
 then also return a vector `distance` containing the distances.
 * `getAllNNs(m, k)` return a matrix of the indices of the `k`-nearest neighbors
-of each row vector in `m`. Indices are numbered from zero. This can be
+of each row vector in `m`. Indices are numbered from one. This can be
 configured to use `nthreads` threads by calling
 `RcppParallel::setThreadOptions(numThreads = nthreads)` prior to calling this
 method.
 * `getAllNNsByList(m, k, include_distances = FALSE)` return a list containing a
 matrix named `item` with the indices of the `k`-nearest neighbors of each row
-vector in `m`. Indices are numbered from zero. If `include_distances = TRUE`
+vector in `m`. Indices are numbered from one. If `include_distances = TRUE`
 then also return a matrix `distance` containing the distances. This can be
 configured to use `nthreads` threads by calling
 `RcppParallel::setThreadOptions(numThreads = nthreads)` prior to calling this
