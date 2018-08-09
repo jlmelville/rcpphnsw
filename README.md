@@ -44,7 +44,9 @@ data <- as.matrix(iris[, -5])
 # Create a new index using the L2 (squared Euclidean) distance
 # nr and nc are the number of rows and columns of the data to be added, respectively
 # ef and M determines speed vs accuracy trade off
-ann <- new(HnswL2, nc = ncol(data), nr = nrow(data), ef = 200, M = 16)
+M <- 16
+ef <- 200
+ann <- new(HnswL2, ncol(data), nrow(data), M, ef)
 
 # Add items to index
 for (i in 1:nr) {
@@ -81,7 +83,9 @@ num_elements <- 100000
 data <- matrix(stats::runif(num_elements * dim), nrow = num_elements)
 
 # Create index
-p <- new(HnswL2, dim, num_elements, ef = 10, M = 16)
+M <- 16
+ef <- 10
+p <- new(HnswL2, dim, num_elements, M, ef)
 
 # Split data into two batches
 data1 <- data[1:(num_elements / 2), ]
@@ -117,11 +121,32 @@ message("Recall for two batches: ", formatC(mean(idx == 1:num_elements)))
 
 ### API
 
-* `new(HnswL2, dim, max_elements, ef = 200, M = 16)` creates a new index using
-the squared L2 distance (i.e. square of the Euclidean distance), with `dim`
-dimensions and a maximum size of `max_elements` items. `ef` and `M` determine
-the speed vs accuracy trade off. Other classes for different distances are:
-`HnswCosine` for the cosine distance and `HnswIp` for the "Inner Product"
+#### **DO NOT USE NAMED PARAMETERS**
+
+Because these are wrappers around C++ code, you **cannot** use named 
+parameters in the calling R code. Arguments are parsed by position. This is
+most annoying in constructors, which take multiple integer arguments, e.g.
+
+```R
+### DO THIS ###
+num_elements <- 100
+M <- 200
+ef_construction <- 16
+index <- new(HnswL2, dim, num_elements, M, ef)
+
+### DON'T DO THIS ###
+index <- new(HnswL2, dim, ef_construction = 16, M = 200, num_elements = 100)
+# treated as if you wrote:
+index <- new(HnswL2, dim, 16, 200, 100)
+```
+
+#### OK onto the API
+
+* `new(HnswL2, dim, max_elements, M = 16, ef_contruction = 200)` creates a new 
+index using the squared L2 distance (i.e. square of the Euclidean distance),
+with `dim` dimensions and a maximum size of `max_elements` items. `ef` and `M`
+determine the speed vs accuracy trade off. Other classes for different distances
+are: `HnswCosine` for the cosine distance and `HnswIp` for the "Inner Product"
 distance (like the cosine distance without normalizing).
 * `new(HnswL2, dim, filename)` load a previously saved index (see `save` below) 
 with `dim` dimensions from the specified `filename`.

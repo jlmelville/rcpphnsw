@@ -66,7 +66,7 @@ get_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
                   )
   # Create the indexing object. You must say up front the number of items that
   # will be stored (nr).
-  ann <- methods::new(clazz, nc, nr, ef, M)
+  ann <- methods::new(clazz, nc, nr, M, ef)
 
   for (i in 1:nr) {
     # Items are added directly

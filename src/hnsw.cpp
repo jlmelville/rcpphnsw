@@ -60,19 +60,19 @@ class Hnsw {
 public:
 
   // dim - length of the vectors being added
-  // maxElements - size of the data being added
-  // efConstruction - controls the quality of the graph. Higher values lead to improved recall at the
+  // max_elements - size of the data being added
+  // ef_construction - controls the quality of the graph. Higher values lead to improved recall at the
   //  expense of longer build time. Suggested range: 100-2000 (default: 200).
   // M - Controls maximum number of neighbors in the zero and above-zero layers. Higher values lead to
   //  better recall and shorter retrieval times, at the expense of longer indexing time.
   //  Suggested range: 5-100 (default: 16).
-  Hnsw(const int dim, const size_t maxElements, const size_t M = 16,
-       const size_t efConstruction = 200) :
+  Hnsw(const int dim, const size_t max_elements, const size_t M = 16,
+       const size_t ef_construction = 200) :
     dim(dim), cur_l(0)
   {
     space = new Distance(dim);
-    appr_alg = new hnswlib::HierarchicalNSW<dist_t>(space, maxElements, M,
-                                                    efConstruction);
+    appr_alg = new hnswlib::HierarchicalNSW<dist_t>(space, max_elements, M,
+                                                    ef_construction);
   }
 
   Hnsw(const int dim, const std::string path_to_index) :
@@ -346,7 +346,7 @@ typedef Hnsw<float, hnswlib::InnerProductSpace, false> HnswIp;
 RCPP_EXPOSED_CLASS_NODECL(HnswL2)
 RCPP_MODULE(HnswL2) {
   Rcpp::class_<HnswL2>("HnswL2")
-  .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, ef, M")
+  .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, M, ef")
   .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
   .method("addItem",    &HnswL2::addItem,    "add item")
   .method("addItems",   &HnswL2::addItems,   "add items")
@@ -361,7 +361,7 @@ RCPP_MODULE(HnswL2) {
 RCPP_EXPOSED_CLASS_NODECL(HnswCosine)
 RCPP_MODULE(HnswCosine) {
   Rcpp::class_<HnswCosine>("HnswCosine")
-  .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, ef, M")
+  .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, M, ef")
   .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
   .method("addItem",    &HnswCosine::addItem,    "add item")
   .method("addItems",   &HnswCosine::addItems,   "add items")
@@ -376,7 +376,7 @@ RCPP_MODULE(HnswCosine) {
 RCPP_EXPOSED_CLASS_NODECL(HnswIp)
   RCPP_MODULE(HnswIp) {
     Rcpp::class_<HnswIp>("HnswIp")
-    .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, ef, M")
+    .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, M, ef")
     .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
     .method("addItem",    &HnswIp::addItem,    "add item")
     .method("addItems",   &HnswIp::addItems,   "add items")
