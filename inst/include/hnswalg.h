@@ -14,7 +14,13 @@
 #include <unordered_map>
 
 
-
+// This allows others to supply their own logger / error printer without
+// requiring Annoy to import their headers. See RcppAnnoy for a use case.
+#ifndef __ERROR_PRINTER_OVERRIDE__
+#define showUpdate(...) { fprintf(stderr, __VA_ARGS__ ); }
+#else
+#define showUpdate(...) { __ERROR_PRINTER_OVERRIDE__( __VA_ARGS__ ); }
+#endif
 
 namespace hnswlib {
 typedef unsigned int tableint;
@@ -571,8 +577,8 @@ public:
       old_index = true;
 
     if (old_index) {
-      std::cerr << "Warning: loading of old indexes will be deprecated before 2019.\n"
-                << "Please resave the index in the new format.\n";
+      showUpdate("Warning: loading of old indexes will be deprecated before 2019.\n"
+                   "Please resave the index in the new format.\n");
     }
     input.clear();
     input.seekg(pos,input.beg);

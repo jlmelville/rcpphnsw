@@ -199,6 +199,9 @@ during my testing.
 * The interface roughly follows the Python one but deviates with naming and also
 rolls the declaration and initialization of the index into one call. And as noted
 above, you must pass arguments by position, not keyword.
+* I have made a change to the C++ `hnswalg.h` code to use the 
+[`showUpdate` macro from RcppAnnoy](https://github.com/eddelbuettel/rcppannoy/blob/498a2c241df0fcac140d80f9ee0a6985d0f08687/inst/include/annoylib.h#L57),
+rather than `std::cerr` directly.
 
 ### Note
 
