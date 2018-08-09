@@ -7,8 +7,9 @@ Rcpp bindings for [HNSW](https://github.com/nmslib/hnsw).
 
 ### Status
 
-Multithreading support for index searching (using 
-[RcppParallel](https://cran.r-project.org/package=RcppParallel)) has been added.
+*August 8 2018*. HNSW was recently updated so that the index size can be
+increased by saving the index to disk, and then specifying a larger capacity
+when reloading it. See the second example below.
 
 ### HNSW
 
@@ -29,6 +30,9 @@ One difference is that I use
 pages. The `NAMESPACE` is still built manually, however (I don't believe you can
 `export` the classes currently).
 
+There is multithreading support for index searching using 
+[RcppParallel](https://cran.r-project.org/package=RcppParallel).
+
 ### Installing
 
 ```R
@@ -44,6 +48,8 @@ data <- as.matrix(iris[, -5])
 # Create a new index using the L2 (squared Euclidean) distance
 # nr and nc are the number of rows and columns of the data to be added, respectively
 # ef and M determines speed vs accuracy trade off
+# You must specify the maximum number of items to add to the index when it
+# is created. But you can increase this number: see the next example
 M <- 16
 ef <- 200
 ann <- new(HnswL2, ncol(data), nrow(data), M, ef)
@@ -67,8 +73,11 @@ all_knn <- RcppHNSW::get_knn(data, k = 4, distance = "l2")
 # Inner Product: HnswIP
 ```
 
-Here's a rough equivalent of the serialization/deserialization example from
-the [hnsw README](https://github.com/nmslib/hnsw#python-bindings-example):
+And here's a rough equivalent of the serialization/deserialization example from
+the [hnsw README](https://github.com/nmslib/hnsw#python-bindings-example).
+Although the index must have its initial size specified when its created, you
+can increase its size by saving it to disk, then specifying a new larger size
+when you read it back, as the following demonstrates:
 
 ```R
 library("RcppHNSW")
@@ -82,14 +91,15 @@ num_elements <- 100000
 # Generate sample data
 data <- matrix(stats::runif(num_elements * dim), nrow = num_elements)
 
-# Create index
-M <- 16
-ef <- 10
-p <- new(HnswL2, dim, num_elements, M, ef)
-
 # Split data into two batches
 data1 <- data[1:(num_elements / 2), ]
 data2 <- data[(num_elements / 2 + 1):num_elements, ]
+
+# Create index
+M <- 16
+ef <- 10
+# Set the initial index size to the size of the first batch
+p <- new(HnswL2, dim, num_elements / 2, M, ef)
 
 message("Adding first batch of ", nrow(data1), " elements")
 p$addItems(data1)
@@ -105,7 +115,8 @@ p$save(filename)
 # Reinitialize and load the index
 rm(p)
 message("Loading index from ", filename)
-p <- new(HnswL2, dim, filename)
+# Increase the total capacity, so that it will handle the new data
+p <- new(HnswL2, dim, filename, num_elements)
 
 message("Adding the second batch of ", nrow(data2), " elements")
 p$addItems(data2)
@@ -150,6 +161,10 @@ are: `HnswCosine` for the cosine distance and `HnswIp` for the "Inner Product"
 distance (like the cosine distance without normalizing).
 * `new(HnswL2, dim, filename)` load a previously saved index (see `save` below) 
 with `dim` dimensions from the specified `filename`.
+* `new(HnswL2, dim, filename, max_elements)` load a previously saved index (see
+`save` below) with `dim` dimensions from the specified `filename`, and a new
+maximum capacity of `max_elements`. This is a way to increase the capacity of
+the index without a complete rebuild.
 * `addItem(v)` add vector `v` to the index.
 * `addItems(m)` add the row vectors of the matrix `m` to the index.
 * `save(filename)` saves an index to the specified `filename`. To load an index,
@@ -182,7 +197,8 @@ during my testing.
 * Arbitrary integer labelling is not supported. Items are labelled 
 `0, 1, 2 ... N`.
 * The interface roughly follows the Python one but deviates with naming and also
-rolls the declaration and initialization of the index into one call.
+rolls the declaration and initialization of the index into one call. And as noted
+above, you must pass arguments by position, not keyword.
 
 ### Note
 
