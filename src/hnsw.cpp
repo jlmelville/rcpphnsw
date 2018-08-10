@@ -20,10 +20,15 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
-#include "hnswlib.h"
 #include <Rcpp.h>
 // [[Rcpp::depends(RcppParallel)]]
 #include <RcppParallel.h>
+
+// define R's REprintf as the 'local' error print method for HNSW
+#define __ERROR_PRINTER_OVERRIDE__  REprintf
+
+#include "hnswlib.h"
+
 
 template<typename dist_t, typename Distance, bool DoNormalize = false>
 struct AddItemWorker;
