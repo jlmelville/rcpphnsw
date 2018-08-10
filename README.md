@@ -128,6 +128,7 @@ idx <- p$getAllNNs(data, k = 1)
 # res$dist contains the distance matrix, res$item stores the indexes
 
 message("Recall for two batches: ", formatC(mean(idx == 1:num_elements)))
+unlink(filename)
 ```
 
 ### API
