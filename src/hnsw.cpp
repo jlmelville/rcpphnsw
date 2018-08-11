@@ -52,7 +52,7 @@ struct Normalizer<dist_t, true> {
     for (size_t i = 0; i < dim; i++) {
       norm += v[i] * v[i];
     }
-    norm = 1.0 / std::sqrt(norm);
+    norm = 1.0f / (std::sqrt(norm) + 1e-30f);
 
     for (size_t i = 0; i < dim; i++) {
       v[i] *= norm;
