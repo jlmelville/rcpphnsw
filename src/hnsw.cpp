@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <Rcpp.h>
 // [[Rcpp::depends(RcppParallel)]]
 #include <RcppParallel.h>
@@ -66,34 +67,39 @@ public:
 
   // dim - length of the vectors being added
   // max_elements - size of the data being added
-  // ef_construction - controls the quality of the graph. Higher values lead to improved recall at the
-  //  expense of longer build time. Suggested range: 100-2000 (default: 200).
-  // M - Controls maximum number of neighbors in the zero and above-zero layers. Higher values lead to
-  //  better recall and shorter retrieval times, at the expense of longer indexing time.
-  //  Suggested range: 5-100 (default: 16).
+  // ef_construction - controls the quality of the graph. Higher values lead to
+  //  improved recall at the expense of longer build time. Suggested range:
+  //  100-2000 (default: 200).
+  // M - Controls maximum number of neighbors in the zero and above-zero
+  //  layers. Higher values lead t better recall and shorter retrieval times,
+  //  at the expense of longer indexing time. Suggested range: 5-100
+  //  (default: 16).
   Hnsw(const int dim, const size_t max_elements, const size_t M = 16,
        const size_t ef_construction = 200) :
-    dim(dim), cur_l(0)
-  {
-    space = new Distance(dim);
-    appr_alg = new hnswlib::HierarchicalNSW<dist_t>(space, max_elements, M,
-                                                    ef_construction);
-  }
+    dim(dim), cur_l(0),
+    space(std::unique_ptr<Distance>(new Distance(dim))),
+    appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
+      new hnswlib::HierarchicalNSW<dist_t>(space.get(), max_elements, M,
+                                           ef_construction)))
+  { }
 
   Hnsw(const int dim, const std::string path_to_index) :
-  dim(dim), cur_l(0)
+  dim(dim), cur_l(0),
+  space(std::unique_ptr<Distance>(new Distance(dim))),
+  appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
+    new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index)))
   {
-    space = new Distance(dim);
-    appr_alg = new hnswlib::HierarchicalNSW<dist_t>(space, path_to_index);
     cur_l = appr_alg->cur_element_count;
   }
 
-  Hnsw(const int dim, const std::string path_to_index, const size_t max_elements) :
-  dim(dim), cur_l(0)
+  Hnsw(const int dim, const std::string path_to_index,
+       const size_t max_elements) :
+  dim(dim), cur_l(0),
+  space(std::unique_ptr<Distance>(new Distance(dim))),
+  appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
+    new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index, false,
+                                         max_elements)))
   {
-    space = new Distance(dim);
-    appr_alg = new hnswlib::HierarchicalNSW<dist_t>(space, path_to_index, false,
-                                                    max_elements);
     cur_l = appr_alg->cur_element_count;
   }
 
@@ -246,17 +252,11 @@ public:
     appr_alg->saveIndex(path_to_index);
   }
 
-  ~Hnsw()
-  {
-    delete space;
-    delete appr_alg;
-  }
-
   int dim;
   bool normalize;
   hnswlib::labeltype cur_l;
-  hnswlib::HierarchicalNSW<dist_t> *appr_alg;
-  hnswlib::SpaceInterface<float> *space;
+  std::unique_ptr<Distance> space;
+  std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>> appr_alg;
 };
 
 template<typename dist_t, typename Distance, bool DoNormalize>
