@@ -96,3 +96,7 @@ get_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
 
   list(idx = idx, dist = dist)
 }
+
+.onUnload <- function(libpath) {
+  library.dynam.unload("RcppHNSW", libpath)
+}
