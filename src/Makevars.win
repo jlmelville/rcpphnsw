@@ -1,8 +1,12 @@
 CXX_STD = CXX11
 
-PKG_CPPFLAGS = -I../inst/include/ -march=native
+PKG_CPPFLAGS = -I../inst/include/
+PKG_CXXFLAGS += -DRCPP_PARALLEL_USE_TBB=1 -DHNSW_PORTABLE=1
 
-PKG_CXXFLAGS += -DRCPP_PARALLEL_USE_TBB=1
+# Uncomment the following flags and comment out the two lines above if you
+# want the default HNSW behavior (faster, but non-portable)
+# PKG_CPPFLAGS = -I../inst/include/ -march=native
+# PKG_CXXFLAGS += -DRCPP_PARALLEL_USE_TBB=1
 
 PKG_LIBS += $(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" \
               -e "RcppParallel::RcppParallelLibs()")

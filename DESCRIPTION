@@ -1,6 +1,6 @@
 Package: RcppHNSW
 Title: 'Rcpp' Bindings for HNSW, a Library for Approximate Nearest Neighbors
-Version: 0.0.0.9000
+Version: 0.0.0.9003
 Authors@R: person("James", "Melville", email = "jlmelville@gmail.com", 
   role = c("aut", "cre"))
 Description: 'HNSW' is a C++ library for Approximate Nearest Neighbors. This 
