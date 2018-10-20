@@ -7,9 +7,21 @@ Rcpp bindings for [HNSW](https://github.com/nmslib/hnsw).
 
 ### Status
 
-*August 8 2018*. HNSW was recently updated so that the index size can be
-increased by saving the index to disk, and then specifying a larger capacity
-when reloading it. See the second example below.
+*October 20 2018*. By inserting some preprocessor symbols into HNSW, these 
+bindings no longer require a non-portable compiler flag and hence will pass `R
+CMD CHECK` without any warnings: previously you would be warned about
+`-march=native`. The price paid is not using specialized functions for the
+distance calculations that are architecture-specific. I have not checked how bad
+the performance hit is. The old settings remain in `src/Makevars` and
+`src/Makevars.win` (commented out), if you want to build the project from
+source directly. Otherwise, [Release
+0.0.0.9000](https://github.com/jlmelville/rcpphnsw/releases/tag/v0.0.0.9000) is
+the last version with the old behavior, which can be installed with something
+like:
+
+```R
+devtools::install_github("jlmelville/rcpphnsw@v0.0.0.9000")
+```
 
 ### HNSW
 
@@ -203,11 +215,6 @@ above, you must pass arguments by position, not keyword.
 * I have made a change to the C++ `hnswalg.h` code to use the 
 [`showUpdate` macro from RcppAnnoy](https://github.com/eddelbuettel/rcppannoy/blob/498a2c241df0fcac140d80f9ee0a6985d0f08687/inst/include/annoylib.h#L57),
 rather than `std::cerr` directly.
-
-### Note
-
-I had to add a non-portable flag to `PKG_CPPFLAGS` (`-march=native`). This
-should be the only status warning in `R CMD check`.
 
 ### License
 
