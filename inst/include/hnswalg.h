@@ -133,6 +133,7 @@ public:
   size_t label_offset_;
   DISTFUNC<dist_t> fstdistfunc_;
   void *dist_func_param_;
+  std::unordered_map<labeltype, tableint> label_lookup_;
 
   std::default_random_engine level_generator_;
 
@@ -605,6 +606,7 @@ public:
     revSize_ = 1.0 / mult_;
     ef_ = 10;
     for (size_t i = 0; i < cur_element_count; i++) {
+      label_lookup_[getExternalLabel(i)]=i;
       unsigned int linkListSize;
       readBinaryPOD(input, linkListSize);
       if (linkListSize == 0) {
@@ -622,10 +624,25 @@ public:
     return;
   }
 
+  template<typename data_t>
+  std::vector<data_t> getDataByLabel(labeltype label)
+  {
+    tableint label_c = label_lookup_[label];
+    char* data_ptrv = getDataByInternalId(label_c);
+    size_t dim = *((size_t *) dist_func_param_);
+    std::vector<data_t> data;
+    data_t* data_ptr = (data_t*) data_ptrv;
+    for (int i = 0; i < dim; i++) {
+      data.push_back(*data_ptr);
+      data_ptr += 1;
+    }
+    return data;
+  }
+
   void addPoint(void *data_point, labeltype label)
   {
     addPoint(data_point, label,-1);
-  };
+  }
 
   tableint addPoint(void *data_point, labeltype label, int level) {
 
@@ -636,6 +653,7 @@ public:
         throw std::runtime_error("The number of elements exceeds the specified limit");
       };
       cur_c = cur_element_count;
+      label_lookup_[label] = cur_c;  // expected unique, if not will overwrite
       cur_element_count++;
     }
     std::unique_lock <std::mutex> lock_el(link_list_locks_[cur_c]);
@@ -767,4 +785,3 @@ public:
   };
 
 }
-
