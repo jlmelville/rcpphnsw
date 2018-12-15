@@ -5,7 +5,7 @@
 \title{Find Nearest Neighbors and Euclidean Distances}
 \usage{
 get_knn(X, k = 10, distance = "euclidean", include_self = TRUE,
-  M = 16, ef = 200)
+  M = 200, ef = 16, verbose = FALSE)
 }
 \arguments{
 \item{X}{a numeric matrix of data to add. Each of the n rows is an item in
@@ -33,6 +33,8 @@ the expense of longer indexing time. Suggested range: 5-100 (default: 16).}
 \item{ef}{Controls the quality of the graph. Higher values lead to improved
 recall at the expense of longer build time. Suggested range: 100-2000
 (default: 200).}
+
+\item{verbose}{If \code{TRUE}, log progress to the console.}
 }
 \value{
 a list containing:

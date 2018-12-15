@@ -67,13 +67,13 @@ public:
 
   // dim - length of the vectors being added
   // max_elements - size of the data being added
-  // ef_construction - controls the quality of the graph. Higher values lead to
-  //  improved recall at the expense of longer build time. Suggested range:
-  //  100-2000 (default: 200).
   // M - Controls maximum number of neighbors in the zero and above-zero
   //  layers. Higher values lead t better recall and shorter retrieval times,
   //  at the expense of longer indexing time. Suggested range: 5-100
   //  (default: 16).
+  // ef_construction - controls the quality of the graph. Higher values lead to
+  //  improved recall at the expense of longer build time. Suggested range:
+  //  100-2000 (default: 200).
   Hnsw(const int dim, const size_t max_elements, const size_t M = 16,
        const size_t ef_construction = 200) :
     dim(dim), cur_l(0),

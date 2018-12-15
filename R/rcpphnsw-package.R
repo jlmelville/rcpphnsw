@@ -14,3 +14,7 @@
 #'
 #' Maintainer: James Melville <jlmelville@gmail.com>
 NULL
+
+.onUnload <- function(libpath) {
+  library.dynam.unload("RcppHNSW", libpath)
+}
