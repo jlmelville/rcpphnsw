@@ -5,7 +5,7 @@
 \title{Find Nearest Neighbors and Euclidean Distances}
 \usage{
 get_knn(X, k = 10, distance = "euclidean", include_self = TRUE,
-  M = 200, ef = 16)
+  M = 16, ef = 200)
 }
 \arguments{
 \item{X}{a numeric matrix of data to add. Each of the n rows is an item in
