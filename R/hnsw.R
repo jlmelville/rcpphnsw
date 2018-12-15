@@ -80,13 +80,13 @@ get_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
     # Neighbors are queried by passing the vector back in
     # To get distances as well as indices, use include_distances = TRUE
     res <- ann$getNNsList(X[i, ], k, include_distances = TRUE)
-    idx[i, ] <- res$item
+    idx[i, ] <- as.integer(res$item)
     dist[i, ] <- res$distance
   }
 
   if (!include_self) {
-    idx <- idx[, -1]
-    dist <- dist[, -1]
+    idx <- idx[, -1, drop=FALSE]
+    dist <- dist[, -1, drop=FALSE]
     k <- k - 1
   }
 
