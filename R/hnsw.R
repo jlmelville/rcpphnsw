@@ -42,7 +42,7 @@ Rcpp::loadModule("HnswIp", TRUE)
 #' @examples
 #' get_knn(as.matrix(iris[, -5]), k = 10)
 get_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
-                    M = 200, ef = 16) {
+                    M = 16, ef = 200) {
 
   distance <- match.arg(distance, c("l2", "euclidean", "cosine", "ip"))
 
