@@ -67,7 +67,7 @@ ef <- 200
 ann <- new(HnswL2, ncol(data), nrow(data), M, ef)
 
 # Add items to index
-for (i in 1:nr) {
+for (i in 1:nrow(data)) {
   ann$addItem(data[i, ])
 }
 
