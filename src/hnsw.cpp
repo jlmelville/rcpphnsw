@@ -115,17 +115,15 @@ public:
   {
     Normalizer<dist_t, DoNormalize>::normalize(dv);
 
-    appr_alg->addPoint(&dv[0], (size_t) cur_l);
+    appr_alg->addPoint(dv.data(), static_cast<size_t>(cur_l));
     ++cur_l;
   }
 
   void addItems(Rcpp::NumericMatrix items) {
     AddItemWorker<dist_t, Distance, DoNormalize> worker(this, items);
     // add items is implemented through the RcppParallel worker but seems to
-    // give disastrous results, so by setting fourth argument grain size to a
-    // large number, forces the use of a single thread for all data sizes
-    RcppParallel::parallelFor(0, items.nrow(), worker,
-                              std::numeric_limits<std::size_t>::max());
+    // give disastrous results when run multi-threaded
+    worker(0, items.nrow());
   }
 
   std::vector<hnswlib::labeltype> getNNs(const std::vector<dist_t>& dv, size_t k)
@@ -141,7 +139,7 @@ public:
     Normalizer<dist_t, DoNormalize>::normalize(fv);
 
     std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
-      appr_alg->searchKnn(&fv[0], k);
+      appr_alg->searchKnn(fv.data(), k);
 
     if (result.size() != k) {
       Rcpp::stop("Unable to find k results. Probably ef or M is too small");
@@ -185,7 +183,7 @@ public:
     Normalizer<dist_t, DoNormalize>::normalize(fv);
 
     std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
-      appr_alg->searchKnn(&fv[0], k);
+      appr_alg->searchKnn(fv.data(), k);
 
     if (result.size() != k) {
       Rcpp::stop("Unable to find k results. Probably ef or M is too small");

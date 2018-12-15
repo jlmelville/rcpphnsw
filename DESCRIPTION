@@ -7,7 +7,6 @@ Description: 'HNSW' is a C++ library for Approximate Nearest Neighbors. This
  package provides a minimal R interface by relying on the 'Rcpp' package, using 
  'RcppAnnoy' as a template. See <https://github.com/nmslib/hnsw> for more on 
  'HNSW'. 'HNSW' is released under Version 2.0 of the Apache License.
-Depends: R (>= 3.5.0)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
