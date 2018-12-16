@@ -2,10 +2,11 @@
 % Please edit documentation in R/hnsw.R
 \name{get_knn}
 \alias{get_knn}
-\title{Find Nearest Neighbors and Euclidean Distances}
+\title{Find Nearest Neighbors and Distances}
 \usage{
 get_knn(X, k = 10, distance = "euclidean", include_self = TRUE,
-  M = 16, ef = 200, verbose = FALSE)
+  M = 16, ef_construction = 200, ef = ef_construction,
+  verbose = FALSE)
 }
 \arguments{
 \item{X}{a numeric matrix of data to add. Each of the n rows is an item in
@@ -26,13 +27,19 @@ the index.}
 \item{include_self}{If \code{TRUE}, return the item itself as one of its
 \code{k}-neighbors.}
 
-\item{M}{Controls maximum number of neighbors in the zero and above-zero
-layers. Higher values lead to better recall and shorter retrieval times, at
-the expense of longer indexing time. Suggested range: 5-100 (default: 16).}
+\item{M}{Controls the number of bi-directional links created for each element
+during index construction. Higher values lead to better results at the
+expense of memory consumption. Typical values are \code{2 - 100}, but
+for most datasets a range of \code{12 - 48} is suitable.}
 
-\item{ef}{Controls the quality of the graph. Higher values lead to improved
-recall at the expense of longer build time. Suggested range: 100-2000
-(default: 200).}
+\item{ef_construction}{Size of the dynamic list used during construction.
+A larger value means a better quality index, but increases build time.
+Should be an integer value between 1 and the size of the dataset.}
+
+\item{ef}{Size of the dynamic list used during search. Higher values lead
+to improved recall at the expense of longer search time. Can take values
+between \code{k} and the size of the dataset and may be greater or smaller
+than \code{ef_construction}. Typical values are \code{100 - 2000}.}
 
 \item{verbose}{If \code{TRUE}, log progress to the console.}
 }
@@ -41,19 +48,40 @@ a list containing:
 \itemize{
   \item \code{idx} an n by k matrix containing the nearest neighbor indices.
   \item \code{dist} an n by k matrix containing the nearest neighbor
-  Euclidean distances.
+   distances.
 }
 }
 \description{
 A k-nearest neighbor algorithm using the HNSW library
 (\url{https://github.com/nmslib/hnsw}).
 }
-\details{
-This function also demonstrates how to use the minimal interface to HNSW to
-do something non-trivial. The class used, "HnswL2", uses the "Squared L2"
-distance, which is the square of the Euclidean distance. This function takes
-care of the square root for you, so returns actual Euclidean distances.
+\section{HNSW Parameters}{
+
+
+Some details on the parameters used for index construction and search, based
+on \url{https://github.com/nmslib/hnswlib/blob/master/ALGO_PARAMS.md}:
+
+\itemize{
+  \item \code{M} Controls the number of bi-directional links created for each
+  element during index construction. Higher values lead to better results at
+  the expense of memory consumption, which is around \code{M * 8-10} bytes
+  per bytes per stored element. High intrinsic dimensionalities will require
+  higher values of \code{M}. A range of \code{2 - 100} is typical, but
+  \code{12 - 48} is ok for most use cases.
+  \item \code{ef_construction} Size of the dynamic list used during
+  construction. A larger value means a better quality index, but increases
+  build time. Should be an integer value between 1 and the size of the
+  dataset. A typical range is \code{100 - 2000}. Beyond a certain point,
+  increasing \code{ef_construction} has no effect. A sufficient value of
+  \code{ef_construction} can be determined by searching with \code{ef =
+  ef_construction}, and ensuring that the recall is at least 0.9.
+  \item \code{ef} Size of the dynamic list used during index search. Can
+  differ from \code{ef_construction} and be any value between \code{k} (the
+  number of neighbors sought) and the number of elements in the index being
+  searched.
 }
+}
+
 \examples{
 get_knn(as.matrix(iris[, -5]), k = 10)
 }

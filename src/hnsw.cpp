@@ -103,6 +103,10 @@ public:
     cur_l = appr_alg->cur_element_count;
   }
 
+  void setEf(const size_t ef) {
+    appr_alg->ef_ = ef;
+  }
+
   void addItem(const std::vector<dist_t>& dv)
   {
     std::vector<dist_t> fv(dv.size());
@@ -361,6 +365,7 @@ RCPP_MODULE(HnswL2) {
   .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, M, ef")
   .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
   .constructor<int32_t, std::string, size_t>("constructor with dimension, loading from filename, number of items")
+  .method("setEf",      &HnswL2::setEf,      "set ef value")
   .method("addItem",    &HnswL2::addItem,    "add item")
   .method("addItems",   &HnswL2::addItems,   "add items")
   .method("save",       &HnswL2::callSave,   "save index to file")
@@ -377,6 +382,7 @@ RCPP_MODULE(HnswCosine) {
   .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, M, ef")
   .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
   .constructor<int32_t, std::string, size_t>("constructor with dimension, loading from filename, number of items")
+  .method("setEf",      &HnswCosine::setEf,      "set ef value")
   .method("addItem",    &HnswCosine::addItem,    "add item")
   .method("addItems",   &HnswCosine::addItems,   "add items")
   .method("save",       &HnswCosine::callSave,   "save index to file")
@@ -393,6 +399,7 @@ RCPP_EXPOSED_CLASS_NODECL(HnswIp)
     .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, M, ef")
     .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
     .constructor<int32_t, std::string, size_t>("constructor with dimension, loading from filename, number of items")
+    .method("setEf",      &HnswIp::setEf,      "set ef value")
     .method("addItem",    &HnswIp::addItem,    "add item")
     .method("addItems",   &HnswIp::addItems,   "add items")
     .method("save",       &HnswIp::callSave,   "save index to file")
