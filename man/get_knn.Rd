@@ -30,7 +30,8 @@ the index.}
 \item{M}{Controls the number of bi-directional links created for each element
 during index construction. Higher values lead to better results at the
 expense of memory consumption. Typical values are \code{2 - 100}, but
-for most datasets a range of \code{12 - 48} is suitable.}
+for most datasets a range of \code{12 - 48} is suitable. Can't be smaller
+than 2.}
 
 \item{ef_construction}{Size of the dynamic list used during construction.
 A larger value means a better quality index, but increases build time.
