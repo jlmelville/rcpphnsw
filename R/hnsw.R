@@ -1,8 +1,3 @@
-## ensure module gets loaded
-Rcpp::loadModule("HnswL2", TRUE)
-Rcpp::loadModule("HnswCosine", TRUE)
-Rcpp::loadModule("HnswIp", TRUE)
-
 #' Find Nearest Neighbors and Distances
 #'
 #' A k-nearest neighbor algorithm using the HNSW library

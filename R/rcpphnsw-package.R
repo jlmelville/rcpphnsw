@@ -15,6 +15,11 @@
 #' Maintainer: James Melville <jlmelville@gmail.com>
 NULL
 
+## ensure module gets loaded
+Rcpp::loadModule("HnswL2", TRUE)
+Rcpp::loadModule("HnswCosine", TRUE)
+Rcpp::loadModule("HnswIp", TRUE)
+
 .onUnload <- function(libpath) {
   library.dynam.unload("RcppHNSW", libpath)
 }
