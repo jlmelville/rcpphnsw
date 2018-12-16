@@ -119,7 +119,8 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
     attr(ann, "distance") <- "euclidean"
   }
 
-  tsmessage("Building HNSW index with metric '", distance, "'")
+  tsmessage("Building HNSW index with metric '", distance, "'",
+            " ef = ", formatC(ef), " M = ", formatC(M))
   progress <- Progress$new(max = nr, display = verbose)
   for (i in 1:nr) {
     # Items are added directly
@@ -150,7 +151,7 @@ hnsw_search <- function(X, ann, k, include_self = TRUE, ef = k,
   dist <- matrix(nrow = nr, ncol = k)
 
   ann$setEf(ef)
-  tsmessage("Searching HNSW index")
+  tsmessage("Searching HNSW index with ef = ", formatC(ef))
   search_progress <- Progress$new(max = nr, display = verbose)
   for (i in 1:nr) {
     # Neighbors are queried by passing the vector back in
