@@ -50,7 +50,8 @@ Rcpp::loadModule("HnswIp", TRUE)
 #' @param M Controls the number of bi-directional links created for each element
 #'   during index construction. Higher values lead to better results at the
 #'   expense of memory consumption. Typical values are \code{2 - 100}, but
-#'   for most datasets a range of \code{12 - 48} is suitable.
+#'   for most datasets a range of \code{12 - 48} is suitable. Can't be smaller
+#'   than 2.
 #' @param ef_construction Size of the dynamic list used during construction.
 #'   A larger value means a better quality index, but increases build time.
 #'   Should be an integer value between 1 and the size of the dataset.
@@ -73,6 +74,11 @@ get_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
   if (!is.matrix(X)) {
     stop("X must be matrix")
   }
+  if (M < 2) {
+    stop("M cannot be < 2")
+  }
+
+
   nr <- nrow(X)
   max_k <- ifelse(include_self, nr, nr - 1)
   if (k > max_k) {
@@ -90,6 +96,9 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
                        verbose = FALSE) {
   if (!is.matrix(X)) {
     stop("X must be matrix")
+  }
+  if (M < 2) {
+    stop("M cannot be < 2")
   }
   distance <- match.arg(distance, c("l2", "euclidean", "cosine", "ip"))
 
