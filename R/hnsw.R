@@ -77,7 +77,7 @@ get_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
   if (M < 2) {
     stop("M cannot be < 2")
   }
-
+  ef_construction <- max(ef_construction, k)
 
   nr <- nrow(X)
   max_k <- ifelse(include_self, nr, nr - 1)
@@ -146,6 +146,8 @@ hnsw_search <- function(X, ann, k, include_self = TRUE, ef = k,
   if (!include_self) {
     k <- k + 1
   }
+
+  ef <- max(ef, k)
 
   idx <- matrix(nrow = nr, ncol = k)
   dist <- matrix(nrow = nr, ncol = k)
