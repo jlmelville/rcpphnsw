@@ -51,7 +51,7 @@ There is multithreading support for index searching using
 devtools::install_github("jlmelville/RcppHNSW")
 ```
 
-### Example
+### Class Example
 
 ```R
 library(RcppHNSW)
@@ -76,13 +76,17 @@ for (i in 1:nrow(data)) {
 # set include_distances = TRUE to get distances as well as index
 res <- ann$getNNsList(data[1, ], k = 4, include_distances = TRUE)
 
-# function interface returns results for all rows in nr x k matrices
-all_knn <- RcppHNSW::hnsw_knn(data, k = 4, distance = "l2")
-# other distance options: "euclidean", "cosine" and "ip" (inner product distance)
-
 # other distance classes:
 # Cosine: HnswCosine
 # Inner Product: HnswIP
+```
+
+### Function example
+
+```R
+# function interface returns results for all rows in nr x k matrices
+all_knn <- RcppHNSW::hnsw_knn(data, k = 4, distance = "l2")
+# other distance options: "euclidean", "cosine" and "ip" (inner product distance)
 ```
 
 And here's a rough equivalent of the serialization/deserialization example from
