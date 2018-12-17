@@ -107,7 +107,7 @@ public:
     appr_alg->ef_ = ef;
   }
 
-  void addItem(const std::vector<dist_t>& dv)
+  void addItem(Rcpp::NumericVector dv)
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
