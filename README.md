@@ -77,7 +77,7 @@ for (i in 1:nrow(data)) {
 res <- ann$getNNsList(data[1, ], k = 4, include_distances = TRUE)
 
 # function interface returns results for all rows in nr x k matrices
-all_knn <- RcppHNSW::get_knn(data, k = 4, distance = "l2")
+all_knn <- RcppHNSW::hnsw_knn(data, k = 4, distance = "l2")
 # other distance options: "euclidean", "cosine" and "ip" (inner product distance)
 
 # other distance classes:

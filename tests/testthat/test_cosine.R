@@ -35,5 +35,5 @@ cosine_dist <- matrix(
     3.31417857e-03, 3.75133220e-03, 3.96576921e-03, 4.37554307e-03,
     4.37823658e-03, 4.77142498e-03), nrow = 10, byrow = 10)
 
-res <- get_knn(ui10, k = 10, distance = "cosine", include_self = TRUE)
+res <- hnsw_knn(ui10, k = 10, distance = "cosine", include_self = TRUE)
 expect_equal(res$dist, cosine_dist, check.attributes = FALSE, tol = 1e-6)

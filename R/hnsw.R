@@ -62,8 +62,8 @@
 #'    distances.
 #' }
 #' @examples
-#' get_knn(as.matrix(iris[, -5]), k = 10)
-get_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
+#' hnsw_knn(as.matrix(iris[, -5]), k = 10)
+hnsw_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
                     M = 16, ef_construction = 200, ef = ef_construction,
                     verbose = FALSE) {
   if (!is.matrix(X)) {

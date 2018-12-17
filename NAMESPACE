@@ -1,7 +1,7 @@
 useDynLib(RcppHNSW, .registration = TRUE)
 import(methods, Rcpp)
 importFrom(RcppParallel, RcppParallelLibs)
-export("get_knn")
+export("hnsw_knn")
 export("HnswL2")
 export("HnswCosine")
 export("HnswIp")
