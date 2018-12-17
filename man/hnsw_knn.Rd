@@ -84,5 +84,5 @@ on \url{https://github.com/nmslib/hnswlib/blob/master/ALGO_PARAMS.md}:
 }
 
 \examples{
-hnsw_knn(as.matrix(iris[, -5]), k = 10)
+iris_nn_data <- hnsw_knn(as.matrix(iris[, -5]), k = 10)
 }

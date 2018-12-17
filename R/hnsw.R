@@ -62,7 +62,7 @@
 #'    distances.
 #' }
 #' @examples
-#' hnsw_knn(as.matrix(iris[, -5]), k = 10)
+#' iris_nn_data <- hnsw_knn(as.matrix(iris[, -5]), k = 10)
 hnsw_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
                     M = 16, ef_construction = 200, ef = ef_construction,
                     verbose = FALSE) {
@@ -87,6 +87,34 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
               ef = ef, verbose = verbose)
 }
 
+#' Build a nearest neighor index
+#'
+#' @param X a numeric matrix of data to add. Each of the n rows is an item in
+#'   the index.
+#' @param distance Type of distance to calculate. One of:
+#' \itemize{
+#'   \item \code{"l2"} Squared L2, i.e. squared Euclidean.
+#'   \item \code{"euclidean"} Euclidean.
+#'   \item \code{"cosine"} Cosine.
+#'   \item \code{"ip"} Inner product: 1 - sum(ai * bi), i.e. the cosine distance
+#'   where the vectors are not normalized. This can lead to negative distances
+#'   and other non-metric behavior.
+#' }
+#' @param M Controls the number of bi-directional links created for each element
+#'   during index construction. Higher values lead to better results at the
+#'   expense of memory consumption. Typical values are \code{2 - 100}, but
+#'   for most datasets a range of \code{12 - 48} is suitable. Can't be smaller
+#'   than 2.
+#' @param ef Size of the dynamic list used during construction.
+#'   A larger value means a better quality index, but increases build time.
+#'   Should be an integer value between 1 and the size of the dataset.
+#' @param verbose If \code{TRUE}, log progress to the console.
+#' @return an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
+#'   class.
+#' @examples
+#' irism <- as.matrix(iris[, -5])
+#' ann <- hnsw_build(irism)
+#' iris_nn <- hnsw_search(irism, ann, k = 5)
 hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
                        verbose = FALSE) {
   if (!is.matrix(X)) {
@@ -126,6 +154,29 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
   ann
 }
 
+#' Search an HNSW nearest neighbor index
+#'
+#' @param X A numeric matrix of data to search for neighbors.
+#' @param ann an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
+#'   class.
+#' @param k Number of neighbors to return.
+#' @param include_self If \code{TRUE}, return the item itself as one of its
+#'   \code{k}-neighbors.
+#' @param ef Size of the dynamic list used during search. Higher values lead
+#'   to improved recall at the expense of longer search time. Can take values
+#'   between \code{k} and the size of the dataset. Typical values are
+#'   \code{100 - 2000}.
+#' @param verbose If \code{TRUE}, log progress to the console.
+#' @return a list containing:
+#' \itemize{
+#'   \item \code{idx} an n by k matrix containing the nearest neighbor indices.
+#'   \item \code{dist} an n by k matrix containing the nearest neighbor
+#'    distances.
+#' }
+#' @examples
+#' irism <- as.matrix(iris[, -5])
+#' ann <- hnsw_build(irism)
+#' iris_nn <- hnsw_search(irism, ann, k = 5)
 hnsw_search <- function(X, ann, k, include_self = TRUE, ef = k,
                         verbose = FALSE) {
   if (!is.matrix(X)) {
