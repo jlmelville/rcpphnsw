@@ -4,7 +4,7 @@
 \alias{hnsw_search}
 \title{Search an HNSW nearest neighbor index}
 \usage{
-hnsw_search(X, ann, k, include_self = TRUE, ef = k, verbose = FALSE)
+hnsw_search(X, ann, k, ef = k, verbose = FALSE)
 }
 \arguments{
 \item{X}{A numeric matrix of data to search for neighbors.}
@@ -13,9 +13,6 @@ hnsw_search(X, ann, k, include_self = TRUE, ef = k, verbose = FALSE)
 class.}
 
 \item{k}{Number of neighbors to return.}
-
-\item{include_self}{If \code{TRUE}, return the item itself as one of its
-\code{k}-neighbors.}
 
 \item{ef}{Size of the dynamic list used during search. Higher values lead
 to improved recall at the expense of longer search time. Can take values
@@ -31,6 +28,11 @@ a list containing:
   \item \code{dist} an n by k matrix containing the nearest neighbor
    distances.
 }
+
+Every item in the dataset is considered to be a neighbor of itself, so the
+first neighbor of item \code{i} should always be \code{i} itself. If that
+isn't the case, then any of \code{M}, \code{ef_construction} and \code{ef}
+may need increasing.
 }
 \description{
 Search an HNSW nearest neighbor index

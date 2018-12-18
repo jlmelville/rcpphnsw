@@ -40,8 +40,6 @@
 #'   where the vectors are not normalized. This can lead to negative distances
 #'   and other non-metric behavior.
 #' }
-#' @param include_self If \code{TRUE}, return the item itself as one of its
-#'   \code{k}-neighbors.
 #' @param M Controls the number of bi-directional links created for each element
 #'   during index construction. Higher values lead to better results at the
 #'   expense of memory consumption. Typical values are \code{2 - 100}, but
@@ -61,9 +59,13 @@
 #'   \item \code{dist} an n by k matrix containing the nearest neighbor
 #'    distances.
 #' }
+#' Every item in the dataset is considered to be a neighbor of itself, so the
+#' first neighbor of item \code{i} should always be \code{i} itself. If that
+#' isn't the case, then any of \code{M}, \code{ef_construction} and \code{ef}
+#' may need increasing.
 #' @examples
 #' iris_nn_data <- hnsw_knn(as.matrix(iris[, -5]), k = 10)
-hnsw_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
+hnsw_knn <- function(X, k = 10, distance = "euclidean",
                     M = 16, ef_construction = 200, ef = ef_construction,
                     verbose = FALSE) {
   if (!is.matrix(X)) {
@@ -75,7 +77,7 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
   ef_construction <- max(ef_construction, k)
 
   nr <- nrow(X)
-  max_k <- ifelse(include_self, nr, nr - 1)
+  max_k <- nr
   if (k > max_k) {
     stop("k cannot be larger than ", max_k)
   }
@@ -83,8 +85,7 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean", include_self = TRUE,
 
   ann <- hnsw_build(X = X, distance = distance, M = M, ef = ef_construction,
                     verbose = verbose)
-  hnsw_search(X = X, ann = ann, k = k, include_self = include_self,
-              ef = ef, verbose = verbose)
+  hnsw_search(X = X, ann = ann, k = k, ef = ef, verbose = verbose)
 }
 
 #' Build a nearest neighor index
@@ -160,8 +161,6 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 #' @param ann an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
 #'   class.
 #' @param k Number of neighbors to return.
-#' @param include_self If \code{TRUE}, return the item itself as one of its
-#'   \code{k}-neighbors.
 #' @param ef Size of the dynamic list used during search. Higher values lead
 #'   to improved recall at the expense of longer search time. Can take values
 #'   between \code{k} and the size of the dataset. Typical values are
@@ -173,24 +172,25 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 #'   \item \code{dist} an n by k matrix containing the nearest neighbor
 #'    distances.
 #' }
+#'
+#' Every item in the dataset is considered to be a neighbor of itself, so the
+#' first neighbor of item \code{i} should always be \code{i} itself. If that
+#' isn't the case, then any of \code{M}, \code{ef_construction} and \code{ef}
+#' may need increasing.
+#'
 #' @examples
 #' irism <- as.matrix(iris[, -5])
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
-hnsw_search <- function(X, ann, k, include_self = TRUE, ef = k,
-                        verbose = FALSE) {
+hnsw_search <- function(X, ann, k, ef = k, verbose = FALSE) {
   if (!is.matrix(X)) {
     stop("X must be matrix")
   }
   nr <- nrow(X)
 
-  max_k <- ifelse(include_self, nr, nr - 1)
+  max_k <- nr
   if (k > max_k) {
     stop("k cannot be larger than ", max_k)
-  }
-
-  if (!include_self) {
-    k <- k + 1
   }
 
   ef <- max(ef, k)
@@ -208,12 +208,6 @@ hnsw_search <- function(X, ann, k, include_self = TRUE, ef = k,
     idx[i, ] <- as.integer(res$item)
     dist[i, ] <- res$distance
     search_progress$increment()
-  }
-
-  if (!include_self) {
-    idx <- idx[, -1, drop = FALSE]
-    dist <- dist[, -1, drop = FALSE]
-    k <- k - 1
   }
 
   if (!is.null(attr(ann, "distance")) &&

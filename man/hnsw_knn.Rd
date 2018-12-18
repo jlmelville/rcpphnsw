@@ -4,9 +4,8 @@
 \alias{hnsw_knn}
 \title{Find Nearest Neighbors and Distances}
 \usage{
-hnsw_knn(X, k = 10, distance = "euclidean", include_self = TRUE,
-  M = 16, ef_construction = 200, ef = ef_construction,
-  verbose = FALSE)
+hnsw_knn(X, k = 10, distance = "euclidean", M = 16,
+  ef_construction = 200, ef = ef_construction, verbose = FALSE)
 }
 \arguments{
 \item{X}{a numeric matrix of data to add. Each of the n rows is an item in
@@ -23,9 +22,6 @@ the index.}
   where the vectors are not normalized. This can lead to negative distances
   and other non-metric behavior.
 }}
-
-\item{include_self}{If \code{TRUE}, return the item itself as one of its
-\code{k}-neighbors.}
 
 \item{M}{Controls the number of bi-directional links created for each element
 during index construction. Higher values lead to better results at the
@@ -51,6 +47,10 @@ a list containing:
   \item \code{dist} an n by k matrix containing the nearest neighbor
    distances.
 }
+Every item in the dataset is considered to be a neighbor of itself, so the
+first neighbor of item \code{i} should always be \code{i} itself. If that
+isn't the case, then any of \code{M}, \code{ef_construction} and \code{ef}
+may need increasing.
 }
 \description{
 A k-nearest neighbor algorithm using the HNSW library
