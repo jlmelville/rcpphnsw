@@ -52,6 +52,11 @@
 #'   to improved recall at the expense of longer search time. Can take values
 #'   between \code{k} and the size of the dataset and may be greater or smaller
 #'   than \code{ef_construction}. Typical values are \code{100 - 2000}.
+#' @param n_threads Number of threads to use. Default is half that recommended
+#'   by RcppParallel.
+#' @param grain_size Minimum batch size for multithreading. If the number of
+#'   items to process in a thread falls below this number, then no threads will
+#'   be used. Used in conjunction with \code{n_threads}.
 #' @param verbose If \code{TRUE}, log progress to the console.
 #' @return a list containing:
 #' \itemize{
@@ -67,6 +72,8 @@
 #' iris_nn_data <- hnsw_knn(as.matrix(iris[, -5]), k = 10)
 hnsw_knn <- function(X, k = 10, distance = "euclidean",
                     M = 16, ef_construction = 200, ef = ef_construction,
+                    n_threads = 0,
+                    grain_size = 1,
                     verbose = FALSE) {
   if (!is.matrix(X)) {
     stop("X must be matrix")
@@ -85,7 +92,9 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
 
   ann <- hnsw_build(X = X, distance = distance, M = M, ef = ef_construction,
                     verbose = verbose)
-  hnsw_search(X = X, ann = ann, k = k, ef = ef, verbose = verbose)
+  hnsw_search(X = X, ann = ann, k = k, ef = ef,
+              n_threads = n_threads, grain_size = grain_size,
+              verbose = verbose)
 }
 
 #' Build a nearest neighor index
@@ -165,6 +174,11 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 #'   to improved recall at the expense of longer search time. Can take values
 #'   between \code{k} and the size of the dataset. Typical values are
 #'   \code{100 - 2000}.
+#' @param n_threads Number of threads to use. Default is half that recommended
+#'   by RcppParallel.
+#' @param grain_size Minimum batch size for multithreading. If the number of
+#'   items to process in a thread falls below this number, then no threads will
+#'   be used. Used in conjunction with \code{n_threads}.
 #' @param verbose If \code{TRUE}, log progress to the console.
 #' @return a list containing:
 #' \itemize{
@@ -182,7 +196,27 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 #' irism <- as.matrix(iris[, -5])
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
-hnsw_search <- function(X, ann, k, ef = k, verbose = FALSE) {
+hnsw_search <- function(X, ann, k, ef = k,
+                        n_threads = 0,
+                        grain_size = 1,
+                        verbose = FALSE) {
+  if (n_threads > 0 ) {
+    res <- hnsw_search_parallel(X = X, ann = ann, k = k, ef = ef,
+                         n_threads = n_threads, grain_size = grain_size,
+                         verbose = verbose)
+  }
+  else {
+    res <- hnsw_search_serial(X = X, ann = ann, k = k, ef = ef,
+                              verbose = verbose)
+  }
+  if (!is.null(attr(ann, "distance")) &&
+      attr(ann, "distance") == "euclidean") {
+    res$dist <- sqrt(res$dist)
+  }
+  res
+}
+
+hnsw_search_serial <- function(X, ann, k, ef = k, verbose = FALSE) {
   if (!is.matrix(X)) {
     stop("X must be matrix")
   }
@@ -210,10 +244,34 @@ hnsw_search <- function(X, ann, k, ef = k, verbose = FALSE) {
     search_progress$increment()
   }
 
-  if (!is.null(attr(ann, "distance")) &&
-      attr(ann, "distance") == "euclidean") {
-    dist <- sqrt(dist)
-  }
-
   list(idx = idx, dist = dist)
+}
+
+hnsw_search_parallel <- function(X, ann, k, ef = k,
+                                 n_threads =
+                                   max(1, RcppParallel::defaultNumThreads() / 2),
+                                 grain_size = 1,
+                                 verbose = FALSE) {
+  index_file <- tempfile()
+  ann$save(index_file)
+
+  tsmessage("Searching HNSW index with ef = ", formatC(ef),
+            " using ", n_threads, " thread", ifelse(n_threads != 1, "s", ""))
+  RcppParallel::setThreadOptions(numThreads = n_threads)
+
+  ann_class <- class(ann)
+  search_nn_func <- switch(ann_class,
+                           Rcpp_HnswCosine = hnsw_cosine_nns,
+                           Rcpp_HnswIp = hnsw_ip_nns,
+                           Rcpp_HnswL2 = hnsw_l2_nns,
+                           stop("BUG: unknown Annoy class '", ann_class, "'")
+  )
+
+  res <- search_nn_func(index_name = index_file,
+                        mat = X, search_k = k,
+                        ef = ef,
+                        grain_size = grain_size,
+                        verbose = verbose)
+  unlink(index_file)
+  res
 }
