@@ -102,8 +102,6 @@ when you read it back, as the following demonstrates:
 
 ```R
 library("RcppHNSW")
-# The number of threads to use in the getAllNNs search
-RcppParallel::setThreadOptions(numThreads = RcppParallel::defaultNumThreads())
 set.seed(12345)
 
 dim <- 16
