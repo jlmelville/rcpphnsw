@@ -18,14 +18,15 @@ L2Sqr(const void *pVect1v, const void *pVect2v, const void *qty_ptr) {
 
 }
 
-#ifndef NO_MANUAL_VECTORIZATION 
+#if defined(USE_AVX)
+
+// Favor using AVX if available.
 static float
   L2SqrSIMD16Ext(const void *pVect1v, const void *pVect2v, const void *qty_ptr) {
     float *pVect1 = (float *) pVect1v;
     float *pVect2 = (float *) pVect2v;
     size_t qty = *((size_t *) qty_ptr);
     float PORTABLE_ALIGN32 TmpRes[8];
-#ifdef __AVX__
     size_t qty16 = qty >> 4;
 
     const float *pEnd1 = pVect1 + (qty16 << 4);
@@ -53,8 +54,17 @@ static float
     float res = TmpRes[0] + TmpRes[1] + TmpRes[2] + TmpRes[3] + TmpRes[4] + TmpRes[5] + TmpRes[6] + TmpRes[7];
 
     return (res);
-#else
-    // size_t qty4 = qty >> 2;
+}
+
+#elif defined(USE_SSE)
+
+static float
+  L2SqrSIMD16Ext(const void *pVect1v, const void *pVect2v, const void *qty_ptr) {
+    float *pVect1 = (float *) pVect1v;
+    float *pVect2 = (float *) pVect2v;
+    size_t qty = *((size_t *) qty_ptr);
+    float PORTABLE_ALIGN32 TmpRes[8];
+     // size_t qty4 = qty >> 2;
     size_t qty16 = qty >> 4;
 
     const float *pEnd1 = pVect1 + (qty16 << 4);
@@ -98,11 +108,10 @@ static float
     float res = TmpRes[0] + TmpRes[1] + TmpRes[2] + TmpRes[3];
 
     return (res);
-#endif
-  }
+}
 #endif
 
-#ifndef NO_MANUAL_VECTORIZATION
+#ifdef USE_SSE
 static float
   L2SqrSIMD4Ext(const void *pVect1v, const void *pVect2v, const void *qty_ptr) {
     float PORTABLE_ALIGN32 TmpRes[8];
@@ -142,7 +151,7 @@ class L2Space : public SpaceInterface<float> {
 public:
   L2Space(size_t dim) {
     fstdistfunc_ = L2Sqr;
-#ifndef NO_MANUAL_VECTORIZATION
+#if defined(USE_SSE) || defined(USE_AVX)
     if (dim % 4 == 0)
       fstdistfunc_ = L2SqrSIMD4Ext;
     if (dim % 16 == 0)
