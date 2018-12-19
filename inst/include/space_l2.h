@@ -4,12 +4,14 @@
 namespace hnswlib {
 
 static float
-L2Sqr(const void *pVect1, const void *pVect2, const void *qty_ptr) {
+L2Sqr(const void *pVect1v, const void *pVect2v, const void *qty_ptr) {
   //return *((float *)pVect2);
+  float *pVect1 = (float *) pVect1v;
+  float *pVect2 = (float *) pVect2v;
   size_t qty = *((size_t *) qty_ptr);
   float res = 0;
-  for (unsigned i = 0; i < qty; i++) {
-    float t = ((float *) pVect1)[i] - ((float *) pVect2)[i];
+  for (; qty > 0; --qty, ++pVect1, ++pVect2) {
+    float t = *pVect1 - *pVect2;
     res += t * t;
   }
   return (res);
