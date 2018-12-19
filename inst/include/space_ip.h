@@ -1,23 +1,4 @@
 #pragma once
-#ifdef _MSC_VER
-#include <intrin.h>
-#include <stdexcept>
-
-#define  __builtin_popcount(t) __popcnt(t)
-#else
-
-#include <x86intrin.h>
-
-#endif
-
-
-#if defined(__GNUC__)
-#define PORTABLE_ALIGN32 __attribute__((aligned(32)))
-#else
-#define PORTABLE_ALIGN32 __declspec(align(32))
-#endif
-
-
 #include "hnswlib.h"
 
 namespace hnswlib {
@@ -33,7 +14,7 @@ InnerProduct(const void *pVect1, const void *pVect2, const void *qty_ptr) {
 
 }
 
-#ifndef HNSW_PORTABLE
+#ifndef NO_MANUAL_VECTORIZATION
 static float
   InnerProductSIMD4Ext(const void *pVect1v, const void *pVect2v, const void *qty_ptr) {
     float PORTABLE_ALIGN32 TmpRes[8];
@@ -132,7 +113,7 @@ static float
   }
 #endif
 
-#ifndef HNSW_PORTABLE
+#ifndef NO_MANUAL_VECTORIZATION
 static float
   InnerProductSIMD16Ext(const void *pVect1v, const void *pVect2v, const void *qty_ptr) {
     float PORTABLE_ALIGN32 TmpRes[8];
@@ -218,7 +199,7 @@ class InnerProductSpace : public SpaceInterface<float> {
 public:
   InnerProductSpace(size_t dim) {
     fstdistfunc_ = InnerProduct;
-#ifndef HNSW_PORTABLE
+#ifndef NO_MANUAL_VECTORIZATION
     if (dim % 4 == 0)
       fstdistfunc_ = InnerProductSIMD4Ext;
     if (dim % 16 == 0)

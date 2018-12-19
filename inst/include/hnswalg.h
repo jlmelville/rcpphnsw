@@ -190,15 +190,19 @@ public:
           data = (int *) (linkLists_[curNodeNum] + (layer - 1) * size_links_per_element_);
         int size = *data;
         tableint *datal = (tableint *) (data + 1);
+#ifndef NO_PREFETCH
         _mm_prefetch((char *) (visited_array + *(data + 1)), _MM_HINT_T0);
         _mm_prefetch((char *) (visited_array + *(data + 1) + 64), _MM_HINT_T0);
         _mm_prefetch(getDataByInternalId(*datal), _MM_HINT_T0);
         _mm_prefetch(getDataByInternalId(*(datal + 1)), _MM_HINT_T0);
+#endif
 
         for (int j = 0; j < size; j++) {
           tableint candidate_id = *(datal + j);
+#ifndef NO_PREFETCH
           _mm_prefetch((char *) (visited_array + *(datal + j + 1)), _MM_HINT_T0);
           _mm_prefetch(getDataByInternalId(*(datal + j + 1)), _MM_HINT_T0);
+#endif
           if (visited_array[candidate_id] == visited_array_tag) continue;
           visited_array[candidate_id] = visited_array_tag;
           char *currObj1 = (getDataByInternalId(candidate_id));
@@ -206,7 +210,9 @@ public:
           dist_t dist1 = fstdistfunc_(data_point, currObj1, dist_func_param_);
           if (top_candidates.top().first > dist1 || top_candidates.size() < ef_construction_) {
             candidateSet.emplace(-dist1, candidate_id);
+#ifndef NO_PREFETCH
             _mm_prefetch(getDataByInternalId(candidateSet.top().second), _MM_HINT_T0);
+#endif
             top_candidates.emplace(dist1, candidate_id);
             if (top_candidates.size() > ef_construction_) {
               top_candidates.pop();
@@ -247,16 +253,20 @@ public:
         tableint current_node_id = current_node_pair.second;
         int *data = (int *) (data_level0_memory_ + current_node_id * size_data_per_element_ + offsetLevel0_);
         int size = *data;
+#ifndef NO_PREFETCH
         _mm_prefetch((char *) (visited_array + *(data + 1)), _MM_HINT_T0);
         _mm_prefetch((char *) (visited_array + *(data + 1) + 64), _MM_HINT_T0);
         _mm_prefetch(data_level0_memory_ + (*(data + 1)) * size_data_per_element_ + offsetData_, _MM_HINT_T0);
         _mm_prefetch((char *) (data + 2), _MM_HINT_T0);
+#endif
 
         for (int j = 1; j <= size; j++) {
           int candidate_id = *(data + j);
+#ifndef NO_PREFETCH
           _mm_prefetch((char *) (visited_array + *(data + j + 1)), _MM_HINT_T0);
           _mm_prefetch(data_level0_memory_ + (*(data + j + 1)) * size_data_per_element_ + offsetData_,
                        _MM_HINT_T0);////////////
+#endif
           if (!(visited_array[candidate_id] == visited_array_tag)) {
 
             visited_array[candidate_id] = visited_array_tag;
@@ -266,9 +276,11 @@ public:
 
             if (top_candidates.top().first > dist || top_candidates.size() < ef) {
               candidate_set.emplace(-dist, candidate_id);
+#ifndef NO_PREFETCH
               _mm_prefetch(data_level0_memory_ + candidate_set.top().second * size_data_per_element_ +
                 offsetLevel0_,///////////
                 _MM_HINT_T0);////////////////////////
+#endif
 
               top_candidates.emplace(dist, candidate_id);
 
