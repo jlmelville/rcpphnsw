@@ -22,19 +22,11 @@
 #include <limits>
 #include <memory>
 #include <Rcpp.h>
-// [[Rcpp::depends(RcppParallel)]]
-#include <RcppParallel.h>
 
 // define R's REprintf as the 'local' error print method for HNSW
 #define __ERROR_PRINTER_OVERRIDE__  REprintf
 
 #include "hnswlib.h"
-
-template<typename dist_t, typename Distance, bool DoNormalize = false>
-struct FindNNWorker;
-
-template<typename dist_t, typename Distance, bool DoNormalize = false>
-struct FindNNListWorker;
 
 template <typename dist_t, bool DoNormalize = false>
 struct Normalizer {
@@ -282,155 +274,6 @@ public:
   std::unique_ptr<Distance> space;
   std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>> appr_alg;
 };
-
-template<typename dist_t, typename Distance, bool DoNormalize>
-struct FindNNWorker : public RcppParallel::Worker
-{
-  std::string index_name;
-  const RcppParallel::RMatrix<double> input;
-  RcppParallel::RMatrix<int> output;
-  const size_t ef;
-  const size_t search_k;
-
-  FindNNWorker(const std::string& index_name,
-               const Rcpp::NumericMatrix input,
-               Rcpp::IntegerMatrix output,
-               size_t ef,
-               size_t search_k)
-    : index_name(index_name),
-      input(input), output(output), ef(ef), search_k(search_k) {}
-
-  void operator()(std::size_t begin, std::size_t end) {
-    Hnsw<dist_t, Distance, DoNormalize> hnsw(index_name);
-    hnsw.setEf(ef);
-
-    for (std::size_t i = begin; i < end; i++) {
-      RcppParallel::RMatrix<double>::Row row = input.row(i);
-      std::vector<dist_t> dv(row.size());
-      std::copy(row.begin(), row.end(), dv.begin());
-      std::vector<hnswlib::labeltype> result = hnsw.getNNsNoCopy(dv, search_k);
-
-      for (size_t k = 0; k < result.size(); k++) {
-        output(i, k) = result[k];
-      }
-    }
-  }
-};
-
-template<typename dist_t, typename Distance, bool DoNormalize>
-struct FindNNListWorker : public RcppParallel::Worker
-{
-  std::string index_name;
-  const RcppParallel::RMatrix<double> input;
-  RcppParallel::RMatrix<int> index;
-  RcppParallel::RMatrix<double> distance;
-  const size_t ef;
-  const size_t search_k;
-  const size_t dim;
-  const bool include_distances;
-
-  FindNNListWorker(const std::string& index_name,
-                   const Rcpp::NumericMatrix input,
-                   Rcpp::IntegerMatrix index,
-                   Rcpp::NumericMatrix distance,
-                   const size_t ef,
-                   const size_t search_k,
-                   bool include_distances)
-    : index_name(index_name),
-      input(input), index(index), distance(distance),
-      ef(ef),
-      search_k(search_k),
-      dim(input.cols()),
-      include_distances(include_distances) {}
-
-  void operator()(std::size_t begin, std::size_t end) {
-    Hnsw<dist_t, Distance, DoNormalize> hnsw(dim, index_name);
-    hnsw.setEf(ef);
-
-    for (std::size_t i = begin; i < end; i++) {
-      RcppParallel::RMatrix<double>::Row row = input.row(i);
-      std::vector<dist_t> dv(row.size());
-      std::copy(row.begin(), row.end(), dv.begin());
-      Rcpp::List result =
-        hnsw.getNNsListNoCopy(dv, search_k, include_distances);
-      std::vector<hnswlib::labeltype> items = result["item"];
-
-      if (include_distances) {
-        std::vector<dist_t> dist = result["distance"];
-
-        for (size_t k = 0; k < items.size(); k++) {
-          index(i, k) = items[k];
-          distance(i, k) = dist[k];
-        }
-      }
-      else {
-        for (size_t k = 0; k < items.size(); k++) {
-          index(i, k) = items[k];
-        }
-      }
-    }
-  }
-};
-
-// [[Rcpp::export]]
-Rcpp::List hnsw_l2_nns(const std::string index_name,
-                       const Rcpp::NumericMatrix mat,
-                       std::size_t ef,
-                       std::size_t search_k,
-                       std::size_t grain_size = 1,
-                       bool include_distances = true,
-                       bool verbose = false) {
-  std::size_t nrow = mat.rows();
-  Rcpp::NumericMatrix dist(nrow, search_k);
-  Rcpp::IntegerMatrix idx(nrow, search_k);
-
-  FindNNListWorker<float, hnswlib::L2Space, false>
-    worker(index_name, mat, idx, dist, ef, search_k, include_distances);
-  RcppParallel::parallelFor(0, nrow, worker, grain_size);
-
-  return Rcpp::List::create(Rcpp::Named("idx") = idx,
-                            Rcpp::Named("dist") = dist);
-}
-
-// [[Rcpp::export]]
-Rcpp::List hnsw_cosine_nns(const std::string index_name,
-                           const Rcpp::NumericMatrix mat,
-                           std::size_t ef,
-                           std::size_t search_k,
-                           std::size_t grain_size = 1,
-                           bool include_distances = true,
-                           bool verbose = false) {
-  std::size_t nrow = mat.rows();
-  Rcpp::NumericMatrix dist(nrow, search_k);
-  Rcpp::IntegerMatrix idx(nrow, search_k);
-
-  FindNNListWorker<float, hnswlib::InnerProductSpace, true>
-    worker(index_name, mat, idx, dist, ef, search_k, include_distances);
-  RcppParallel::parallelFor(0, nrow, worker, grain_size);
-
-  return Rcpp::List::create(Rcpp::Named("idx") = idx,
-                            Rcpp::Named("dist") = dist);
-}
-
-// [[Rcpp::export]]
-Rcpp::List hnsw_ip_nns(const std::string index_name,
-                       const Rcpp::NumericMatrix mat,
-                       std::size_t ef,
-                       std::size_t search_k,
-                       std::size_t grain_size = 1,
-                       bool include_distances = true,
-                       bool verbose = false) {
-  std::size_t nrow = mat.rows();
-  Rcpp::NumericMatrix dist(nrow, search_k);
-  Rcpp::IntegerMatrix idx(nrow, search_k);
-
-  FindNNListWorker<float, hnswlib::InnerProductSpace, true>
-    worker(index_name, mat, idx, dist, ef, search_k, include_distances);
-  RcppParallel::parallelFor(0, nrow, worker, grain_size);
-
-  return Rcpp::List::create(Rcpp::Named("idx") = idx,
-                            Rcpp::Named("dist") = dist);
-}
 
 typedef Hnsw<float, hnswlib::L2Space, false> HnswL2;
 typedef Hnsw<float, hnswlib::InnerProductSpace, true> HnswCosine;
