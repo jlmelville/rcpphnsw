@@ -1,7 +1,7 @@
 CXX_STD = CXX11
 
 PKG_CPPFLAGS = -I../inst/include/
-PKG_CXXFLAGS += -DRCPP_PARALLEL_USE_TBB=1 -DHNSW_PORTABLE=1
+PKG_CXXFLAGS += -DRCPP_PARALLEL_USE_TBB=1 -DNO_MANUAL_VECTORIZATION
 
 # Uncomment the following flags and comment out the two lines above if you
 # want the default HNSW behavior (faster, but non-portable)

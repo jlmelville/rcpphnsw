@@ -5,8 +5,7 @@
 \title{Find Nearest Neighbors and Distances}
 \usage{
 hnsw_knn(X, k = 10, distance = "euclidean", M = 16,
-  ef_construction = 200, ef = ef_construction, n_threads = 0,
-  grain_size = 1, verbose = FALSE)
+  ef_construction = 200, ef = ef_construction, verbose = FALSE)
 }
 \arguments{
 \item{X}{a numeric matrix of data to add. Each of the n rows is an item in
@@ -38,13 +37,6 @@ Should be an integer value between 1 and the size of the dataset.}
 to improved recall at the expense of longer search time. Can take values
 between \code{k} and the size of the dataset and may be greater or smaller
 than \code{ef_construction}. Typical values are \code{100 - 2000}.}
-
-\item{n_threads}{Number of threads to use. Default is half that recommended
-by RcppParallel.}
-
-\item{grain_size}{Minimum batch size for multithreading. If the number of
-items to process in a thread falls below this number, then no threads will
-be used. Used in conjunction with \code{n_threads}.}
 
 \item{verbose}{If \code{TRUE}, log progress to the console.}
 }
