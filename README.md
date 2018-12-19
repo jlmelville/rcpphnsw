@@ -51,7 +51,20 @@ There is multithreading support for index searching using
 devtools::install_github("jlmelville/RcppHNSW")
 ```
 
-### Example
+### Function example
+
+```R
+# function interface returns results for all rows in nr x k matrices
+all_knn <- RcppHNSW::hnsw_knn(data, k = 4, distance = "l2")
+# other distance options: "euclidean", "cosine" and "ip" (inner product distance)
+
+# or it can be split into two steps, so you can build with one set of data
+# and search with another
+ann <- hnsw_build(irism[1:100, ])
+iris_nn <- hnsw_search(irism[101:150, ], ann, k = 5)
+```
+
+### Class Example
 
 ```R
 library(RcppHNSW)
@@ -76,10 +89,6 @@ for (i in 1:nrow(data)) {
 # set include_distances = TRUE to get distances as well as index
 res <- ann$getNNsList(data[1, ], k = 4, include_distances = TRUE)
 
-# function interface returns results for all rows in nr x k matrices
-all_knn <- RcppHNSW::get_knn(data, k = 4, distance = "l2")
-# other distance options: "euclidean", "cosine" and "ip" (inner product distance)
-
 # other distance classes:
 # Cosine: HnswCosine
 # Inner Product: HnswIP
@@ -93,8 +102,6 @@ when you read it back, as the following demonstrates:
 
 ```R
 library("RcppHNSW")
-# The number of threads to use in the getAllNNs search
-RcppParallel::setThreadOptions(numThreads = RcppParallel::defaultNumThreads())
 set.seed(12345)
 
 dim <- 16

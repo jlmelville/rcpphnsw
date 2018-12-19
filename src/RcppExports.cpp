@@ -5,12 +5,66 @@
 
 using namespace Rcpp;
 
+// hnsw_l2_nns
+Rcpp::List hnsw_l2_nns(const std::string index_name, const Rcpp::NumericMatrix mat, std::size_t ef, std::size_t search_k, std::size_t grain_size, bool include_distances, bool verbose);
+RcppExport SEXP _RcppHNSW_hnsw_l2_nns(SEXP index_nameSEXP, SEXP matSEXP, SEXP efSEXP, SEXP search_kSEXP, SEXP grain_sizeSEXP, SEXP include_distancesSEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string >::type index_name(index_nameSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type ef(efSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type search_k(search_kSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type grain_size(grain_sizeSEXP);
+    Rcpp::traits::input_parameter< bool >::type include_distances(include_distancesSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(hnsw_l2_nns(index_name, mat, ef, search_k, grain_size, include_distances, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
+// hnsw_cosine_nns
+Rcpp::List hnsw_cosine_nns(const std::string index_name, const Rcpp::NumericMatrix mat, std::size_t ef, std::size_t search_k, std::size_t grain_size, bool include_distances, bool verbose);
+RcppExport SEXP _RcppHNSW_hnsw_cosine_nns(SEXP index_nameSEXP, SEXP matSEXP, SEXP efSEXP, SEXP search_kSEXP, SEXP grain_sizeSEXP, SEXP include_distancesSEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string >::type index_name(index_nameSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type ef(efSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type search_k(search_kSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type grain_size(grain_sizeSEXP);
+    Rcpp::traits::input_parameter< bool >::type include_distances(include_distancesSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(hnsw_cosine_nns(index_name, mat, ef, search_k, grain_size, include_distances, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
+// hnsw_ip_nns
+Rcpp::List hnsw_ip_nns(const std::string index_name, const Rcpp::NumericMatrix mat, std::size_t ef, std::size_t search_k, std::size_t grain_size, bool include_distances, bool verbose);
+RcppExport SEXP _RcppHNSW_hnsw_ip_nns(SEXP index_nameSEXP, SEXP matSEXP, SEXP efSEXP, SEXP search_kSEXP, SEXP grain_sizeSEXP, SEXP include_distancesSEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string >::type index_name(index_nameSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix >::type mat(matSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type ef(efSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type search_k(search_kSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type grain_size(grain_sizeSEXP);
+    Rcpp::traits::input_parameter< bool >::type include_distances(include_distancesSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(hnsw_ip_nns(index_name, mat, ef, search_k, grain_size, include_distances, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 RcppExport SEXP _rcpp_module_boot_HnswL2();
 RcppExport SEXP _rcpp_module_boot_HnswCosine();
 RcppExport SEXP _rcpp_module_boot_HnswIp();
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_RcppHNSW_hnsw_l2_nns", (DL_FUNC) &_RcppHNSW_hnsw_l2_nns, 7},
+    {"_RcppHNSW_hnsw_cosine_nns", (DL_FUNC) &_RcppHNSW_hnsw_cosine_nns, 7},
+    {"_RcppHNSW_hnsw_ip_nns", (DL_FUNC) &_RcppHNSW_hnsw_ip_nns, 7},
     {"_rcpp_module_boot_HnswL2", (DL_FUNC) &_rcpp_module_boot_HnswL2, 0},
     {"_rcpp_module_boot_HnswCosine", (DL_FUNC) &_rcpp_module_boot_HnswCosine, 0},
     {"_rcpp_module_boot_HnswIp", (DL_FUNC) &_rcpp_module_boot_HnswIp, 0},
