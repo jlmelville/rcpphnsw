@@ -1,7 +1,7 @@
 CXX_STD = CXX11
 
 PKG_CPPFLAGS = -I../inst/include/
-PKG_CXXFLAGS += -DNO_MANUAL_VECTORIZATION -DNO_PREFETCH
+PKG_CXXFLAGS += -DNO_MANUAL_VECTORIZATION
 
 # Uncomment this flag (and comment out the PKG_CPPFLAGS line above if you
 # want the default HNSW behavior (faster, but non-portable)
