@@ -165,6 +165,7 @@ public:
     return &dim_;
   }
 
+  ~L2Space() {}
 };
 
 static int
@@ -226,6 +227,7 @@ public:
     return &dim_;
   }
 
+  ~L2SpaceI() {}
 };
 
 

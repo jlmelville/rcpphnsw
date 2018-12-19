@@ -221,6 +221,7 @@ public:
     return &dim_;
   }
 
+  ~InnerProductSpace() {}
 };
 
 
