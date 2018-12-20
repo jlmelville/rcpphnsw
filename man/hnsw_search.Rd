@@ -4,7 +4,7 @@
 \alias{hnsw_search}
 \title{Search an HNSW nearest neighbor index}
 \usage{
-hnsw_search(X, ann, k, ef = k, verbose = FALSE)
+hnsw_search(X, ann, k, ef = 10, verbose = FALSE)
 }
 \arguments{
 \item{X}{A numeric matrix of data to search for neighbors.}

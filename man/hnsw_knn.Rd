@@ -5,7 +5,7 @@
 \title{Find Nearest Neighbors and Distances}
 \usage{
 hnsw_knn(X, k = 10, distance = "euclidean", M = 16,
-  ef_construction = 200, ef = ef_construction, verbose = FALSE)
+  ef_construction = 200, ef = 10, verbose = FALSE)
 }
 \arguments{
 \item{X}{a numeric matrix of data to add. Each of the n rows is an item in

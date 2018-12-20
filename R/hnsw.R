@@ -66,7 +66,7 @@
 #' @examples
 #' iris_nn_data <- hnsw_knn(as.matrix(iris[, -5]), k = 10)
 hnsw_knn <- function(X, k = 10, distance = "euclidean",
-                    M = 16, ef_construction = 200, ef = ef_construction,
+                    M = 16, ef_construction = 200, ef = 10,
                     verbose = FALSE) {
   if (!is.matrix(X)) {
     stop("X must be matrix")
@@ -182,7 +182,7 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 #' irism <- as.matrix(iris[, -5])
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
-hnsw_search <- function(X, ann, k, ef = k, verbose = FALSE) {
+hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE) {
   if (!is.matrix(X)) {
     stop("X must be matrix")
   }
