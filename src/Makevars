@@ -1,10 +1,8 @@
 CXX_STD = CXX11
 
 PKG_CPPFLAGS = -I../inst/include/
-PKG_CXXFLAGS += -DNO_MANUAL_VECTORIZATION
+PKG_CXXFLAGS = -DNO_MANUAL_VECTORIZATION
 
 # Uncomment this flag (and comment out the PKG_CPPFLAGS line above if you
 # want the default HNSW behavior (faster, but non-portable)
 # PKG_CPPFLAGS = -I../inst/include/ -march=native
-
-PKG_LIBS += $(shell ${R_HOME}/bin/Rscript -e "RcppParallel::RcppParallelLibs()")

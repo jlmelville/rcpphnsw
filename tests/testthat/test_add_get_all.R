@@ -1,8 +1,6 @@
 library(RcppHNSW)
 context("add/get matrix")
 
-RcppParallel::setThreadOptions(numThreads = 1)
-
 ann <- new(HnswL2, ncol(ui10), nrow(ui10), M = 200, ef = 16)
 ann$addItems(ui10)
 res <- ann$getAllNNsList(ui10, k = 4, include_distances = TRUE)
