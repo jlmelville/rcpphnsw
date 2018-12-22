@@ -171,7 +171,6 @@ static float
     size_t qty = *((size_t *) qty_ptr);
 
     size_t qty16 = qty / 16;
-    size_t qty4 = qty / 4;
 
     const float *pEnd1 = pVect1 + 16 * qty16;
 
