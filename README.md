@@ -42,9 +42,6 @@ One difference is that I use
 pages. The `NAMESPACE` is still built manually, however (I don't believe you can
 `export` the classes currently).
 
-There is multithreading support for index searching using 
-[RcppParallel](https://cran.r-project.org/package=RcppParallel).
-
 ### Installing
 
 ```R
@@ -196,24 +193,15 @@ vector named `item` with the indices of the `k`-nearest neighbors of
 the vector `v`. Indices are numbered from one. If `include_distances = TRUE`
 then also return a vector `distance` containing the distances.
 * `getAllNNs(m, k)` return a matrix of the indices of the `k`-nearest neighbors
-of each row vector in `m`. Indices are numbered from one. This can be
-configured to use `nthreads` threads by calling
-`RcppParallel::setThreadOptions(numThreads = nthreads)` prior to calling this
-method.
+of each row vector in `m`. Indices are numbered from one.
 * `getAllNNsByList(m, k, include_distances = FALSE)` return a list containing a
 matrix named `item` with the indices of the `k`-nearest neighbors of each row
 vector in `m`. Indices are numbered from one. If `include_distances = TRUE`
-then also return a matrix `distance` containing the distances. This can be
-configured to use `nthreads` threads by calling
-`RcppParallel::setThreadOptions(numThreads = nthreads)` prior to calling this
-method.
+then also return a matrix `distance` containing the distances.
 
 ### Differences from Python Bindings
 
-* Multi-threading support is available only when searching the index, i.e.
-through `getAllNNs` or `getAllNNsList`. It's not currently turned on for 
-building the index (`addItems`) because this gave disastrously bad results 
-during my testing.
+* Multi-threading is not supported.
 * Arbitrary integer labelling is not supported. Items are labelled 
 `0, 1, 2 ... N`.
 * The interface roughly follows the Python one but deviates with naming and also
