@@ -13,6 +13,10 @@
 #' @author James Melville for the R inteface; Yury Malkov for HNSW itself.
 #'
 #' Maintainer: James Melville <jlmelville@gmail.com>
+#' @references
+#' Malkov, Y. A., & Yashunin, D. A. (2016).
+#' Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs.
+#' \emph{arXiv preprint} \emph{arXiv:1603.09320}.
 NULL
 
 ## ensure module gets loaded

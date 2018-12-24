@@ -86,3 +86,8 @@ on \url{https://github.com/nmslib/hnswlib/blob/master/ALGO_PARAMS.md}:
 \examples{
 iris_nn_data <- hnsw_knn(as.matrix(iris[, -5]), k = 10)
 }
+\references{
+Malkov, Y. A., & Yashunin, D. A. (2016).
+Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs.
+\emph{arXiv preprint} \emph{arXiv:1603.09320}.
+}

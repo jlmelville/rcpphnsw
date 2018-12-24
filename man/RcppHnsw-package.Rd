@@ -19,6 +19,10 @@ Details about HNSW are available at the reference listed below.
 }
 \references{
 \url{https://github.com/nmslib/hnsw}
+
+Malkov, Y. A., & Yashunin, D. A. (2016).
+Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs.
+\emph{arXiv preprint} \emph{arXiv:1603.09320}.
 }
 \author{
 James Melville for the R inteface; Yury Malkov for HNSW itself.
