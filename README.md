@@ -3,7 +3,7 @@
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/jlmelville/rcpphnsw?branch=master&svg=true)](https://ci.appveyor.com/project/jlmelville/rcpphnsw)
 [![Coverage Status](https://img.shields.io/codecov/c/github/jlmelville/rcpphnsw/master.svg)](https://codecov.io/github/jlmelville/rcpphnsw?branch=master)
 
-Rcpp bindings for [HNSW](https://github.com/nmslib/hnsw).
+Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 
 ### Status
 
@@ -23,16 +23,16 @@ like:
 devtools::install_github("jlmelville/rcpphnsw@v0.0.0.9000")
 ```
 
-### HNSW
+### hnswlib
 
-HNSW is a header-only C++ library for finding approximate nearest neighbors
+hnswlib is a header-only C++ library for finding approximate nearest neighbors
 (ANN) via Hierarchical Navigable Small Worlds
 [(Yashunin and Malkov, 2016)](https://arxiv.org/abs/1603.09320). 
 It is part of the [nmslib](https://github.com/nmslib/nmslib]) project. 
 
 ### RcppHNSW
 
-An R package that interfaces with HNSW, taking enormous amounts of inspiration
+An R package that interfaces with hnswlib, taking enormous amounts of inspiration
 from [Dirk Eddelbuettel](https://github.com/eddelbuettel)'s
 [RcppAnnoy](https://github.com/eddelbuettel/rcppannoy) package which did the
 same for the [Annoy](https://github.com/spotify/annoy) ANN C++ library.
@@ -92,7 +92,8 @@ res <- ann$getNNsList(data[1, ], k = 4, include_distances = TRUE)
 ```
 
 And here's a rough equivalent of the serialization/deserialization example from
-the [hnsw README](https://github.com/nmslib/hnsw#python-bindings-example).
+the 
+[hnswlib README](https://github.com/nmslib/hnswlib#python-bindings-examples).
 Although the index must have its initial size specified when its created, you
 can increase its size by saving it to disk, then specifying a new larger size
 when you read it back, as the following demonstrates:

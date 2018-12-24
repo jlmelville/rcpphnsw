@@ -54,7 +54,7 @@ may need increasing.
 }
 \description{
 A k-nearest neighbor algorithm using the HNSW library
-(\url{https://github.com/nmslib/hnsw}).
+(\url{https://github.com/nmslib/hnswlib}).
 }
 \section{HNSW Parameters}{
 
