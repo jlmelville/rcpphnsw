@@ -92,7 +92,7 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
   hnsw_search(X = X, ann = ann, k = k, ef = ef, verbose = verbose)
 }
 
-#' Build a nearest neighor index
+#' Build a nearest neighbor index
 #'
 #' @param X a numeric matrix of data to add. Each of the n rows is an item in
 #'   the index.

@@ -10,7 +10,7 @@
 #' @aliases HnswL2 Rcpp_HnswL2-class HnswCosine Rcpp_HnswCosine-class HnswIp Rcpp_HnswIp-class
 #' @references
 #' \url{https://github.com/nmslib/hnsw}
-#' @author James Melville for the R inteface; Yury Malkov for HNSW itself.
+#' @author James Melville for the R interface; Yury Malkov for HNSW itself.
 #'
 #' Maintainer: James Melville <jlmelville@gmail.com>
 #' @references

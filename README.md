@@ -203,7 +203,7 @@ then also return a matrix `distance` containing the distances.
 ### Differences from Python Bindings
 
 * Multi-threading is not supported.
-* Arbitrary integer labelling is not supported. Items are labelled 
+* Arbitrary integer labeling is not supported. Items are labeled 
 `0, 1, 2 ... N`.
 * The interface roughly follows the Python one but deviates with naming and also
 rolls the declaration and initialization of the index into one call. And as noted
