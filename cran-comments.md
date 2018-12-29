@@ -14,6 +14,12 @@ This is the first submission of the package.
 
 There were no ERRORs or WARNINGs.
 
+There was a message about possibly mis-spelled words in DESCRIPTION:
+
+  HNSW (2:28)
+ 
+This is spelled correctly.
+
 ## Downstream dependencies
 
 None.
