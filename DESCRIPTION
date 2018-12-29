@@ -3,7 +3,7 @@ Title: 'Rcpp' Bindings for 'hnswlib', a Library for Approximate Nearest Neighbor
 Version: 0.1.0
 Authors@R: c(person("James", "Melville", email = "jlmelville@gmail.com", 
   role = c("aut", "cre")), person("Aaron", "Lun", role = "ctb"))
-Description: 'hnswlib' is a C++ library for Approximate Nearest Neighbors. This 
+Description: 'Hnswlib' is a C++ library for Approximate Nearest Neighbors. This 
  package provides a minimal R interface by relying on the 'Rcpp' package, using 
  'RcppAnnoy' as a template. See <https://github.com/nmslib/hnswlib> for more on 
  'hnswlib'. 'hnswlib' is released under Version 2.0 of the Apache License.
