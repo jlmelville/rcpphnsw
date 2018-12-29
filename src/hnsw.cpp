@@ -1,4 +1,4 @@
-//  RcppHNSW -- Rcpp bindings to HNSW library for Approximate Nearest Neighbours
+//  RcppHNSW -- Rcpp bindings to hnswlib library for Approximate Nearest Neighbours
 //
 //  Copyright (C) 2018  James Melville
 //
@@ -23,7 +23,7 @@
 #include <memory>
 #include <Rcpp.h>
 
-// define R's REprintf as the 'local' error print method for HNSW
+// define R's REprintf as the 'local' error print method for hnswlib
 #define __ERROR_PRINTER_OVERRIDE__  REprintf
 
 #include "hnswlib.h"

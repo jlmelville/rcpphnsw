@@ -53,10 +53,10 @@ isn't the case, then any of \code{M}, \code{ef_construction} and \code{ef}
 may need increasing.
 }
 \description{
-A k-nearest neighbor algorithm using the HNSW library
+A k-nearest neighbor algorithm using the hnswlib library
 (\url{https://github.com/nmslib/hnswlib}).
 }
-\section{HNSW Parameters}{
+\section{Hnswlib Parameters}{
 
 
 Some details on the parameters used for index construction and search, based

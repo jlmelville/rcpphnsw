@@ -1,9 +1,9 @@
 #' Find Nearest Neighbors and Distances
 #'
-#' A k-nearest neighbor algorithm using the HNSW library
+#' A k-nearest neighbor algorithm using the hnswlib library
 #' (\url{https://github.com/nmslib/hnswlib}).
 #'
-#' @section HNSW Parameters:
+#' @section Hnswlib Parameters:
 #'
 #' Some details on the parameters used for index construction and search, based
 #' on \url{https://github.com/nmslib/hnswlib/blob/master/ALGO_PARAMS.md}:

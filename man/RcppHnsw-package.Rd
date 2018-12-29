@@ -9,13 +9,13 @@
 \alias{Rcpp_HnswCosine-class}
 \alias{HnswIp}
 \alias{Rcpp_HnswIp-class}
-\title{Rcpp bindings for the HNSW C++ library for approximate nearest neighbors.}
+\title{Rcpp bindings for the hnswlib C++ library for approximate nearest neighbors.}
 \description{
-HNSW is a library implementing the Hierarchical Navigable Small World method
-for approximate nearest neighbor search.
+hnswlib is a library implementing the Hierarchical Navigable Small World
+method for approximate nearest neighbor search.
 }
 \details{
-Details about HNSW are available at the reference listed below.
+Details about hnswlib are available at the reference listed below.
 }
 \references{
 \url{https://github.com/nmslib/hnsw}
@@ -25,7 +25,7 @@ Efficient and robust approximate nearest neighbor search using Hierarchical Navi
 \emph{arXiv preprint} \emph{arXiv:1603.09320}.
 }
 \author{
-James Melville for the R interface; Yury Malkov for HNSW itself.
+James Melville for the R interface; Yury Malkov for hnswlib itself.
 
 Maintainer: James Melville <jlmelville@gmail.com>
 }
