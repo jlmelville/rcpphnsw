@@ -5,8 +5,12 @@ This is the first submission of the package.
 ## Test environments
 
 * ubuntu 14.04 (on travis-ci), R 3.4.4, R 3.5.1, R-devel
+* ubuntu 16.04 (on rhub), R 3.4.4
+* fedora (on rhub), R-devel
+* debian (on rhub), R-devel
 * mac OS X High Sierra (on travis-ci), R 3.4.4, R 3.5.2
 * local Windows 10 build, R 3.5.2
+* Windows Server 2008 (on rhub) R-devel
 * Windows Server 2012 (on appveyor) R 3.5.2
 * win-builder (devel)
 
