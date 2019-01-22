@@ -47,8 +47,16 @@ pages. The `NAMESPACE` is still built manually, however (I don't believe you can
 
 ### Installing
 
+From CRAN:
+
 ```R
-devtools::install_github("jlmelville/RcppHNSW")
+install.packages("RcppHNSW")
+```
+
+Development versions from github:
+
+```R
+remotes::install_github("jlmelville/RcppHNSW")
 ```
 
 ### Function example
