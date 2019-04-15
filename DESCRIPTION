@@ -8,6 +8,8 @@ Description: 'Hnswlib' is a C++ library for Approximate Nearest Neighbors. This
  <https://github.com/nmslib/hnswlib> for more on 'hnswlib'. 'hnswlib' is 
  released under Version 2.0 of the Apache License.
 License: GPL-3
+URL: https://github.com/jlmelville/rcpphnsw
+BugReports: https://github.com/jlmelville/rcpphnsw/issues
 Encoding: UTF-8
 LazyData: true
 Imports: methods, Rcpp (>= 0.11.3)
