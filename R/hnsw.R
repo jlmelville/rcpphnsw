@@ -192,11 +192,6 @@ hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE) {
   }
   nr <- nrow(X)
 
-  max_k <- nr
-  if (k > max_k) {
-    stop("k cannot be larger than ", max_k)
-  }
-
   ef <- max(ef, k)
 
   idx <- matrix(nrow = nr, ncol = k)
