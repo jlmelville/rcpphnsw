@@ -1,6 +1,8 @@
 ## Release Summary
 
-This is the first submission of the package.
+This is a minor release to add a new method to an object and to fix a 
+user-reported bug with the search function. Also, a URL and BugReports entry has
+been added to the DESCRIPTION.
 
 ## Test environments
 
