@@ -164,7 +164,9 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 #' @param X A numeric matrix of data to search for neighbors.
 #' @param ann an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
 #'   class.
-#' @param k Number of neighbors to return.
+#' @param k Number of neighbors to return. This can't be larger than the number
+#'   of items that were added to the index \code{ann}. To check the size of the
+#'   index, call \code{ann$size()}.
 #' @param ef Size of the dynamic list used during search. Higher values lead
 #'   to improved recall at the expense of longer search time. Can take values
 #'   between \code{k} and the size of the dataset. Typical values are
