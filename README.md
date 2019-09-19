@@ -200,17 +200,26 @@ the index without a complete rebuild.
 * `save(filename)` saves an index to the specified `filename`. To load an index,
 use the `new(HnswL2, dim, filename)` constructor (see above).
 * `getNNs(v, k)` return a vector of the indices of the `k`-nearest neighbors of
-the vector `v`. Indices are numbered from one.
+the vector `v`. Indices are numbered from one. If `k` neighbors can't be found,
+an error will be thrown. This normally means that `ef` or `M` have been set 
+too small, but also bear in mind that you can't return more items than were
+put into the index.
 * `getNNsList(v, k, include_distances = FALSE)` return a list containing a
 vector named `item` with the indices of the `k`-nearest neighbors of
 the vector `v`. Indices are numbered from one. If `include_distances = TRUE`
-then also return a vector `distance` containing the distances.
+then also return a vector `distance` containing the distances. If `k` neighbors
+can't be found, an error is thrown.
 * `getAllNNs(m, k)` return a matrix of the indices of the `k`-nearest neighbors
-of each row vector in `m`. Indices are numbered from one.
+of each row vector in `m`. Indices are numbered from one. If `k` neighbors
+can't be found, an error is thrown.
 * `getAllNNsList(m, k, include_distances = FALSE)` return a list containing a
 matrix named `item` with the indices of the `k`-nearest neighbors of each row
 vector in `m`. Indices are numbered from one. If `include_distances = TRUE`
-then also return a matrix `distance` containing the distances.
+then also return a matrix `distance` containing the distances. If `k` neighbors
+can't be found, an error is thrown.
+* `size()` returns the number of items in the index. This is an upper limit on
+the number of neighbors you can expect to return from `getNNs` and the other
+search methods.
 
 ### Differences from Python Bindings
 
