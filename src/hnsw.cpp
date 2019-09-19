@@ -268,6 +268,10 @@ public:
     appr_alg->saveIndex(path_to_index);
   }
 
+  std::size_t size() const {
+    return appr_alg->cur_element_count;
+  }
+
   int dim;
   bool normalize;
   hnswlib::labeltype cur_l;
@@ -293,6 +297,7 @@ RCPP_MODULE(HnswL2) {
   .method("getNNsList", &HnswL2::getNNsList, "retrieve Nearest Neigbours given vector")
   .method("getAllNNs",  &HnswL2::getAllNNs,  "retrieve Nearest Neigbours given matrix")
   .method("getAllNNsList",  &HnswL2::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
+  .method("size",       &HnswL2::size,       "number of items added to the index")
   ;
 }
 
@@ -310,6 +315,7 @@ RCPP_MODULE(HnswCosine) {
   .method("getNNsList", &HnswCosine::getNNsList, "retrieve Nearest Neigbours given vector")
   .method("getAllNNs",  &HnswCosine::getAllNNs,  "retrieve Nearest Neigbours given matrix")
   .method("getAllNNsList",  &HnswCosine::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
+  .method("size",       &HnswCosine::size,       "number of items added to the index")
   ;
 }
 
@@ -327,5 +333,6 @@ RCPP_EXPOSED_CLASS_NODECL(HnswIp)
     .method("getNNsList", &HnswIp::getNNsList, "retrieve Nearest Neigbours given vector")
     .method("getAllNNs",  &HnswIp::getAllNNs,  "retrieve Nearest Neigbours given matrix")
     .method("getAllNNsList",  &HnswIp::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
+    .method("size",       &HnswIp::size,       "number of items added to the index")
     ;
   }
