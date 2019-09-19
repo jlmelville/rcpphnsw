@@ -194,19 +194,20 @@ with `dim` dimensions from the specified `filename`.
 `save` below) with `dim` dimensions from the specified `filename`, and a new
 maximum capacity of `max_elements`. This is a way to increase the capacity of
 the index without a complete rebuild.
+* `setEf(ef)` set search parameter `ef`.
 * `addItem(v)` add vector `v` to the index.
 * `addItems(m)` add the row vectors of the matrix `m` to the index.
 * `save(filename)` saves an index to the specified `filename`. To load an index,
 use the `new(HnswL2, dim, filename)` constructor (see above).
 * `getNNs(v, k)` return a vector of the indices of the `k`-nearest neighbors of
 the vector `v`. Indices are numbered from one.
-* `getNNsByList(v, k, include_distances = FALSE)` return a list containing a
+* `getNNsList(v, k, include_distances = FALSE)` return a list containing a
 vector named `item` with the indices of the `k`-nearest neighbors of
 the vector `v`. Indices are numbered from one. If `include_distances = TRUE`
 then also return a vector `distance` containing the distances.
 * `getAllNNs(m, k)` return a matrix of the indices of the `k`-nearest neighbors
 of each row vector in `m`. Indices are numbered from one.
-* `getAllNNsByList(m, k, include_distances = FALSE)` return a list containing a
+* `getAllNNsList(m, k, include_distances = FALSE)` return a list containing a
 matrix named `item` with the indices of the `k`-nearest neighbors of each row
 vector in `m`. Indices are numbered from one. If `include_distances = TRUE`
 then also return a matrix `distance` containing the distances.
