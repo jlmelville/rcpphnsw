@@ -4,6 +4,8 @@
 
 * A new method, `size()` is available for the index objects and reports the
 number of items added to the index.
+* Updated hnswlib to <https://github.com/nmslib/hnswlib/commit/d9eb56e2> 
+(31 July 2019).
 
 ## Bug fixes and minor improvements
 
