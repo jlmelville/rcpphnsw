@@ -10,6 +10,8 @@ Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 
 ### Status
 
+*January 21 2019*. RcppHNSW is now available on CRAN.
+
 *October 20 2018*. By inserting some preprocessor symbols into hnswlib, these 
 bindings no longer require a non-portable compiler flag and hence will pass `R
 CMD CHECK` without any warnings: previously you would be warned about
