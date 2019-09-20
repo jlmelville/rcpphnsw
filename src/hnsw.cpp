@@ -272,6 +272,18 @@ public:
     return appr_alg->cur_element_count;
   }
 
+  void markDeleted(std::size_t label) {
+    if (label < 1 || label > size()) {
+      Rcpp::stop("Bad label");
+    }
+    // internally labels are zero-indexed
+    appr_alg->markDelete(label - 1);
+  }
+
+  void resizeIndex(std::size_t new_size) {
+    appr_alg->resizeIndex(new_size);
+  }
+
   int dim;
   bool normalize;
   hnswlib::labeltype cur_l;
@@ -297,7 +309,9 @@ RCPP_MODULE(HnswL2) {
   .method("getNNsList", &HnswL2::getNNsList, "retrieve Nearest Neigbours given vector")
   .method("getAllNNs",  &HnswL2::getAllNNs,  "retrieve Nearest Neigbours given matrix")
   .method("getAllNNsList",  &HnswL2::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
-  .method("size",       &HnswL2::size,       "number of items added to the index")
+  .method("size",       &HnswL2::size,        "number of items added to the index")
+  .method("markDeleted",  &HnswL2::markDeleted, "remove the item with the specified label from the index")
+  .method("resizeIndex",  &HnswL2::resizeIndex, "resize the index to use this number of items")
   ;
 }
 
@@ -316,6 +330,8 @@ RCPP_MODULE(HnswCosine) {
   .method("getAllNNs",  &HnswCosine::getAllNNs,  "retrieve Nearest Neigbours given matrix")
   .method("getAllNNsList",  &HnswCosine::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
   .method("size",       &HnswCosine::size,       "number of items added to the index")
+  .method("markDeleted",  &HnswCosine::markDeleted, "remove the item with the specified label from the index")
+  .method("resizeIndex",  &HnswCosine::resizeIndex, "resize the index to use this number of items")
   ;
 }
 
@@ -334,5 +350,7 @@ RCPP_EXPOSED_CLASS_NODECL(HnswIp)
     .method("getAllNNs",  &HnswIp::getAllNNs,  "retrieve Nearest Neigbours given matrix")
     .method("getAllNNsList",  &HnswIp::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
     .method("size",       &HnswIp::size,       "number of items added to the index")
+    .method("markDeleted",  &HnswIp::markDeleted, "remove the item with the specified label from the index")
+    .method("resizeIndex",  &HnswIp::resizeIndex, "resize the index to use this number of items")
     ;
   }
