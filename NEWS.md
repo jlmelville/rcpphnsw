@@ -2,10 +2,15 @@
 
 ## New features
 
-* A new method, `size()` is available for the index objects and reports the
-number of items added to the index.
 * Updated hnswlib to <https://github.com/nmslib/hnswlib/commit/d9eb56e2> 
 (31 July 2019).
+* A new method, `markDeleted`, that will remove an object from being retrieved
+from the index.
+* A new method, `resizeIndex`, that allows the index to be increased without 
+having to save and reload the index.
+* A new method, `size` is available for the index objects and reports the
+number of items added to the index.
+
 
 ## Bug fixes and minor improvements
 
