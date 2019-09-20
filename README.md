@@ -10,7 +10,7 @@ Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 
 ### Status
 
-*October 20 2018*. By inserting some preprocessor symbols into HNSW, these 
+*October 20 2018*. By inserting some preprocessor symbols into hnswlib, these 
 bindings no longer require a non-portable compiler flag and hence will pass `R
 CMD CHECK` without any warnings: previously you would be warned about
 `-march=native`. The price paid is not using specialized functions for the

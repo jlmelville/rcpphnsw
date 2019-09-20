@@ -2,7 +2,7 @@
 % Please edit documentation in R/hnsw.R
 \name{hnsw_build}
 \alias{hnsw_build}
-\title{Build a nearest neighbor index}
+\title{Build an hnswlib nearest neighbor index}
 \usage{
 hnsw_build(X, distance = "euclidean", M = 16, ef = 200,
   verbose = FALSE)
@@ -38,7 +38,7 @@ an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
   class.
 }
 \description{
-Build a nearest neighbor index
+Build an hnswlib nearest neighbor index
 }
 \examples{
 irism <- as.matrix(iris[, -5])
