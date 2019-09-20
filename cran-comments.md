@@ -26,6 +26,15 @@ There was a message about possibly mis-spelled words in DESCRIPTION:
  
 This is spelled correctly.
 
+With r-hub checking on Windows only there was a message:
+
+"N  checking for non-standard things in the check directory
+   Found the following files/directories:
+     'examples_x64' 'tests_i386' 'tests_x64'
+     'RcppHNSW-Ex_i386.Rout' 'RcppHNSW-Ex_x64.Rout' 'examples_i386'"
+
+This would seem to be something to do with r-hub rather than a real problem.
+
 ## Downstream dependencies
 
 None.
