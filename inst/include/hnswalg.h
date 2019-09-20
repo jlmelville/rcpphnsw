@@ -658,8 +658,8 @@ namespace hnswlib {
                 old_index = true;
 
             if (old_index) {
-                std::cerr << "Warning: loading of old indexes will be deprecated before 2019.\n"
-                          << "Please resave the index in the new format.\n";
+                showUpdate("Warning: loading of old indexes will be deprecated before 2019.\n"
+                               "Please resave the index in the new format.\n");
             }
             input.clear();
             input.seekg(pos,input.beg);
