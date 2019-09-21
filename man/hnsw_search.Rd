@@ -2,7 +2,7 @@
 % Please edit documentation in R/hnsw.R
 \name{hnsw_search}
 \alias{hnsw_search}
-\title{Search an HNSW nearest neighbor index}
+\title{Search an hnswlib nearest neighbor index}
 \usage{
 hnsw_search(X, ann, k, ef = 10, verbose = FALSE)
 }
@@ -37,7 +37,7 @@ isn't the case, then any of \code{M}, \code{ef_construction} and \code{ef}
 may need increasing.
 }
 \description{
-Search an HNSW nearest neighbor index
+Search an hnswlib nearest neighbor index
 }
 \examples{
 irism <- as.matrix(iris[, -5])

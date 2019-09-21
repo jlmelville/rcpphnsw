@@ -10,7 +10,15 @@ Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 
 ### Status
 
-*October 20 2018*. By inserting some preprocessor symbols into HNSW, these 
+*September 20 2019*. RcppHNSW 0.2.0 is now available on CRAN, up to date with
+hnswlib at <https://github.com/nmslib/hnswlib/commit/c5c38f0>, with new methods:
+`size`, `resizeIndex` and `markDeleted`. Also, a bug that prevented searching
+with datasets smaller than `k` has been fixed. Thanks to 
+[Yuxing Liao](https://github.com/yxngl) for spotting that.
+
+*January 21 2019*. RcppHNSW is now available on CRAN.
+
+*October 20 2018*. By inserting some preprocessor symbols into hnswlib, these 
 bindings no longer require a non-portable compiler flag and hence will pass `R
 CMD CHECK` without any warnings: previously you would be warned about
 `-march=native`. The price paid is not using specialized functions for the
@@ -102,12 +110,12 @@ res <- ann$getNNsList(data[1, ], k = 4, include_distances = TRUE)
 # Inner Product: HnswIP
 ```
 
-And here's a rough equivalent of the serialization/deserialization example from
+Here's a rough equivalent of the serialization/deserialization example from
 the 
-[hnswlib README](https://github.com/nmslib/hnswlib#python-bindings-examples).
-Although the index must have its initial size specified when its created, you
-can increase its size by saving it to disk, then specifying a new larger size
-when you read it back, as the following demonstrates:
+[hnswlib README](https://github.com/nmslib/hnswlib#python-bindings-examples), 
+but using the recently-added `resizeIndex` method to increase the size of the
+index after its initial specification, avoiding having to read from or write
+to disk:
 
 ```R
 library("RcppHNSW")
@@ -136,15 +144,8 @@ p$addItems(data1)
 idx <- p$getAllNNs(data1, k = 1)
 message("Recall for the first batch: ", formatC(mean(idx == 1:nrow(data1))))
 
-filename <- "first_half.bin"
-# Serialize index
-p$save(filename)
-
-# Reinitialize and load the index
-rm(p)
-message("Loading index from ", filename)
 # Increase the total capacity, so that it will handle the new data
-p <- new(HnswL2, dim, filename, num_elements)
+p$resizeIndex(num_elements)
 
 message("Adding the second batch of ", nrow(data2), " elements")
 p$addItems(data2)
@@ -156,6 +157,21 @@ idx <- p$getAllNNs(data, k = 1)
 # res$dist contains the distance matrix, res$item stores the indexes
 
 message("Recall for two batches: ", formatC(mean(idx == 1:num_elements)))
+```
+
+Although there's no longer any need for this, for completeness, here's how you
+would use `save` and `new` to achieve the same effect without `resizeIndex`:
+
+```R
+filename <- "first_half.bin"
+# Serialize index
+p$save(filename)
+
+# Reinitialize and load the index
+rm(p)
+message("Loading index from ", filename)
+# Increase the total capacity, so that it will handle the new data
+p <- new(HnswL2, dim, filename, num_elements)
 unlink(filename)
 ```
 
@@ -195,40 +211,60 @@ with `dim` dimensions from the specified `filename`.
 maximum capacity of `max_elements`. This is a way to increase the capacity of
 the index without a complete rebuild.
 * `setEf(ef)` set search parameter `ef`.
-* `addItem(v)` add vector `v` to the index.
-* `addItems(m)` add the row vectors of the matrix `m` to the index.
+* `addItem(v)` add vector `v` to the index. Internally, each vector gets an
+increasing integer label, with the first vector added getting the label `1`, the
+second `2` and so on. These labels are returned in `getNNs` and related methods
+to identify which vector in the index are neighbors.
+* `addItems(m)` add the row vectors of the matrix `m` to the index. Internally,
+each row vector gets an increasing integer label, with the first row added
+getting the label `1`, the second `2` and so on. These labels are returned in
+`getNNs` and related methods to identify which vector in the index are
+neighbors.
 * `save(filename)` saves an index to the specified `filename`. To load an index,
 use the `new(HnswL2, dim, filename)` constructor (see above).
-* `getNNs(v, k)` return a vector of the indices of the `k`-nearest neighbors of
-the vector `v`. Indices are numbered from one. If `k` neighbors can't be found,
-an error will be thrown. This normally means that `ef` or `M` have been set 
-too small, but also bear in mind that you can't return more items than were
-put into the index.
+* `getNNs(v, k)` return a vector of the labels of the `k`-nearest neighbors of
+the vector `v`. Labels are integers numbered from one, representing the
+insertion order into the index, e.g. the label `1` represents the first item
+added to the index. If `k` neighbors can't be found, an error will be thrown.
+This normally means that `ef` or `M` have been set too small, but also bear in
+mind that you can't return more items than were put into the index.
 * `getNNsList(v, k, include_distances = FALSE)` return a list containing a
-vector named `item` with the indices of the `k`-nearest neighbors of
-the vector `v`. Indices are numbered from one. If `include_distances = TRUE`
-then also return a vector `distance` containing the distances. If `k` neighbors
-can't be found, an error is thrown.
-* `getAllNNs(m, k)` return a matrix of the indices of the `k`-nearest neighbors
-of each row vector in `m`. Indices are numbered from one. If `k` neighbors
-can't be found, an error is thrown.
+vector named `item` with the labels of the `k`-nearest neighbors of the vector
+`v`. Labels are integers numbered from one, representing the insertion order
+into the index, e.g. the label `1` represents the first item added to the index.
+If `include_distances = TRUE` then also return a vector `distance` containing
+the distances. If `k` neighbors can't be found, an error is thrown.
+* `getAllNNs(m, k)` return a matrix of the labels of the `k`-nearest neighbors
+of each row vector in `m`. Labels are integers numbered from one, representing
+the insertion order into the index, e.g. the label `1` represents the first item
+added to the index.. If `k` neighbors can't be found, an error is thrown.
 * `getAllNNsList(m, k, include_distances = FALSE)` return a list containing a
-matrix named `item` with the indices of the `k`-nearest neighbors of each row
-vector in `m`. Indices are numbered from one. If `include_distances = TRUE`
-then also return a matrix `distance` containing the distances. If `k` neighbors
-can't be found, an error is thrown.
+matrix named `item` with the labels of the `k`-nearest neighbors of each row
+vector in `m`. Labels are integers numbered from one, representing the insertion
+order into the index, e.g. the label `1` represents the first item added to the
+index. If `include_distances = TRUE` then also return a matrix `distance`
+containing the distances. If `k` neighbors can't be found, an error is thrown.
 * `size()` returns the number of items in the index. This is an upper limit on
 the number of neighbors you can expect to return from `getNNs` and the other
 search methods.
+* `markDeleted(i)` marks the item with label `i` (the `i`th item added to the
+index) as deleted. This means that the item will not be returned in any further
+searches of the index. It does not reduce the memory used by the index. Calls to
+`size()` do *not* reflect the number of marked deleted items.
+* `resize(max_elements)` changes the maximum capacity of the index to 
+`max_elements`.
 
 ### Differences from Python Bindings
 
 * Multi-threading is not supported.
-* Arbitrary integer labeling is not supported. Items are labeled 
-`0, 1, 2 ... N`.
+* Arbitrary integer labeling is not supported. Where labels are used, e.g. in
+the return value of `getNNsList` or as input in `markDeleted`, the labels 
+represent the order in which the items were added to the index, using 1-indexing
+to be consistent with R. So in the Python bindings, the first item in the index
+has a default of label `0`, but here it will have label `1`.
 * The interface roughly follows the Python one but deviates with naming and also
-rolls the declaration and initialization of the index into one call. And as noted
-above, you must pass arguments by position, not keyword.
+rolls the declaration and initialization of the index into one call. And as
+noted above, you must pass arguments by position, not keyword.
 * I have made a change to the C++ `hnswalg.h` code to use the 
 [`showUpdate` macro from RcppAnnoy](https://github.com/eddelbuettel/rcppannoy/blob/498a2c241df0fcac140d80f9ee0a6985d0f08687/inst/include/annoylib.h#L57),
 rather than `std::cerr` directly.
