@@ -10,6 +10,12 @@ Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 
 ### Status
 
+*September 20 2019*. RcppHNSW 0.2.0 is now available on CRAN, up to date with
+hnswlib at <https://github.com/nmslib/hnswlib/commit/c5c38f0>, with new methods:
+`size`, `resizeIndex` and `markDeleted`. Also, a bug that prevented searching
+with datasets smaller than `k` has been fixed. Thanks to 
+[Yuxing Liao](https://github.com/yxngl) for spotting that.
+
 *January 21 2019*. RcppHNSW is now available on CRAN.
 
 *October 20 2018*. By inserting some preprocessor symbols into hnswlib, these 
