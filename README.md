@@ -1,24 +1,26 @@
-## RcppHNSW
+# RcppHNSW
+
 [![Travis-CI Build Status](https://travis-ci.org/jlmelville/rcpphnsw.svg?branch=master)](https://travis-ci.org/jlmelville/rcpphnsw)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/jlmelville/rcpphnsw?branch=master&svg=true)](https://ci.appveyor.com/project/jlmelville/rcpphnsw)
 [![Coverage Status](https://img.shields.io/codecov/c/github/jlmelville/rcpphnsw/master.svg)](https://codecov.io/github/jlmelville/rcpphnsw?branch=master)
 [![CRAN Status Badge](http://www.r-pkg.org/badges/version/RcppHNSW)](https://cran.r-project.org/package=RcppHNSW)
+[![Dependencies](https://tinyverse.netlify.com/badge/RcppHNSW)](https://cran.r-project.org/package=RcppHNSW)
 [![CRAN Monthly Downloads](https://cranlogs.r-pkg.org/badges/RcppHNSW)](https://cran.r-project.org/package=RcppHNSW)
 ![CRAN Downloads](http://cranlogs.r-pkg.org/badges/grand-total/RcppHNSW)
 
 Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 
-### Status
+## Status
 
 *September 20 2019*. RcppHNSW 0.2.0 is now available on CRAN, up to date with
 hnswlib at <https://github.com/nmslib/hnswlib/commit/c5c38f0>, with new methods:
 `size`, `resizeIndex` and `markDeleted`. Also, a bug that prevented searching
-with datasets smaller than `k` has been fixed. Thanks to 
+with datasets smaller than `k` has been fixed. Thanks to
 [Yuxing Liao](https://github.com/yxngl) for spotting that.
 
 *January 21 2019*. RcppHNSW is now available on CRAN.
 
-*October 20 2018*. By inserting some preprocessor symbols into hnswlib, these 
+*October 20 2018*. By inserting some preprocessor symbols into hnswlib, these
 bindings no longer require a non-portable compiler flag and hence will pass `R
 CMD CHECK` without any warnings: previously you would be warned about
 `-march=native`. The price paid is not using specialized functions for the
@@ -34,14 +36,14 @@ like:
 devtools::install_github("jlmelville/rcpphnsw@v0.0.0.9000")
 ```
 
-### hnswlib
+## hnswlib
 
 hnswlib is a header-only C++ library for finding approximate nearest neighbors
 (ANN) via Hierarchical Navigable Small Worlds
-[(Yashunin and Malkov, 2016)](https://arxiv.org/abs/1603.09320). 
-It is part of the [nmslib](https://github.com/nmslib/nmslib]) project. 
+[(Yashunin and Malkov, 2016)](https://arxiv.org/abs/1603.09320).
+It is part of the [nmslib](https://github.com/nmslib/nmslib]) project.
 
-### RcppHNSW
+## The RcppHNSW Package
 
 An R package that interfaces with hnswlib, taking enormous amounts of inspiration
 from [Dirk Eddelbuettel](https://github.com/eddelbuettel)'s
@@ -53,7 +55,7 @@ One difference is that I use
 pages. The `NAMESPACE` is still built manually, however (I don't believe you can
 `export` the classes currently).
 
-### Installing
+## Installing
 
 From CRAN:
 
@@ -67,7 +69,7 @@ Development versions from github:
 remotes::install_github("jlmelville/RcppHNSW")
 ```
 
-### Function example
+## Function example
 
 ```R
 # function interface returns results for all rows in nr x k matrices
@@ -80,7 +82,7 @@ ann <- hnsw_build(irism[1:100, ])
 iris_nn <- hnsw_search(irism[101:150, ], ann, k = 5)
 ```
 
-### Class Example
+## Class Example
 
 ```R
 library(RcppHNSW)
@@ -111,8 +113,8 @@ res <- ann$getNNsList(data[1, ], k = 4, include_distances = TRUE)
 ```
 
 Here's a rough equivalent of the serialization/deserialization example from
-the 
-[hnswlib README](https://github.com/nmslib/hnswlib#python-bindings-examples), 
+the
+[hnswlib README](https://github.com/nmslib/hnswlib#python-bindings-examples),
 but using the recently-added `resizeIndex` method to increase the size of the
 index after its initial specification, avoiding having to read from or write
 to disk:
@@ -175,11 +177,11 @@ p <- new(HnswL2, dim, filename, num_elements)
 unlink(filename)
 ```
 
-### API
+## API
 
-#### **DO NOT USE NAMED PARAMETERS**
+### **DO NOT USE NAMED PARAMETERS**
 
-Because these are wrappers around C++ code, you **cannot** use named 
+Because these are wrappers around C++ code, you **cannot** use named
 parameters in the calling R code. Arguments are parsed by position. This is
 most annoying in constructors, which take multiple integer arguments, e.g.
 
@@ -196,15 +198,15 @@ index <- new(HnswL2, dim, ef_construction = 16, M = 200, num_elements = 100)
 index <- new(HnswL2, dim, 16, 200, 100)
 ```
 
-#### OK onto the API
+### OK onto the API
 
-* `new(HnswL2, dim, max_elements, M = 16, ef_contruction = 200)` creates a new 
+* `new(HnswL2, dim, max_elements, M = 16, ef_contruction = 200)` creates a new
 index using the squared L2 distance (i.e. square of the Euclidean distance),
 with `dim` dimensions and a maximum size of `max_elements` items. `ef` and `M`
 determine the speed vs accuracy trade off. Other classes for different distances
 are: `HnswCosine` for the cosine distance and `HnswIp` for the "Inner Product"
 distance (like the cosine distance without normalizing).
-* `new(HnswL2, dim, filename)` load a previously saved index (see `save` below) 
+* `new(HnswL2, dim, filename)` load a previously saved index (see `save` below)
 with `dim` dimensions from the specified `filename`.
 * `new(HnswL2, dim, filename, max_elements)` load a previously saved index (see
 `save` below) with `dim` dimensions from the specified `filename`, and a new
@@ -251,24 +253,24 @@ search methods.
 index) as deleted. This means that the item will not be returned in any further
 searches of the index. It does not reduce the memory used by the index. Calls to
 `size()` do *not* reflect the number of marked deleted items.
-* `resize(max_elements)` changes the maximum capacity of the index to 
+* `resize(max_elements)` changes the maximum capacity of the index to
 `max_elements`.
 
-### Differences from Python Bindings
+## Differences from Python Bindings
 
 * Multi-threading is not supported.
 * Arbitrary integer labeling is not supported. Where labels are used, e.g. in
-the return value of `getNNsList` or as input in `markDeleted`, the labels 
+the return value of `getNNsList` or as input in `markDeleted`, the labels
 represent the order in which the items were added to the index, using 1-indexing
 to be consistent with R. So in the Python bindings, the first item in the index
 has a default of label `0`, but here it will have label `1`.
 * The interface roughly follows the Python one but deviates with naming and also
 rolls the declaration and initialization of the index into one call. And as
 noted above, you must pass arguments by position, not keyword.
-* I have made a change to the C++ `hnswalg.h` code to use the 
+* I have made a change to the C++ `hnswalg.h` code to use the
 [`showUpdate` macro from RcppAnnoy](https://github.com/eddelbuettel/rcppannoy/blob/498a2c241df0fcac140d80f9ee0a6985d0f08687/inst/include/annoylib.h#L57),
 rather than `std::cerr` directly.
 
-### License
+## License
 
 [GPL-3 or later](https://www.gnu.org/licenses/gpl-3.0.en.html).
