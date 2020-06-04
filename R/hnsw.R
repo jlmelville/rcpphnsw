@@ -149,11 +149,15 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 
   tsmessage("Building HNSW index with metric '", distance, "'",
             " ef = ", formatC(ef), " M = ", formatC(M))
-  progress <- Progress$new(max = nr, display = verbose)
-  for (i in 1:nr) {
-    # Items are added directly
-    ann$addItem(X[i, ])
-    progress$increment()
+  if (verbose) {
+    progress <- Progress$new(max = nr, display = verbose)
+    for (i in 1:nr) {
+      # Items are added directly
+      ann$addItem(X[i, ])
+      progress$increment()
+    }
+  } else {
+    ann$addItems(X)
   }
 
   ann
@@ -192,23 +196,28 @@ hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE) {
   if (!is.matrix(X)) {
     stop("X must be matrix")
   }
-  nr <- nrow(X)
 
   ef <- max(ef, k)
 
-  idx <- matrix(nrow = nr, ncol = k)
-  dist <- matrix(nrow = nr, ncol = k)
-
   ann$setEf(ef)
   tsmessage("Searching HNSW index with ef = ", formatC(ef))
-  search_progress <- Progress$new(max = nr, display = verbose)
-  for (i in 1:nr) {
-    # Neighbors are queried by passing the vector back in
-    # To get distances as well as indices, use include_distances = TRUE
-    res <- ann$getNNsList(X[i, ], k, TRUE)
-    idx[i, ] <- as.integer(res$item)
-    dist[i, ] <- res$distance
-    search_progress$increment()
+  if (verbose) {
+    nr <- nrow(X)
+    idx <- matrix(nrow = nr, ncol = k)
+    dist <- matrix(nrow = nr, ncol = k)
+    search_progress <- Progress$new(max = nr, display = verbose)
+    for (i in 1:nr) {
+      # Neighbors are queried by passing the vector back in
+      # To get distances as well as indices, use include_distances = TRUE
+      res <- ann$getNNsList(X[i, ], k, TRUE)
+      idx[i, ] <- as.integer(res$item)
+      dist[i, ] <- res$distance
+      search_progress$increment()
+    }
+  } else {
+    res <- ann$getAllNNsList(X, k, TRUE)
+    idx <- as.integer(res$item)
+    dist <- res$distance
   }
 
   if (!is.null(attr(ann, "distance")) &&
