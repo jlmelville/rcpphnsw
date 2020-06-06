@@ -1,3 +1,17 @@
+# RcppHNSW 0.2.9999
+
+## New features
+
+* Setting `verbose = TRUE` now has incurs substantially less computational 
+overhead associated with calculating the progress bar. Thank you to 
+[Samuel Granjeaud](https://github.com/SamGG) for spotting the problem and 
+reporting the issue.
+* New parameter: `progress`. By default this is set to `"bar"` and will show the
+progress bar when `verbose = TRUE`. If you want a more terse output, set
+`progress = NULL`. `progress = NULL` will eventually be the default setting:
+for now, `verbose = TRUE` will get you the progress bar by default for backwards
+compatibility.
+
 # RcppHNSW 0.2.0
 
 ## New features
