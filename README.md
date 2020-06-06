@@ -7,6 +7,7 @@
 [![Dependencies](https://tinyverse.netlify.com/badge/RcppHNSW)](https://cran.r-project.org/package=RcppHNSW)
 [![CRAN Monthly Downloads](https://cranlogs.r-pkg.org/badges/RcppHNSW)](https://cran.r-project.org/package=RcppHNSW)
 ![CRAN Downloads](http://cranlogs.r-pkg.org/badges/grand-total/RcppHNSW)
+[![Last Commit](https://img.shields.io/github/last-commit/jlmelville/rcpphnsw)](https://github.com/jlmelville/rcpphnsw)
 
 Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 
