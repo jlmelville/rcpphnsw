@@ -169,7 +169,7 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
     # Items are added directly
     ann$addItem(X[i, ])
     if (show_progress) {
-      progress$increment()
+      progress <- increment_progress(progress)
     }
   }
 
