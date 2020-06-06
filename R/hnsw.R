@@ -52,7 +52,11 @@
 #'   to improved recall at the expense of longer search time. Can take values
 #'   between \code{k} and the size of the dataset and may be greater or smaller
 #'   than \code{ef_construction}. Typical values are \code{100 - 2000}.
-#' @param verbose If \code{TRUE}, log progress to the console.
+#' @param verbose If \code{TRUE}, log messages to the console.
+#' @param progress If \code{"bar"} (the default), also log a progress bar when
+#'   \code{verbose = TRUE}. There is a small but noticeable overhead (a few
+#'   percent of run time) to tracking progress. Set \code{progress = NULL} to
+#'   turn this off. Has no effect if \code{verbose = FALSE}.
 #' @return a list containing:
 #' \itemize{
 #'   \item \code{idx} an n by k matrix containing the nearest neighbor indices.
@@ -71,7 +75,7 @@
 #' \emph{arXiv preprint} \emph{arXiv:1603.09320}.
 hnsw_knn <- function(X, k = 10, distance = "euclidean",
                     M = 16, ef_construction = 200, ef = 10,
-                    verbose = FALSE) {
+                    verbose = FALSE, progress = "bar") {
   if (!is.matrix(X)) {
     stop("X must be matrix")
   }
@@ -88,8 +92,9 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
   distance <- match.arg(distance, c("l2", "euclidean", "cosine", "ip"))
 
   ann <- hnsw_build(X = X, distance = distance, M = M, ef = ef_construction,
-                    verbose = verbose)
-  hnsw_search(X = X, ann = ann, k = k, ef = ef, verbose = verbose)
+                    verbose = verbose, progress = progress)
+  hnsw_search(X = X, ann = ann, k = k, ef = ef, verbose = verbose,
+              progress = progress)
 }
 
 #' Build an hnswlib nearest neighbor index
@@ -113,7 +118,11 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
 #' @param ef Size of the dynamic list used during construction.
 #'   A larger value means a better quality index, but increases build time.
 #'   Should be an integer value between 1 and the size of the dataset.
-#' @param verbose If \code{TRUE}, log progress to the console.
+#' @param verbose If \code{TRUE}, log messages to the console.
+#' @param progress If \code{"bar"} (the default), also log a progress bar when
+#'   \code{verbose = TRUE}. There is a small but noticeable overhead (a few
+#'   percent of run time) to tracking progress. Set \code{progress = NULL} to
+#'   turn this off. Has no effect if \code{verbose = FALSE}.
 #' @return an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
 #'   class.
 #' @examples
@@ -121,7 +130,7 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
 hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
-                       verbose = FALSE) {
+                       verbose = FALSE, progress = "bar") {
   if (!is.matrix(X)) {
     stop("X must be matrix")
   }
@@ -149,13 +158,22 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 
   tsmessage("Building HNSW index with metric '", distance, "'",
             " ef = ", formatC(ef), " M = ", formatC(M))
-  progress <- Progress$new(max = nr, display = verbose)
+
+  show_progress <- verbose && !is.null(progress) && progress == "bar"
+  progress <- NULL
+  if (show_progress) {
+    progress <- make_progress(max = nr)
+  }
+
   for (i in 1:nr) {
     # Items are added directly
     ann$addItem(X[i, ])
-    progress$increment()
+    if (show_progress) {
+      progress$increment()
+    }
   }
 
+  tsmessage("Finished building index")
   ann
 }
 
@@ -171,7 +189,11 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 #'   to improved recall at the expense of longer search time. Can take values
 #'   between \code{k} and the size of the dataset. Typical values are
 #'   \code{100 - 2000}.
-#' @param verbose If \code{TRUE}, log progress to the console.
+#' @param verbose If \code{TRUE}, log messages to the console.
+#' @param progress If \code{"bar"} (the default), also log a progress bar when
+#'   \code{verbose = TRUE}. There is a small but noticeable overhead (a few
+#'   percent of run time) to tracking progress. Set \code{progress = NULL} to
+#'   turn this off. Has no effect if \code{verbose = FALSE}.
 #' @return a list containing:
 #' \itemize{
 #'   \item \code{idx} an n by k matrix containing the nearest neighbor indices.
@@ -188,7 +210,7 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 #' irism <- as.matrix(iris[, -5])
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
-hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE) {
+hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE, progress = "bar") {
   if (!is.matrix(X)) {
     stop("X must be matrix")
   }
@@ -201,14 +223,22 @@ hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE) {
 
   ann$setEf(ef)
   tsmessage("Searching HNSW index with ef = ", formatC(ef))
-  search_progress <- Progress$new(max = nr, display = verbose)
+
+  show_progress <- verbose && !is.null(progress)&& progress == "bar"
+  progress <- NULL
+  if (show_progress) {
+    progress <- make_progress(max = nr)
+  }
+
   for (i in 1:nr) {
     # Neighbors are queried by passing the vector back in
     # To get distances as well as indices, use include_distances = TRUE
     res <- ann$getNNsList(X[i, ], k, TRUE)
     idx[i, ] <- as.integer(res$item)
     dist[i, ] <- res$distance
-    search_progress$increment()
+    if (show_progress) {
+      progress <- increment_progress(progress)
+    }
   }
 
   if (!is.null(attr(ann, "distance")) &&
@@ -216,5 +246,6 @@ hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE) {
     dist <- sqrt(dist)
   }
 
+  tsmessage("Finished searching")
   list(idx = idx, dist = dist)
 }

@@ -4,8 +4,16 @@
 \alias{hnsw_knn}
 \title{Find Nearest Neighbors and Distances}
 \usage{
-hnsw_knn(X, k = 10, distance = "euclidean", M = 16,
-  ef_construction = 200, ef = 10, verbose = FALSE)
+hnsw_knn(
+  X,
+  k = 10,
+  distance = "euclidean",
+  M = 16,
+  ef_construction = 200,
+  ef = 10,
+  verbose = FALSE,
+  progress = "bar"
+)
 }
 \arguments{
 \item{X}{a numeric matrix of data to add. Each of the n rows is an item in
@@ -38,7 +46,12 @@ to improved recall at the expense of longer search time. Can take values
 between \code{k} and the size of the dataset and may be greater or smaller
 than \code{ef_construction}. Typical values are \code{100 - 2000}.}
 
-\item{verbose}{If \code{TRUE}, log progress to the console.}
+\item{verbose}{If \code{TRUE}, log messages to the console.}
+
+\item{progress}{If \code{"bar"} (the default), also log a progress bar when
+\code{verbose = TRUE}. There is a small but noticeable overhead (a few
+percent of run time) to tracking progress. Set \code{progress = NULL} to
+turn this off. Has no effect if \code{verbose = FALSE}.}
 }
 \value{
 a list containing:
