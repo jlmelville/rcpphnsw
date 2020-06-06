@@ -123,6 +123,7 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
 #'   \code{verbose = TRUE}. There is a small but noticeable overhead (a few
 #'   percent of run time) to tracking progress. Set \code{progress = NULL} to
 #'   turn this off. Has no effect if \code{verbose = FALSE}.
+#' @param n_threads integer, number of OpenMP threads to use (if available)
 #' @return an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
 #'   class.
 #' @examples
@@ -130,7 +131,9 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
 hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
-                       verbose = FALSE, progress = "bar") {
+                       verbose = FALSE, progress = "bar", n_threads = 1L) {
+  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && n_threads >= 1)
+
   if (!is.matrix(X)) {
     stop("X must be matrix")
   }
@@ -165,13 +168,19 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
     progress <- make_progress(max = nr)
   }
 
-  for (i in 1:nr) {
-    # Items are added directly
-    ann$addItem(X[i, ])
-    if (show_progress) {
+
+  if (show_progress) {
+    progress <- increment_progress(progress)
+    for (i in 1:nr) {
+      # Items are added directly
+      ann$addItem(X[i, ])
       progress <- increment_progress(progress)
     }
+  } else {
+    ann$addItems(X, n_threads)
   }
+
+
 
   tsmessage("Finished building index")
   ann

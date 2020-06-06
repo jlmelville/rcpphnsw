@@ -100,24 +100,46 @@ public:
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
 
-    addItemNoCopy(fv);
+    addItemNoCopy(fv, cur_l) ;
   }
 
-  void addItemNoCopy(std::vector<dist_t>& dv)
+  void addItemNoCopy(std::vector<dist_t>& dv, size_t id)
   {
     Normalizer<dist_t, DoNormalize>::normalize(dv);
 
-    appr_alg->addPoint(dv.data(), static_cast<size_t>(cur_l));
+    appr_alg->addPoint(dv.data(), static_cast<size_t>(id));
     ++cur_l;
   }
 
-  void addItems(Rcpp::NumericMatrix items) {
-    for (int i = 0; i < items.nrow(); i++) {
-      Rcpp::NumericMatrix::Row row = items.row(i);
-      std::vector<dist_t> dv(row.size());
-      std::copy(row.begin(), row.end(), dv.begin());
-      addItemNoCopy(dv);
+  void addItems(Rcpp::NumericMatrix items, int n_threads = 1) {
+
+    // we can't touch R API in a threaded code, but we can use data
+    // allocated by R
+    // so we need to get a pointer to the underlying matrix data
+    uint32_t ncol = items.ncol();
+    uint32_t nrow = items.nrow();
+    double * items_ptr = reinterpret_cast<double *>(&items[0]);
+
+    size_t index_start = cur_l;
+    #ifdef _OPENMP
+    #pragma omp parallel num_threads(n_threads)
+    #endif
+    {
+      // allocate dv once
+      std::vector<dist_t> dv(ncol);
+      #ifdef _OPENMP
+      #pragma omp for schedule(dynamic, 64)
+      #endif
+      for (int i = 0; i < nrow; i++) {
+        // fill vector from a row in a column-major matrix
+        for (auto j = 0; j < ncol; j ++) {
+          dv[j] =  items_ptr[nrow * j + i];
+        }
+        // add vector to the index
+        addItemNoCopy(dv, index_start + i);
+      }
     }
+
   }
 
   std::vector<hnswlib::labeltype> getNNs(const std::vector<dist_t>& dv, size_t k)
