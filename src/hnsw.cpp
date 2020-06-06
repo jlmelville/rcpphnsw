@@ -23,9 +23,6 @@
 #include <memory>
 #include <Rcpp.h>
 
-// define R's REprintf as the 'local' error print method for hnswlib
-#define __ERROR_PRINTER_OVERRIDE__  REprintf
-
 #include "hnswlib.h"
 
 template <typename dist_t, bool DoNormalize = false>
