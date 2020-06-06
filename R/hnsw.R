@@ -159,23 +159,18 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
   tsmessage("Building HNSW index with metric '", distance, "'",
             " ef = ", formatC(ef), " M = ", formatC(M))
 
-  show_progress <- verbose && !is.null(progress) && progress == "bar"
-  progress <- NULL
-  if (show_progress) {
-    progress <- make_progress(max = nr)
-  }
-
-  if (show_progress) {
-    for (i in 1:nr) {
-      # Items are added directly
-      ann$addItem(X[i, ])
-      progress <- increment_progress(progress)
-    }
+  nstars <- 50
+  if (verbose && nr > nstars && !is.null(progress) && progress == "bar") {
+    progress_for(
+      nr, nstars,
+      function(chunk_start, chunk_end) {
+        ann$addItems(X[chunk_start:chunk_end, , drop = FALSE])
+      }
+    )
   }
   else {
     ann$addItems(X)
   }
-
 
   tsmessage("Finished building index")
   ann
@@ -228,21 +223,16 @@ hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE, progress = "bar") {
   ann$setEf(ef)
   tsmessage("Searching HNSW index with ef = ", formatC(ef))
 
-  show_progress <- verbose && !is.null(progress)&& progress == "bar"
-  progress <- NULL
-  if (show_progress) {
-    progress <- make_progress(max = nr)
-  }
-
-  if (show_progress) {
-    for (i in 1:nr) {
-      # Neighbors are queried by passing the vector back in
-      # To get distances as well as indices, use include_distances = TRUE
-      res <- ann$getNNsList(X[i, ], k, TRUE)
-      idx[i, ] <- as.integer(res$item)
-      dist[i, ] <- res$distance
-      progress <- increment_progress(progress)
-    }
+  nstars <- 50
+  if (verbose && nr > nstars && !is.null(progress) && progress == "bar") {
+    progress_for(
+      nr, nstars,
+      function(chunk_start, chunk_end) {
+        res <- ann$getAllNNsList(X[chunk_start:chunk_end, , drop = FALSE], k, TRUE)
+        idx[chunk_start:chunk_end, ] <<- as.integer(res$item)
+        dist[chunk_start:chunk_end, ] <<- res$distance
+      }
+    )
   }
   else {
     res <- ann$getAllNNsList(X, k, TRUE)

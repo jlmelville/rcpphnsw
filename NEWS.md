@@ -1,16 +1,17 @@
-# RcppHNSW 0.2.9999
+# RcppHNSW 0.2.9000
 
-## New features
+## Bug fixes and minor improvements
 
 * Setting `verbose = TRUE` now has incurs substantially less computational 
 overhead associated with calculating the progress bar. Thank you to 
-[Samuel Granjeaud](https://github.com/SamGG) for spotting the problem and 
-reporting the issue.
+[Samuel Granjeaud](https://github.com/SamGG) for spotting the problem and coming
+up with various solutions.
 * New parameter: `progress`. By default this is set to `"bar"` and will show the
 progress bar when `verbose = TRUE`. If you want a more terse output, set
 `progress = NULL`. `progress = NULL` will eventually be the default setting:
 for now, `verbose = TRUE` will get you the progress bar by default for backwards
 compatibility.
+* No progress bar will be shown if you have less than 50 items to process.
 
 # RcppHNSW 0.2.0
 
