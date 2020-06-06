@@ -165,13 +165,17 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
     progress <- make_progress(max = nr)
   }
 
-  for (i in 1:nr) {
-    # Items are added directly
-    ann$addItem(X[i, ])
-    if (show_progress) {
-      progress$increment()
+  if (show_progress) {
+    for (i in 1:nr) {
+      # Items are added directly
+      ann$addItem(X[i, ])
+      progress <- increment_progress(progress)
     }
   }
+  else {
+    ann$addItems(X)
+  }
+
 
   tsmessage("Finished building index")
   ann
@@ -230,15 +234,20 @@ hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE, progress = "bar") {
     progress <- make_progress(max = nr)
   }
 
-  for (i in 1:nr) {
-    # Neighbors are queried by passing the vector back in
-    # To get distances as well as indices, use include_distances = TRUE
-    res <- ann$getNNsList(X[i, ], k, TRUE)
-    idx[i, ] <- as.integer(res$item)
-    dist[i, ] <- res$distance
-    if (show_progress) {
+  if (show_progress) {
+    for (i in 1:nr) {
+      # Neighbors are queried by passing the vector back in
+      # To get distances as well as indices, use include_distances = TRUE
+      res <- ann$getNNsList(X[i, ], k, TRUE)
+      idx[i, ] <- as.integer(res$item)
+      dist[i, ] <- res$distance
       progress <- increment_progress(progress)
     }
+  }
+  else {
+    res <- ann$getAllNNsList(X, k, TRUE)
+    idx <- res$item
+    dist <- res$distance
   }
 
   if (!is.null(attr(ann, "distance")) &&
