@@ -116,8 +116,8 @@ public:
     // we can't touch R API in a threaded code, but we can use data
     // allocated by R
     // so we need to get a pointer to the underlying matrix data
-    uint32_t ncol = items.ncol();
-    uint32_t nrow = items.nrow();
+    int ncol = items.ncol();
+    int nrow = items.nrow();
     double * items_ptr = reinterpret_cast<double *>(&items[0]);
 
     size_t index_start = cur_l;

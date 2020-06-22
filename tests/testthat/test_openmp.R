@@ -26,11 +26,11 @@ ind_2 <- hnsw_build(
 )
 
 knn_1 = hnsw_search(x, ind_1, k = 5)
-ind_2 = hnsw_search(x, ind_4, k = 5)
+knn_2 = hnsw_search(x, ind_2, k = 5)
 # Seems index which was built using more than 1 thread is not determenistic
 # but in general the difference between index built with 1 thread and
 # many threads should be small
-expect_lt(mean(knn_1$dist - ind_2$dist), 1e-4)
+expect_lt(mean(knn_1$dist - knn_2$dist), 1e-4)
 
 # same check for indices
-expect_lt(mean(knn_1$idx != ind_2$idx), 1e-2)
+expect_lt(mean(knn_1$idx != knn_2$idx), 1e-2)
