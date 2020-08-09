@@ -15,6 +15,6 @@ Encoding: UTF-8
 LazyData: true
 Imports: methods, Rcpp (>= 0.11.3)
 LinkingTo: Rcpp
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Suggests: testthat,
     covr

@@ -12,7 +12,8 @@ hnsw_knn(
   ef_construction = 200,
   ef = 10,
   verbose = FALSE,
-  progress = "bar"
+  progress = "bar",
+  n_threads = 1L
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ than \code{ef_construction}. Typical values are \code{100 - 2000}.}
 \code{verbose = TRUE}. There is a small but noticeable overhead (a few
 percent of run time) to tracking progress. Set \code{progress = NULL} to
 turn this off. Has no effect if \code{verbose = FALSE}.}
+
+\item{n_threads}{integer, number of OpenMP threads to use (if available).}
 }
 \value{
 a list containing:
