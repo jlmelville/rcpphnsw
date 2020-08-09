@@ -57,6 +57,7 @@
 #'   \code{verbose = TRUE}. There is a small but noticeable overhead (a few
 #'   percent of run time) to tracking progress. Set \code{progress = NULL} to
 #'   turn this off. Has no effect if \code{verbose = FALSE}.
+#' @param n_threads integer, number of OpenMP threads to use (if available).
 #' @return a list containing:
 #' \itemize{
 #'   \item \code{idx} an n by k matrix containing the nearest neighbor indices.
@@ -74,8 +75,10 @@
 #' Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs.
 #' \emph{arXiv preprint} \emph{arXiv:1603.09320}.
 hnsw_knn <- function(X, k = 10, distance = "euclidean",
-                    M = 16, ef_construction = 200, ef = 10,
-                    verbose = FALSE, progress = "bar") {
+                     M = 16, ef_construction = 200, ef = 10,
+                     verbose = FALSE, progress = "bar", n_threads = 1L) {
+  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && n_threads >= 1)
+
   if (!is.matrix(X)) {
     stop("X must be matrix")
   }
@@ -91,10 +94,14 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
   }
   distance <- match.arg(distance, c("l2", "euclidean", "cosine", "ip"))
 
-  ann <- hnsw_build(X = X, distance = distance, M = M, ef = ef_construction,
-                    verbose = verbose, progress = progress)
-  hnsw_search(X = X, ann = ann, k = k, ef = ef, verbose = verbose,
-              progress = progress)
+  ann <- hnsw_build(
+    X = X, distance = distance, M = M, ef = ef_construction,
+    verbose = verbose, progress = progress
+  )
+  hnsw_search(
+    X = X, ann = ann, k = k, ef = ef, verbose = verbose,
+    progress = progress
+  )
 }
 
 #' Build an hnswlib nearest neighbor index
@@ -123,7 +130,7 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
 #'   \code{verbose = TRUE}. There is a small but noticeable overhead (a few
 #'   percent of run time) to tracking progress. Set \code{progress = NULL} to
 #'   turn this off. Has no effect if \code{verbose = FALSE}.
-#' @param n_threads integer, number of OpenMP threads to use (if available)
+#' @param n_threads integer, number of OpenMP threads to use (if available).
 #' @return an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
 #'   class.
 #' @examples
@@ -146,11 +153,11 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
   nc <- ncol(X)
 
   clazz <- switch(distance,
-                  "l2" = RcppHNSW::HnswL2,
-                  "euclidean" = RcppHNSW::HnswL2,
-                  "cosine" = RcppHNSW::HnswCosine,
-                  "ip" = RcppHNSW::HnswIp
-                  )
+    "l2" = RcppHNSW::HnswL2,
+    "euclidean" = RcppHNSW::HnswL2,
+    "cosine" = RcppHNSW::HnswCosine,
+    "ip" = RcppHNSW::HnswIp
+  )
   # Create the indexing object. You must say up front the number of items that
   # will be stored (nr).
   ann <- methods::new(clazz, nc, nr, M, ef)
@@ -159,28 +166,25 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
     attr(ann, "distance") <- "euclidean"
   }
 
-  tsmessage("Building HNSW index with metric '", distance, "'",
-            " ef = ", formatC(ef), " M = ", formatC(M))
+  tsmessage(
+    "Building HNSW index with metric '", distance, "'",
+    " ef = ", formatC(ef), " M = ", formatC(M)
+  )
 
-  show_progress <- verbose && !is.null(progress) && progress == "bar"
-  progress <- NULL
-  if (show_progress) {
-    progress <- make_progress(max = nr)
+  nstars <- 50
+  if (verbose && nr > nstars && !is.null(progress) && progress == "bar") {
+    progress_for(
+      nr, nstars,
+      function(chunk_start, chunk_end) {
+        ann$addItems(X[chunk_start:chunk_end, , drop = FALSE],
+          n_threads = n_threads
+        )
+      }
+    )
   }
-
-
-  if (show_progress) {
-    progress <- increment_progress(progress)
-    for (i in 1:nr) {
-      # Items are added directly
-      ann$addItem(X[i, ])
-      progress <- increment_progress(progress)
-    }
-  } else {
-    ann$addItems(X, n_threads)
+  else {
+    ann$addItems(X, n_threads = n_threads)
   }
-
-
 
   tsmessage("Finished building index")
   ann
@@ -233,25 +237,25 @@ hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE, progress = "bar") {
   ann$setEf(ef)
   tsmessage("Searching HNSW index with ef = ", formatC(ef))
 
-  show_progress <- verbose && !is.null(progress)&& progress == "bar"
-  progress <- NULL
-  if (show_progress) {
-    progress <- make_progress(max = nr)
+  nstars <- 50
+  if (verbose && nr > nstars && !is.null(progress) && progress == "bar") {
+    progress_for(
+      nr, nstars,
+      function(chunk_start, chunk_end) {
+        res <- ann$getAllNNsList(X[chunk_start:chunk_end, , drop = FALSE], k, TRUE)
+        idx[chunk_start:chunk_end, ] <<- as.integer(res$item)
+        dist[chunk_start:chunk_end, ] <<- res$distance
+      }
+    )
   }
-
-  for (i in 1:nr) {
-    # Neighbors are queried by passing the vector back in
-    # To get distances as well as indices, use include_distances = TRUE
-    res <- ann$getNNsList(X[i, ], k, TRUE)
-    idx[i, ] <- as.integer(res$item)
-    dist[i, ] <- res$distance
-    if (show_progress) {
-      progress <- increment_progress(progress)
-    }
+  else {
+    res <- ann$getAllNNsList(X, k, TRUE)
+    idx <- res$item
+    dist <- res$distance
   }
 
   if (!is.null(attr(ann, "distance")) &&
-      attr(ann, "distance") == "euclidean") {
+    attr(ann, "distance") == "euclidean") {
     dist <- sqrt(dist)
   }
 

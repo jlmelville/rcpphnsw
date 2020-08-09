@@ -12,5 +12,3 @@ expect_equal(res$item, self_nn_index4, check.attributes = FALSE)
 
 items <- ann$getAllNNs(ui10, k = 4)
 expect_equal(items, self_nn_index4, check.attributes = FALSE)
-
-

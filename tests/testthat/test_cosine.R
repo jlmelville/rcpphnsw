@@ -4,7 +4,8 @@ context("cosine")
 # numbers from:
 # sklearn.metrics.pairwise.pairwise_distances(iris.data[5:15, 0:4], metric='cosine')
 cosine_dist <- matrix(
-  c(0.00000000e+00, 1.31438082e-04, 4.82989889e-04, 7.37108399e-04,
+  c(
+    0.00000000e+00, 1.31438082e-04, 4.82989889e-04, 7.37108399e-04,
     9.93327490e-04, 1.13137420e-03, 1.83037974e-03, 2.62771618e-03,
     2.96597815e-03, 3.96576921e-03,
     0.00000000e+00, 1.31438082e-04, 6.80740485e-04, 9.09531789e-04,
@@ -33,7 +34,10 @@ cosine_dist <- matrix(
     1.88800695e-03, 2.03772306e-03,
     0.00000000e+00, 7.82778985e-04, 1.60367331e-03, 2.79805679e-03,
     3.31417857e-03, 3.75133220e-03, 3.96576921e-03, 4.37554307e-03,
-    4.37823658e-03, 4.77142498e-03), nrow = 10, byrow = 10)
+    4.37823658e-03, 4.77142498e-03
+  ),
+  nrow = 10, byrow = 10
+)
 
 res <- hnsw_knn(ui10, k = 10, distance = "cosine")
 expect_equal(res$dist, cosine_dist, check.attributes = FALSE, tol = 1e-6)
