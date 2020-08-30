@@ -204,19 +204,27 @@ public:
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
 
-    return getNNsListNoCopy(fv, nnbrs, include_distances);
+    bool ok = true;
+    Rcpp::List result = getNNsListNoCopy(fv, nnbrs, include_distances, ok);
+
+    if (!ok) {
+      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
+    }
+    return result;
   }
 
   Rcpp::List getNNsListNoCopy(std::vector<dist_t>& fv, std::size_t nnbrs,
-                              bool include_distances)
+                              bool include_distances, bool& ok)
   {
+    ok = true;
     Normalizer<dist_t, DoNormalize>::normalize(fv);
 
     std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
       appr_alg->searchKnn(fv.data(), nnbrs);
 
-    if (result.size() != nnbrs) {
-      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
+    const std::size_t nresults = result.size();
+    if (nresults != nnbrs) {
+      ok = false;
     }
 
     std::vector<hnswlib::labeltype> items;
@@ -259,12 +267,15 @@ public:
   {
     Rcpp::IntegerMatrix allItems(fm.nrow(), nnbrs);
     Rcpp::NumericMatrix allDistances(fm.nrow(), nnbrs);
-
+    bool ok = true;
     for (int i = 0; i < fm.nrow(); i++) {
       Rcpp::NumericMatrix::Row row = fm.row(i);
       std::vector<dist_t> dv(row.size());
       std::copy(row.begin(), row.end(), dv.begin());
-      Rcpp::List result = getNNsListNoCopy(dv, nnbrs, include_distances);
+      Rcpp::List result = getNNsListNoCopy(dv, nnbrs, include_distances, ok);
+      if (!ok) {
+        Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
+      }
       std::vector<hnswlib::labeltype> items = result["item"];
 
       if (include_distances) {
