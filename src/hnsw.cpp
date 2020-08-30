@@ -265,13 +265,20 @@ public:
   Rcpp::List getAllNNsList(Rcpp::NumericMatrix fm, std::size_t nnbrs,
                            bool include_distances = true)
   {
-    Rcpp::IntegerMatrix allItems(fm.nrow(), nnbrs);
-    Rcpp::NumericMatrix allDistances(fm.nrow(), nnbrs);
+    const std::size_t nr = fm.nrow();
+    const std::size_t nc = fm.ncol();
+
+    std::vector<hnswlib::labeltype> idx_vec(nr * nnbrs);
+    std::vector<double> dist_vec(nr * nnbrs);
+    std::vector<dist_t> dv(nc);
+    auto data = Rcpp::as<std::vector<double>>(fm);
     bool ok = true;
-    for (int i = 0; i < fm.nrow(); i++) {
-      Rcpp::NumericMatrix::Row row = fm.row(i);
-      std::vector<dist_t> dv(row.size());
-      std::copy(row.begin(), row.end(), dv.begin());
+
+    for (std::size_t i = 0; i < nr; i++) {
+      for (std::size_t j = 0; j < nc; j++) {
+        dv[j] = data[j * nr + i];
+      }
+
       Rcpp::List result = getNNsListNoCopy(dv, nnbrs, include_distances, ok);
       if (!ok) {
         Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
@@ -282,26 +289,24 @@ public:
         std::vector<dist_t> dist = result["distance"];
 
         for (std::size_t k = 0; k < items.size(); k++) {
-          allItems(i, k) = items[k];
-          allDistances(i, k) = dist[k];
+          idx_vec[k * nr + i] = items[k];
+          dist_vec[k * nr + i] = dist[k];
         }
       }
       else {
         for (std::size_t k = 0; k < items.size(); k++) {
-          allItems(i, k) = items[k];
+          idx_vec[k * nr + i] = items[k];
         }
       }
     }
 
+    auto result = Rcpp::List::create(
+      Rcpp::Named("item") = Rcpp::IntegerMatrix(nr, nnbrs, idx_vec.begin())
+    );
     if (include_distances) {
-      return Rcpp::List::create(
-        Rcpp::Named("item") = allItems,
-        Rcpp::Named("distance") = allDistances);
+      result["distance"] = Rcpp::NumericMatrix(nr, nnbrs, dist_vec.begin());
     }
-    else {
-      return Rcpp::List::create(
-        Rcpp::Named("item") = allItems);
-    }
+    return result;
   }
 
 
