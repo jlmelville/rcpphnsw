@@ -205,16 +205,24 @@ public:
     std::copy(dv.begin(), dv.end(), fv.begin());
 
     bool ok = true;
-    Rcpp::List result = getNNsListNoCopy(fv, nnbrs, include_distances, ok);
-
+    std::vector<dist_t> distances(0);
+    std::vector<hnswlib::labeltype> items = getNNsListNoCopy(fv, nnbrs,
+                                                             include_distances,
+                                                             distances, ok);
     if (!ok) {
       Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
+    }
+
+    auto result = Rcpp::List::create(Rcpp::Named("item") = items);
+    if (include_distances) {
+      result["distance"] = distances;
     }
     return result;
   }
 
-  Rcpp::List getNNsListNoCopy(std::vector<dist_t>& fv, std::size_t nnbrs,
-                              bool include_distances, bool& ok)
+  std::vector<hnswlib::labeltype> getNNsListNoCopy(
+      std::vector<dist_t>& fv, std::size_t nnbrs, bool include_distances,
+      std::vector<dist_t>& distances, bool& ok)
   {
     ok = true;
     Normalizer<dist_t, DoNormalize>::normalize(fv);
@@ -231,8 +239,8 @@ public:
     items.reserve(nnbrs);
 
     if (include_distances) {
-      std::vector<dist_t> distances;
       distances.reserve(nnbrs);
+      distances.clear();
 
       for (std::size_t i = 0; i < nnbrs; i++) {
         auto &result_tuple = result.top();
@@ -243,10 +251,6 @@ public:
 
       std::reverse(distances.begin(), distances.end());
       std::reverse(items.begin(), items.end());
-
-      return Rcpp::List::create(
-        Rcpp::Named("item") = items,
-        Rcpp::Named("distance") = distances);
     }
     else {
       for (std::size_t i = 0; i < nnbrs; i++) {
@@ -256,10 +260,9 @@ public:
       }
 
       std::reverse(items.begin(), items.end());
-
-      return Rcpp::List::create(
-        Rcpp::Named("item") = items);
     }
+
+    return items;
   }
 
   Rcpp::List getAllNNsList(Rcpp::NumericMatrix fm, std::size_t nnbrs,
@@ -273,24 +276,23 @@ public:
     std::vector<dist_t> dv(nc);
     auto data = Rcpp::as<std::vector<double>>(fm);
     bool ok = true;
+    std::vector<dist_t> distances(0);
 
     for (std::size_t i = 0; i < nr; i++) {
       for (std::size_t j = 0; j < nc; j++) {
         dv[j] = data[j * nr + i];
       }
 
-      Rcpp::List result = getNNsListNoCopy(dv, nnbrs, include_distances, ok);
+      std::vector<hnswlib::labeltype> items =
+        getNNsListNoCopy(dv, nnbrs, include_distances, distances, ok);
       if (!ok) {
         Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
       }
-      std::vector<hnswlib::labeltype> items = result["item"];
 
       if (include_distances) {
-        std::vector<dist_t> dist = result["distance"];
-
         for (std::size_t k = 0; k < items.size(); k++) {
           idx_vec[k * nr + i] = items[k];
-          dist_vec[k * nr + i] = dist[k];
+          dist_vec[k * nr + i] = distances[k];
         }
       }
       else {
