@@ -21,9 +21,14 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <thread>
+
 #include <Rcpp.h>
 
 #include "hnswlib.h"
+
+#include "RcppPerpendicular/RcppPerpendicular.h"
+
 
 template <typename dist_t, bool DoNormalize = false>
 struct Normalizer {
@@ -61,29 +66,29 @@ public:
   //  100-2000 (default: 200).
   Hnsw(const int dim, const size_t max_elements, const size_t M = 16,
        const size_t ef_construction = 200) :
-    dim(dim), cur_l(0),
-    space(std::unique_ptr<Distance>(new Distance(dim))),
-    appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
+  dim(dim), cur_l(0), numThreads(1),
+  space(std::unique_ptr<Distance>(new Distance(dim))),
+  appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
       new hnswlib::HierarchicalNSW<dist_t>(space.get(), max_elements, M,
                                            ef_construction)))
   { }
 
   Hnsw(const int dim, const std::string path_to_index) :
-  dim(dim), cur_l(0),
+  dim(dim), cur_l(0), numThreads(1),
   space(std::unique_ptr<Distance>(new Distance(dim))),
   appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
-    new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index)))
+      new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index)))
   {
     cur_l = appr_alg->cur_element_count;
   }
 
   Hnsw(const int dim, const std::string path_to_index,
        const size_t max_elements) :
-  dim(dim), cur_l(0),
+  dim(dim), cur_l(0), numThreads(1),
   space(std::unique_ptr<Distance>(new Distance(dim))),
   appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
-    new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index, false,
-                                         max_elements)))
+      new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index, false,
+                                           max_elements)))
   {
     cur_l = appr_alg->cur_element_count;
   }
@@ -108,36 +113,43 @@ public:
     ++cur_l;
   }
 
-  void addItems(Rcpp::NumericMatrix items, int n_threads = 1) {
+  struct AddWorker {
+    Hnsw<dist_t, Distance, DoNormalize> &hnsw;
+    double * items_ptr;
+    std::size_t nrow;
+    std::size_t ncol;
+    std::size_t index_start;
 
-    // we can't touch R API in a threaded code, but we can use data
-    // allocated by R
-    // so we need to get a pointer to the underlying matrix data
+    AddWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
+              double *items_ptr,
+              std::size_t nrow,
+              std::size_t ncol,
+              std::size_t index_start) :
+      hnsw(hnsw), items_ptr(items_ptr), nrow(nrow), ncol(ncol), index_start(index_start)
+    {}
+
+    void operator()(std::size_t begin, std::size_t end) {
+      std::vector<dist_t> dv(ncol);
+
+      for (std::size_t i = begin; i < end; i++) {
+        for (std::size_t j = 0; j < ncol; j++) {
+          dv[j] =  items_ptr[nrow * j + i];
+        }
+        hnsw.addItemNoCopy(dv, index_start + i);
+      }
+    }
+  };
+
+  void addItems(Rcpp::NumericMatrix items) {
     int ncol = items.ncol();
     int nrow = items.nrow();
     double * items_ptr = reinterpret_cast<double *>(&items[0]);
 
-    size_t index_start = cur_l;
-    #ifdef _OPENMP
-    #pragma omp parallel num_threads(n_threads)
-    #endif
-    {
-      // allocate dv once
-      std::vector<dist_t> dv(ncol);
-      #ifdef _OPENMP
-      #pragma omp for schedule(dynamic, 64)
-      #endif
-      for (int i = 0; i < nrow; i++) {
-        // fill vector from a row in a column-major matrix
-        for (auto j = 0; j < ncol; j ++) {
-          dv[j] =  items_ptr[nrow * j + i];
-        }
-        // add vector to the index
-        addItemNoCopy(dv, index_start + i);
-      }
-    }
-
+    AddWorker worker(*this, items_ptr, nrow, ncol, cur_l);
+    RcppPerpendicular::parallel_for(0, nrow, worker, this->numThreads, 1);
+    cur_l = size();
   }
+
 
   std::vector<hnswlib::labeltype> getNNs(const std::vector<dist_t>& dv, size_t k)
   {
@@ -180,7 +192,7 @@ public:
   }
 
   Rcpp::List getNNsListNoCopy(std::vector<dist_t>& fv, size_t k,
-                        bool include_distances)
+                              bool include_distances)
   {
     Normalizer<dist_t, DoNormalize>::normalize(fv);
 
@@ -291,6 +303,10 @@ public:
     return appr_alg->cur_element_count;
   }
 
+  void setNumThreads(std::size_t numThreads) {
+    this->numThreads = numThreads;
+  }
+
   void markDeleted(std::size_t label) {
     if (label < 1 || label > size()) {
       Rcpp::stop("Bad label");
@@ -306,6 +322,7 @@ public:
   int dim;
   bool normalize;
   hnswlib::labeltype cur_l;
+  std::size_t numThreads;
   std::unique_ptr<Distance> space;
   std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>> appr_alg;
 };
@@ -329,6 +346,7 @@ RCPP_MODULE(HnswL2) {
   .method("getAllNNs",  &HnswL2::getAllNNs,  "retrieve Nearest Neigbours given matrix")
   .method("getAllNNsList",  &HnswL2::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
   .method("size",       &HnswL2::size,        "number of items added to the index")
+  .method("setNumThreads",  &HnswL2::setNumThreads, "set the number of threads to use")
   .method("markDeleted",  &HnswL2::markDeleted, "remove the item with the specified label from the index")
   .method("resizeIndex",  &HnswL2::resizeIndex, "resize the index to use this number of items")
   ;
@@ -349,6 +367,7 @@ RCPP_MODULE(HnswCosine) {
   .method("getAllNNs",  &HnswCosine::getAllNNs,  "retrieve Nearest Neigbours given matrix")
   .method("getAllNNsList",  &HnswCosine::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
   .method("size",       &HnswCosine::size,       "number of items added to the index")
+  .method("setNumThreads",  &HnswCosine::setNumThreads, "set the number of threads to use")
   .method("markDeleted",  &HnswCosine::markDeleted, "remove the item with the specified label from the index")
   .method("resizeIndex",  &HnswCosine::resizeIndex, "resize the index to use this number of items")
   ;
@@ -362,13 +381,13 @@ RCPP_EXPOSED_CLASS_NODECL(HnswIp)
     .constructor<int32_t, std::string, size_t>("constructor with dimension, loading from filename, number of items")
     .method("setEf",      &HnswIp::setEf,      "set ef value")
     .method("addItem",    &HnswIp::addItem,    "add item")
-    .method("addItems",   &HnswIp::addItems,   "add items")
     .method("save",       &HnswIp::callSave,   "save index to file")
     .method("getNNs",     &HnswIp::getNNs,     "retrieve Nearest Neigbours given vector")
     .method("getNNsList", &HnswIp::getNNsList, "retrieve Nearest Neigbours given vector")
     .method("getAllNNs",  &HnswIp::getAllNNs,  "retrieve Nearest Neigbours given matrix")
     .method("getAllNNsList",  &HnswIp::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
     .method("size",       &HnswIp::size,       "number of items added to the index")
+    .method("setNumThreads",  &HnswIp::setNumThreads, "set the number of threads to use")
     .method("markDeleted",  &HnswIp::markDeleted, "remove the item with the specified label from the index")
     .method("resizeIndex",  &HnswIp::resizeIndex, "resize the index to use this number of items")
     ;

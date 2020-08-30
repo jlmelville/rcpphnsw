@@ -1,5 +1,5 @@
 library(RcppHNSW)
-context("test OpenMP")
+context("test parallel")
 
 set.seed(1)
 
@@ -27,7 +27,7 @@ ind_2 <- hnsw_build(
 
 knn_1 <- hnsw_search(x, ind_1, k = 5)
 knn_2 <- hnsw_search(x, ind_2, k = 5)
-# Seems index which was built using more than 1 thread is not determenistic
+# Seems index which was built using more than 1 thread is not deterministic
 # but in general the difference between index built with 1 thread and
 # many threads should be small
 expect_lt(mean(knn_1$dist - knn_2$dist), 1e-4)

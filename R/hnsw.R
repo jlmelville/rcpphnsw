@@ -96,7 +96,7 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
 
   ann <- hnsw_build(
     X = X, distance = distance, M = M, ef = ef_construction,
-    verbose = verbose, progress = progress
+    verbose = verbose, progress = progress, n_threads = n_threads
   )
   hnsw_search(
     X = X, ann = ann, k = k, ef = ef, verbose = verbose,
@@ -168,22 +168,21 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 
   tsmessage(
     "Building HNSW index with metric '", distance, "'",
-    " ef = ", formatC(ef), " M = ", formatC(M)
+    " ef = ", formatC(ef), " M = ", formatC(M), " using ", n_threads, " threads"
   )
+  ann$setNumThreads(n_threads)
 
   nstars <- 50
   if (verbose && nr > nstars && !is.null(progress) && progress == "bar") {
     progress_for(
       nr, nstars,
       function(chunk_start, chunk_end) {
-        ann$addItems(X[chunk_start:chunk_end, , drop = FALSE],
-          n_threads = n_threads
-        )
+        ann$addItems(X[chunk_start:chunk_end, , drop = FALSE])
       }
     )
   }
   else {
-    ann$addItems(X, n_threads = n_threads)
+    ann$addItems(X)
   }
 
   tsmessage("Finished building index")
