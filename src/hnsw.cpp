@@ -38,14 +38,14 @@ struct Normalizer {
 template <typename dist_t>
 struct Normalizer<dist_t, true> {
   static void normalize(std::vector<dist_t>& v) {
-    const size_t dim = v.size();
+    const std::size_t dim = v.size();
     float norm = 0.0f;
-    for (size_t i = 0; i < dim; i++) {
+    for (std::size_t i = 0; i < dim; i++) {
       norm += v[i] * v[i];
     }
     norm = 1.0f / (std::sqrt(norm) + 1e-30f);
 
-    for (size_t i = 0; i < dim; i++) {
+    for (std::size_t i = 0; i < dim; i++) {
       v[i] *= norm;
     }
   }
@@ -64,8 +64,8 @@ public:
   // ef_construction - controls the quality of the graph. Higher values lead to
   //  improved recall at the expense of longer build time. Suggested range:
   //  100-2000 (default: 200).
-  Hnsw(const int dim, const size_t max_elements, const size_t M = 16,
-       const size_t ef_construction = 200) :
+  Hnsw(int dim, std::size_t max_elements, std::size_t M = 16,
+       std::size_t ef_construction = 200) :
   dim(dim), cur_l(0), numThreads(0),
   space(std::unique_ptr<Distance>(new Distance(dim))),
   appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
@@ -73,7 +73,7 @@ public:
                                            ef_construction)))
   { }
 
-  Hnsw(const int dim, const std::string path_to_index) :
+  Hnsw(int dim, const std::string &path_to_index) :
   dim(dim), cur_l(0), numThreads(0),
   space(std::unique_ptr<Distance>(new Distance(dim))),
   appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
@@ -82,8 +82,7 @@ public:
     cur_l = appr_alg->cur_element_count;
   }
 
-  Hnsw(const int dim, const std::string path_to_index,
-       const size_t max_elements) :
+  Hnsw(int dim, const std::string &path_to_index, std::size_t max_elements) :
   dim(dim), cur_l(0), numThreads(0),
   space(std::unique_ptr<Distance>(new Distance(dim))),
   appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
@@ -93,7 +92,7 @@ public:
     cur_l = appr_alg->cur_element_count;
   }
 
-  void setEf(const size_t ef) {
+  void setEf(std::size_t ef) {
     appr_alg->ef_ = ef;
   }
 
@@ -105,11 +104,11 @@ public:
     addItemNoCopy(fv, cur_l) ;
   }
 
-  void addItemNoCopy(std::vector<dist_t>& dv, size_t id)
+  void addItemNoCopy(std::vector<dist_t>& dv, std::size_t id)
   {
     Normalizer<dist_t, DoNormalize>::normalize(dv);
 
-    appr_alg->addPoint(dv.data(), static_cast<size_t>(id));
+    appr_alg->addPoint(dv.data(), static_cast<std::size_t>(id));
     ++cur_l;
   }
 
@@ -151,7 +150,7 @@ public:
   }
 
 
-  std::vector<hnswlib::labeltype> getNNs(const std::vector<dist_t>& dv, size_t k)
+  std::vector<hnswlib::labeltype> getNNs(const std::vector<dist_t>& dv, std::size_t k)
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
@@ -159,7 +158,7 @@ public:
     return getNNsNoCopy(fv, k);
   }
 
-  std::vector<hnswlib::labeltype> getNNsNoCopy(std::vector<dist_t>& fv, size_t k)
+  std::vector<hnswlib::labeltype> getNNsNoCopy(std::vector<dist_t>& fv, std::size_t k)
   {
     Normalizer<dist_t, DoNormalize>::normalize(fv);
 
@@ -172,7 +171,7 @@ public:
 
     std::vector<hnswlib::labeltype> items;
     items.reserve(k);
-    for (size_t i = 0; i < k; i++) {
+    for (std::size_t i = 0; i < k; i++) {
       auto &result_tuple = result.top();
       items.push_back(result_tuple.second + 1);
       result.pop();
@@ -182,7 +181,7 @@ public:
     return items;
   }
 
-  Rcpp::List getNNsList(const std::vector<dist_t>& dv, size_t k,
+  Rcpp::List getNNsList(const std::vector<dist_t>& dv, std::size_t k,
                         bool include_distances)
   {
     std::vector<dist_t> fv(dv.size());
@@ -191,7 +190,7 @@ public:
     return getNNsListNoCopy(fv, k, include_distances);
   }
 
-  Rcpp::List getNNsListNoCopy(std::vector<dist_t>& fv, size_t k,
+  Rcpp::List getNNsListNoCopy(std::vector<dist_t>& fv, std::size_t k,
                               bool include_distances)
   {
     Normalizer<dist_t, DoNormalize>::normalize(fv);
@@ -210,7 +209,7 @@ public:
       std::vector<dist_t> distances;
       distances.reserve(k);
 
-      for (size_t i = 0; i < k; i++) {
+      for (std::size_t i = 0; i < k; i++) {
         auto &result_tuple = result.top();
         distances.push_back(result_tuple.first);
         items.push_back(result_tuple.second + 1);
@@ -225,7 +224,7 @@ public:
         Rcpp::Named("distance") = distances);
     }
     else {
-      for (size_t i = 0; i < k; i++) {
+      for (std::size_t i = 0; i < k; i++) {
         auto &result_tuple = result.top();
         items.push_back(result_tuple.second + 1);
         result.pop();
@@ -238,7 +237,7 @@ public:
     }
   }
 
-  Rcpp::List getAllNNsList(Rcpp::NumericMatrix fm, size_t k,
+  Rcpp::List getAllNNsList(Rcpp::NumericMatrix fm, std::size_t k,
                            bool include_distances = true)
   {
     Rcpp::IntegerMatrix allItems(fm.nrow(), k);
@@ -254,13 +253,13 @@ public:
       if (include_distances) {
         std::vector<dist_t> dist = result["distance"];
 
-        for (size_t k = 0; k < items.size(); k++) {
+        for (std::size_t k = 0; k < items.size(); k++) {
           allItems(i, k) = items[k];
           allDistances(i, k) = dist[k];
         }
       }
       else {
-        for (size_t k = 0; k < items.size(); k++) {
+        for (std::size_t k = 0; k < items.size(); k++) {
           allItems(i, k) = items[k];
         }
       }
@@ -302,7 +301,7 @@ public:
         }
         std::vector<hnswlib::labeltype> result = hnsw.getNNsNoCopy(dv, nnbrs);
 
-        for (size_t k = 0; k < result.size(); k++) {
+        for (std::size_t k = 0; k < result.size(); k++) {
           idx_vec[k * nr + i] = result[k];
         }
       }
@@ -324,7 +323,7 @@ public:
     return idx;
   }
 
-  void callSave(const std::string path_to_index) {
+  void callSave(const std::string &path_to_index) {
     appr_alg->saveIndex(path_to_index);
   }
 
@@ -363,9 +362,9 @@ typedef Hnsw<float, hnswlib::InnerProductSpace, false> HnswIp;
 RCPP_EXPOSED_CLASS_NODECL(HnswL2)
 RCPP_MODULE(HnswL2) {
   Rcpp::class_<HnswL2>("HnswL2")
-  .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, M, ef")
+  .constructor<int32_t, std::size_t, std::size_t, std::size_t>("constructor with dimension, number of items, M, ef")
   .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
-  .constructor<int32_t, std::string, size_t>("constructor with dimension, loading from filename, number of items")
+  .constructor<int32_t, std::string, std::size_t>("constructor with dimension, loading from filename, number of items")
   .method("setEf",      &HnswL2::setEf,      "set ef value")
   .method("addItem",    &HnswL2::addItem,    "add item")
   .method("addItems",   &HnswL2::addItems,   "add items")
@@ -384,9 +383,9 @@ RCPP_MODULE(HnswL2) {
 RCPP_EXPOSED_CLASS_NODECL(HnswCosine)
 RCPP_MODULE(HnswCosine) {
   Rcpp::class_<HnswCosine>("HnswCosine")
-  .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, M, ef")
+  .constructor<int32_t, std::size_t, std::size_t, std::size_t>("constructor with dimension, number of items, M, ef")
   .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
-  .constructor<int32_t, std::string, size_t>("constructor with dimension, loading from filename, number of items")
+  .constructor<int32_t, std::string, std::size_t>("constructor with dimension, loading from filename, number of items")
   .method("setEf",      &HnswCosine::setEf,      "set ef value")
   .method("addItem",    &HnswCosine::addItem,    "add item")
   .method("addItems",   &HnswCosine::addItems,   "add items")
@@ -405,9 +404,9 @@ RCPP_MODULE(HnswCosine) {
 RCPP_EXPOSED_CLASS_NODECL(HnswIp)
   RCPP_MODULE(HnswIp) {
     Rcpp::class_<HnswIp>("HnswIp")
-    .constructor<int32_t, size_t, size_t, size_t>("constructor with dimension, number of items, M, ef")
+    .constructor<int32_t, std::size_t, std::size_t, std::size_t>("constructor with dimension, number of items, M, ef")
     .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
-    .constructor<int32_t, std::string, size_t>("constructor with dimension, loading from filename, number of items")
+    .constructor<int32_t, std::string, std::size_t>("constructor with dimension, loading from filename, number of items")
     .method("setEf",      &HnswIp::setEf,      "set ef value")
     .method("addItem",    &HnswIp::addItem,    "add item")
     .method("save",       &HnswIp::callSave,   "save index to file")
