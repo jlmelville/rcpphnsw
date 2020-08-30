@@ -277,22 +277,51 @@ public:
     }
   }
 
-  Rcpp::IntegerMatrix getAllNNs(Rcpp::NumericMatrix fm, size_t k)
-  {
-    Rcpp::IntegerMatrix output(fm.nrow(), k);
 
-    for (int i = 0; i < fm.nrow(); i++) {
-      Rcpp::NumericMatrix::Row row = fm.row(i);
-      std::vector<dist_t> dv(row.size());
-      std::copy(row.begin(), row.end(), dv.begin());
-      std::vector<hnswlib::labeltype> result = getNNsNoCopy(dv, k);
+  struct SearchWorker {
 
-      for (size_t k = 0; k < result.size(); k++) {
-        output(i, k) = result[k];
+    Hnsw<dist_t, Distance, DoNormalize> &hnsw;
+    const std::vector<double> &data;
+
+    const std::size_t nr;
+    const std::size_t nc;
+    const std::size_t nnbrs;
+
+    std::vector<hnswlib::labeltype> idx_vec;
+
+    SearchWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
+                 const std::vector<double> &data, std::size_t nr,
+                 std::size_t nc, std::size_t nnbrs) :
+      hnsw(hnsw), data(data), nr(nr), nc(nc), nnbrs(nnbrs), idx_vec(nr * nnbrs)  {}
+
+    void operator()(std::size_t begin, std::size_t end) {
+      std::vector<dist_t> dv(nc);
+      for (std::size_t i = begin; i < end; i++) {
+        for (std::size_t j = 0; j < nc; j++) {
+          dv[j] = data[j * nr + i];
+        }
+        std::vector<hnswlib::labeltype> result = hnsw.getNNsNoCopy(dv, nnbrs);
+
+        for (size_t k = 0; k < result.size(); k++) {
+          idx_vec[k * nr + i] = result[k];
+        }
       }
     }
+  };
 
-    return output;
+  Rcpp::IntegerMatrix getAllNNs(Rcpp::NumericMatrix fm, std::size_t nnbrs)
+  {
+    const std::size_t nrow = fm.nrow();
+    const std::size_t ncol = fm.ncol();
+
+    auto data = Rcpp::as<std::vector<double>>(fm);
+
+    SearchWorker worker(*this, data, nrow, ncol, nnbrs);
+
+    RcppPerpendicular::parallel_for(0, nrow, worker, numThreads, 1);
+
+    Rcpp::IntegerMatrix idx(nrow, nnbrs, worker.idx_vec.begin());
+    return idx;
   }
 
   void callSave(const std::string path_to_index) {
