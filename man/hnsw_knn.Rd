@@ -13,7 +13,7 @@ hnsw_knn(
   ef = 10,
   verbose = FALSE,
   progress = "bar",
-  n_threads = 1L
+  n_threads = 0
 )
 }
 \arguments{
@@ -54,7 +54,7 @@ than \code{ef_construction}. Typical values are \code{100 - 2000}.}
 percent of run time) to tracking progress. Set \code{progress = NULL} to
 turn this off. Has no effect if \code{verbose = FALSE}.}
 
-\item{n_threads}{integer, number of OpenMP threads to use (if available).}
+\item{n_threads}{number of threads to use when constructing the index.}
 }
 \value{
 a list containing:

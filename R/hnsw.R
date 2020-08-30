@@ -57,7 +57,7 @@
 #'   \code{verbose = TRUE}. There is a small but noticeable overhead (a few
 #'   percent of run time) to tracking progress. Set \code{progress = NULL} to
 #'   turn this off. Has no effect if \code{verbose = FALSE}.
-#' @param n_threads integer, number of OpenMP threads to use (if available).
+#' @param n_threads number of threads to use when constructing the index.
 #' @return a list containing:
 #' \itemize{
 #'   \item \code{idx} an n by k matrix containing the nearest neighbor indices.
@@ -76,8 +76,8 @@
 #' \emph{arXiv preprint} \emph{arXiv:1603.09320}.
 hnsw_knn <- function(X, k = 10, distance = "euclidean",
                      M = 16, ef_construction = 200, ef = 10,
-                     verbose = FALSE, progress = "bar", n_threads = 1L) {
-  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && n_threads >= 1)
+                     verbose = FALSE, progress = "bar", n_threads = 0) {
+  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && n_threads >= 0)
 
   if (!is.matrix(X)) {
     stop("X must be matrix")
@@ -130,7 +130,7 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
 #'   \code{verbose = TRUE}. There is a small but noticeable overhead (a few
 #'   percent of run time) to tracking progress. Set \code{progress = NULL} to
 #'   turn this off. Has no effect if \code{verbose = FALSE}.
-#' @param n_threads integer, number of OpenMP threads to use (if available).
+#' @param n_threads number of threads to use.
 #' @return an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
 #'   class.
 #' @examples
@@ -138,8 +138,8 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
 hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
-                       verbose = FALSE, progress = "bar", n_threads = 1L) {
-  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && n_threads >= 1)
+                       verbose = FALSE, progress = "bar", n_threads = 0) {
+  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && n_threads >= 0)
 
   if (!is.matrix(X)) {
     stop("X must be matrix")

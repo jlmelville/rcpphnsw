@@ -11,7 +11,7 @@ hnsw_build(
   ef = 200,
   verbose = FALSE,
   progress = "bar",
-  n_threads = 1L
+  n_threads = 0
 )
 }
 \arguments{
@@ -45,7 +45,7 @@ Should be an integer value between 1 and the size of the dataset.}
 percent of run time) to tracking progress. Set \code{progress = NULL} to
 turn this off. Has no effect if \code{verbose = FALSE}.}
 
-\item{n_threads}{integer, number of OpenMP threads to use (if available).}
+\item{n_threads}{number of threads to use.}
 }
 \value{
 an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}

@@ -66,7 +66,7 @@ public:
   //  100-2000 (default: 200).
   Hnsw(const int dim, const size_t max_elements, const size_t M = 16,
        const size_t ef_construction = 200) :
-  dim(dim), cur_l(0), numThreads(1),
+  dim(dim), cur_l(0), numThreads(0),
   space(std::unique_ptr<Distance>(new Distance(dim))),
   appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
       new hnswlib::HierarchicalNSW<dist_t>(space.get(), max_elements, M,
@@ -74,7 +74,7 @@ public:
   { }
 
   Hnsw(const int dim, const std::string path_to_index) :
-  dim(dim), cur_l(0), numThreads(1),
+  dim(dim), cur_l(0), numThreads(0),
   space(std::unique_ptr<Distance>(new Distance(dim))),
   appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
       new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index)))
@@ -84,7 +84,7 @@ public:
 
   Hnsw(const int dim, const std::string path_to_index,
        const size_t max_elements) :
-  dim(dim), cur_l(0), numThreads(1),
+  dim(dim), cur_l(0), numThreads(0),
   space(std::unique_ptr<Distance>(new Distance(dim))),
   appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
       new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index, false,
@@ -146,7 +146,7 @@ public:
     double * items_ptr = reinterpret_cast<double *>(&items[0]);
 
     AddWorker worker(*this, items_ptr, nrow, ncol, cur_l);
-    RcppPerpendicular::parallel_for(0, nrow, worker, this->numThreads, 1);
+    RcppPerpendicular::parallel_for(0, nrow, worker, numThreads, 1);
     cur_l = size();
   }
 
