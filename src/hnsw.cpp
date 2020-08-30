@@ -150,28 +150,28 @@ public:
   }
 
 
-  std::vector<hnswlib::labeltype> getNNs(const std::vector<dist_t>& dv, std::size_t k)
+  std::vector<hnswlib::labeltype> getNNs(const std::vector<dist_t>& dv, std::size_t nnbrs)
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
 
-    return getNNsNoCopy(fv, k);
+    return getNNsNoCopy(fv, nnbrs);
   }
 
-  std::vector<hnswlib::labeltype> getNNsNoCopy(std::vector<dist_t>& fv, std::size_t k)
+  std::vector<hnswlib::labeltype> getNNsNoCopy(std::vector<dist_t>& fv, std::size_t nnbrs)
   {
     Normalizer<dist_t, DoNormalize>::normalize(fv);
 
     std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
-      appr_alg->searchKnn(fv.data(), k);
+      appr_alg->searchKnn(fv.data(), nnbrs);
 
-    if (result.size() != k) {
-      Rcpp::stop("Unable to find k results. Probably ef or M is too small");
+    if (result.size() != nnbrs) {
+      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
 
     std::vector<hnswlib::labeltype> items;
-    items.reserve(k);
-    for (std::size_t i = 0; i < k; i++) {
+    items.reserve(nnbrs);
+    for (std::size_t i = 0; i < nnbrs; i++) {
       auto &result_tuple = result.top();
       items.push_back(result_tuple.second + 1);
       result.pop();
@@ -181,35 +181,35 @@ public:
     return items;
   }
 
-  Rcpp::List getNNsList(const std::vector<dist_t>& dv, std::size_t k,
+  Rcpp::List getNNsList(const std::vector<dist_t>& dv, std::size_t nnbrs,
                         bool include_distances)
   {
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
 
-    return getNNsListNoCopy(fv, k, include_distances);
+    return getNNsListNoCopy(fv, nnbrs, include_distances);
   }
 
-  Rcpp::List getNNsListNoCopy(std::vector<dist_t>& fv, std::size_t k,
+  Rcpp::List getNNsListNoCopy(std::vector<dist_t>& fv, std::size_t nnbrs,
                               bool include_distances)
   {
     Normalizer<dist_t, DoNormalize>::normalize(fv);
 
     std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
-      appr_alg->searchKnn(fv.data(), k);
+      appr_alg->searchKnn(fv.data(), nnbrs);
 
-    if (result.size() != k) {
-      Rcpp::stop("Unable to find k results. Probably ef or M is too small");
+    if (result.size() != nnbrs) {
+      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
 
     std::vector<hnswlib::labeltype> items;
-    items.reserve(k);
+    items.reserve(nnbrs);
 
     if (include_distances) {
       std::vector<dist_t> distances;
-      distances.reserve(k);
+      distances.reserve(nnbrs);
 
-      for (std::size_t i = 0; i < k; i++) {
+      for (std::size_t i = 0; i < nnbrs; i++) {
         auto &result_tuple = result.top();
         distances.push_back(result_tuple.first);
         items.push_back(result_tuple.second + 1);
@@ -224,7 +224,7 @@ public:
         Rcpp::Named("distance") = distances);
     }
     else {
-      for (std::size_t i = 0; i < k; i++) {
+      for (std::size_t i = 0; i < nnbrs; i++) {
         auto &result_tuple = result.top();
         items.push_back(result_tuple.second + 1);
         result.pop();
@@ -237,17 +237,17 @@ public:
     }
   }
 
-  Rcpp::List getAllNNsList(Rcpp::NumericMatrix fm, std::size_t k,
+  Rcpp::List getAllNNsList(Rcpp::NumericMatrix fm, std::size_t nnbrs,
                            bool include_distances = true)
   {
-    Rcpp::IntegerMatrix allItems(fm.nrow(), k);
-    Rcpp::NumericMatrix allDistances(fm.nrow(), k);
+    Rcpp::IntegerMatrix allItems(fm.nrow(), nnbrs);
+    Rcpp::NumericMatrix allDistances(fm.nrow(), nnbrs);
 
     for (int i = 0; i < fm.nrow(); i++) {
       Rcpp::NumericMatrix::Row row = fm.row(i);
       std::vector<dist_t> dv(row.size());
       std::copy(row.begin(), row.end(), dv.begin());
-      Rcpp::List result = getNNsListNoCopy(dv, k, include_distances);
+      Rcpp::List result = getNNsListNoCopy(dv, nnbrs, include_distances);
       std::vector<hnswlib::labeltype> items = result["item"];
 
       if (include_distances) {
