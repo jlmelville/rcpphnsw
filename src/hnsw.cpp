@@ -342,6 +342,7 @@ public:
                                                                    ok_row);
         if (!ok_row) {
           ok = false;
+          break;
         }
 
         for (std::size_t k = 0; k < result.size(); k++) {
