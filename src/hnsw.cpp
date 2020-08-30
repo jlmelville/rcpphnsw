@@ -155,26 +155,43 @@ public:
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
 
-    return getNNsNoCopy(fv, nnbrs);
+    bool ok = true;
+    std::vector<hnswlib::labeltype> result = getNNsNoCopy(fv, nnbrs, ok);
+
+    if (!ok) {
+      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
+    }
+    return result;
   }
 
-  std::vector<hnswlib::labeltype> getNNsNoCopy(std::vector<dist_t>& fv, std::size_t nnbrs)
+  std::vector<hnswlib::labeltype> getNNsNoCopy(std::vector<dist_t>& fv,
+                                               std::size_t nnbrs,
+                                               bool& ok)
   {
+    ok = true;
     Normalizer<dist_t, DoNormalize>::normalize(fv);
 
     std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
       appr_alg->searchKnn(fv.data(), nnbrs);
 
-    if (result.size() != nnbrs) {
-      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
+
+    const std::size_t nresults = result.size();
+    if (nresults != nnbrs) {
+      ok = false;
     }
 
     std::vector<hnswlib::labeltype> items;
     items.reserve(nnbrs);
-    for (std::size_t i = 0; i < nnbrs; i++) {
+    for (std::size_t i = 0; i < nresults; i++) {
       auto &result_tuple = result.top();
       items.push_back(result_tuple.second + 1);
       result.pop();
+    }
+
+    if (!ok) {
+      for (std::size_t i = 0; i != nnbrs - nresults; i++) {
+        items.push_back(-1);
+      }
     }
     std::reverse(items.begin(), items.end());
 
@@ -287,11 +304,13 @@ public:
     const std::size_t nnbrs;
 
     std::vector<hnswlib::labeltype> idx_vec;
+    bool ok;
 
     SearchWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
                  const std::vector<double> &data, std::size_t nr,
                  std::size_t nc, std::size_t nnbrs) :
-      hnsw(hnsw), data(data), nr(nr), nc(nc), nnbrs(nnbrs), idx_vec(nr * nnbrs)  {}
+      hnsw(hnsw), data(data), nr(nr), nc(nc), nnbrs(nnbrs), idx_vec(nr * nnbrs),
+      ok(true) {}
 
     void operator()(std::size_t begin, std::size_t end) {
       std::vector<dist_t> dv(nc);
@@ -299,7 +318,13 @@ public:
         for (std::size_t j = 0; j < nc; j++) {
           dv[j] = data[j * nr + i];
         }
-        std::vector<hnswlib::labeltype> result = hnsw.getNNsNoCopy(dv, nnbrs);
+
+        bool ok_row = true;
+        std::vector<hnswlib::labeltype> result = hnsw.getNNsNoCopy(dv, nnbrs,
+                                                                   ok_row);
+        if (!ok_row) {
+          ok = false;
+        }
 
         for (std::size_t k = 0; k < result.size(); k++) {
           idx_vec[k * nr + i] = result[k];
@@ -318,6 +343,9 @@ public:
     SearchWorker worker(*this, data, nrow, ncol, nnbrs);
 
     RcppPerpendicular::parallel_for(0, nrow, worker, numThreads, 1);
+    if (!worker.ok) {
+      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
+    }
 
     Rcpp::IntegerMatrix idx(nrow, nnbrs, worker.idx_vec.begin());
     return idx;
