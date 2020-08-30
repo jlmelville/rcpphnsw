@@ -56,19 +56,24 @@ inline auto split_input_range(const IndexRange &range, std::size_t n_threads,
 template <typename Worker>
 inline void parallel_for(std::size_t begin, std::size_t end, Worker &worker,
                          std::size_t n_threads, std::size_t grain_size = 1) {
-  // split the work
-  IndexRange input_range(begin, end);
-  std::vector<IndexRange> ranges =
-      split_input_range(input_range, n_threads, grain_size);
+  if (n_threads > 0) {
+    // split the work
+    IndexRange input_range(begin, end);
+    std::vector<IndexRange> ranges =
+        split_input_range(input_range, n_threads, grain_size);
 
-  std::vector<std::thread> threads;
-  for (auto &range : ranges) {
-    threads.push_back(
-        std::thread(&worker_thread<Worker>, std::ref(worker), range));
+    std::vector<std::thread> threads;
+    for (auto &range : ranges) {
+      threads.push_back(
+          std::thread(&worker_thread<Worker>, std::ref(worker), range));
+    }
+
+    for (auto &thread : threads) {
+      thread.join();
+    }
   }
-
-  for (auto &thread : threads) {
-    thread.join();
+  else {
+    worker(begin, end);
   }
 }
 
