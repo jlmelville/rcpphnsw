@@ -214,6 +214,8 @@ with `dim` dimensions from the specified `filename`.
 maximum capacity of `max_elements`. This is a way to increase the capacity of
 the index without a complete rebuild.
 * `setEf(ef)` set search parameter `ef`.
+* `setNumThreads(num_threads)` Use this number of threads when calling 
+`addItems`.
 * `addItem(v)` add vector `v` to the index. Internally, each vector gets an
 increasing integer label, with the first vector added getting the label `1`, the
 second `2` and so on. These labels are returned in `getNNs` and related methods
@@ -222,7 +224,8 @@ to identify which vector in the index are neighbors.
 each row vector gets an increasing integer label, with the first row added
 getting the label `1`, the second `2` and so on. These labels are returned in
 `getNNs` and related methods to identify which vector in the index are
-neighbors.
+neighbors. The number of threads specified by `setNumThreads` is used for
+building the index and may be non-deterministic.
 * `save(filename)` saves an index to the specified `filename`. To load an index,
 use the `new(HnswL2, dim, filename)` constructor (see above).
 * `getNNs(v, k)` return a vector of the labels of the `k`-nearest neighbors of
