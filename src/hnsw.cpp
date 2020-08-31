@@ -156,45 +156,14 @@ public:
     std::copy(dv.begin(), dv.end(), fv.begin());
 
     bool ok = true;
-    std::vector<hnswlib::labeltype> result = getNNsNoCopy(fv, nnbrs, ok);
+    bool include_distances = false;
+    std::vector<dist_t> distances(0);
+    std::vector<hnswlib::labeltype> items =
+      getNNsImpl(fv, nnbrs, include_distances, distances, ok);
 
     if (!ok) {
       Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
-    return result;
-  }
-
-  std::vector<hnswlib::labeltype> getNNsNoCopy(std::vector<dist_t>& fv,
-                                               std::size_t nnbrs,
-                                               bool& ok)
-  {
-    ok = true;
-    Normalizer<dist_t, DoNormalize>::normalize(fv);
-
-    std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
-      appr_alg->searchKnn(fv.data(), nnbrs);
-
-
-    const std::size_t nresults = result.size();
-    if (nresults != nnbrs) {
-      ok = false;
-    }
-
-    std::vector<hnswlib::labeltype> items;
-    items.reserve(nnbrs);
-    for (std::size_t i = 0; i < nresults; i++) {
-      auto &result_tuple = result.top();
-      items.push_back(result_tuple.second + 1);
-      result.pop();
-    }
-
-    if (!ok) {
-      for (std::size_t i = 0; i != nnbrs - nresults; i++) {
-        items.push_back(-1);
-      }
-    }
-    std::reverse(items.begin(), items.end());
-
     return items;
   }
 
@@ -206,9 +175,8 @@ public:
 
     bool ok = true;
     std::vector<dist_t> distances(0);
-    std::vector<hnswlib::labeltype> items = getNNsListNoCopy(fv, nnbrs,
-                                                             include_distances,
-                                                             distances, ok);
+    std::vector<hnswlib::labeltype> items =
+      getNNsImpl(fv, nnbrs, include_distances, distances, ok);
     if (!ok) {
       Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
@@ -220,7 +188,7 @@ public:
     return result;
   }
 
-  std::vector<hnswlib::labeltype> getNNsListNoCopy(
+  std::vector<hnswlib::labeltype> getNNsImpl(
       std::vector<dist_t>& fv, std::size_t nnbrs, bool include_distances,
       std::vector<dist_t>& distances, bool& ok)
   {
@@ -309,7 +277,7 @@ public:
         }
 
         std::vector<hnswlib::labeltype> items =
-          hnsw.getNNsListNoCopy(dv, nnbrs, include_distances, distances, ok_row);
+          hnsw.getNNsImpl(dv, nnbrs, include_distances, distances, ok_row);
         if (!ok_row) {
           ok = false;
           break;
@@ -364,12 +332,14 @@ public:
 
     std::vector<hnswlib::labeltype> idx_vec;
     bool ok;
+    bool include_distances = false;
+    std::vector<dist_t> distances;
 
     SearchWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
                  const std::vector<double> &data, std::size_t nr,
                  std::size_t nc, std::size_t nnbrs) :
       hnsw(hnsw), data(data), nr(nr), nc(nc), nnbrs(nnbrs), idx_vec(nr * nnbrs),
-      ok(true) {}
+      ok(true), include_distances(false), distances(0) {}
 
     void operator()(std::size_t begin, std::size_t end) {
       std::vector<dist_t> dv(nc);
@@ -379,15 +349,15 @@ public:
         }
 
         bool ok_row = true;
-        std::vector<hnswlib::labeltype> result = hnsw.getNNsNoCopy(dv, nnbrs,
-                                                                   ok_row);
+        std::vector<hnswlib::labeltype> items =
+          hnsw.getNNsImpl(dv, nnbrs, include_distances, distances, ok_row);
         if (!ok_row) {
           ok = false;
           break;
         }
 
-        for (std::size_t k = 0; k < result.size(); k++) {
-          idx_vec[k * nr + i] = result[k];
+        for (std::size_t k = 0; k < items.size(); k++) {
+          idx_vec[k * nr + i] = items[k];
         }
       }
     }
