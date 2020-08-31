@@ -214,8 +214,8 @@ with `dim` dimensions from the specified `filename`.
 maximum capacity of `max_elements`. This is a way to increase the capacity of
 the index without a complete rebuild.
 * `setEf(ef)` set search parameter `ef`.
-* `setNumThreads(num_threads)` Use this number of threads when calling 
-`addItems`.
+* `setNumThreads(num_threads)` Use this number of threads when adding items
+(via `addItems`) and searching the index (via `getAllNNs` and `getAllNNsList`).
 * `addItem(v)` add vector `v` to the index. Internally, each vector gets an
 increasing integer label, with the first vector added getting the label `1`, the
 second `2` and so on. These labels are returned in `getNNs` and related methods
@@ -243,13 +243,15 @@ the distances. If `k` neighbors can't be found, an error is thrown.
 * `getAllNNs(m, k)` return a matrix of the labels of the `k`-nearest neighbors
 of each row vector in `m`. Labels are integers numbered from one, representing
 the insertion order into the index, e.g. the label `1` represents the first item
-added to the index.. If `k` neighbors can't be found, an error is thrown.
+added to the index. If `k` neighbors can't be found, an error is thrown. The 
+number  of threads specified by `setNumThreads` is used for searching.
 * `getAllNNsList(m, k, include_distances = FALSE)` return a list containing a
 matrix named `item` with the labels of the `k`-nearest neighbors of each row
 vector in `m`. Labels are integers numbered from one, representing the insertion
 order into the index, e.g. the label `1` represents the first item added to the
 index. If `include_distances = TRUE` then also return a matrix `distance`
 containing the distances. If `k` neighbors can't be found, an error is thrown.
+The number  of threads specified by `setNumThreads` is used for searching.
 * `size()` returns the number of items in the index. This is an upper limit on
 the number of neighbors you can expect to return from `getNNs` and the other
 search methods.
