@@ -57,7 +57,7 @@
 #'   \code{verbose = TRUE}. There is a small but noticeable overhead (a few
 #'   percent of run time) to tracking progress. Set \code{progress = NULL} to
 #'   turn this off. Has no effect if \code{verbose = FALSE}.
-#' @param n_threads number of threads to use when constructing the index.
+#' @param n_threads number of threads to use.
 #' @return a list containing:
 #' \itemize{
 #'   \item \code{idx} an n by k matrix containing the nearest neighbor indices.
@@ -100,7 +100,7 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
   )
   hnsw_search(
     X = X, ann = ann, k = k, ef = ef, verbose = verbose,
-    progress = progress
+    progress = progress, n_threads = n_threads
   )
 }
 
@@ -206,6 +206,7 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 #'   \code{verbose = TRUE}. There is a small but noticeable overhead (a few
 #'   percent of run time) to tracking progress. Set \code{progress = NULL} to
 #'   turn this off. Has no effect if \code{verbose = FALSE}.
+#' @param n_threads number of threads to use.
 #' @return a list containing:
 #' \itemize{
 #'   \item \code{idx} an n by k matrix containing the nearest neighbor indices.
@@ -222,7 +223,10 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 #' irism <- as.matrix(iris[, -5])
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
-hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE, progress = "bar") {
+hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE, progress = "bar",
+                        n_threads = 0) {
+  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && n_threads >= 0)
+
   if (!is.matrix(X)) {
     stop("X must be matrix")
   }
@@ -234,7 +238,9 @@ hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE, progress = "bar") {
   dist <- matrix(nrow = nr, ncol = k)
 
   ann$setEf(ef)
-  tsmessage("Searching HNSW index with ef = ", formatC(ef))
+  ann$setNumThreads(n_threads)
+  tsmessage("Searching HNSW index with ef = ", formatC(ef), " and ", n_threads,
+            " threads")
 
   nstars <- 50
   if (verbose && nr > nstars && !is.null(progress) && progress == "bar") {

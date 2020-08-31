@@ -4,7 +4,15 @@
 \alias{hnsw_search}
 \title{Search an hnswlib nearest neighbor index}
 \usage{
-hnsw_search(X, ann, k, ef = 10, verbose = FALSE, progress = "bar")
+hnsw_search(
+  X,
+  ann,
+  k,
+  ef = 10,
+  verbose = FALSE,
+  progress = "bar",
+  n_threads = 0
+)
 }
 \arguments{
 \item{X}{A numeric matrix of data to search for neighbors.}
@@ -27,6 +35,8 @@ between \code{k} and the size of the dataset. Typical values are
 \code{verbose = TRUE}. There is a small but noticeable overhead (a few
 percent of run time) to tracking progress. Set \code{progress = NULL} to
 turn this off. Has no effect if \code{verbose = FALSE}.}
+
+\item{n_threads}{number of threads to use.}
 }
 \value{
 a list containing:
