@@ -13,6 +13,13 @@ Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 
 ## Status
 
+*August 30 2020*. Although not yet on CRAN, support for building and searching
+an index in parallel (via the `n_threads` function argument and `setNumThreads`
+object method) has been added to the current development version (available via
+`devtools::install_github`). Thanks to 
+[Dmitriy Selivanov](https://github.com/dselivanov) for a lot of the work on
+this.
+
 *September 20 2019*. RcppHNSW 0.2.0 is now available on CRAN, up to date with
 hnswlib at <https://github.com/nmslib/hnswlib/commit/c5c38f0>, with new methods:
 `size`, `resizeIndex` and `markDeleted`. Also, a bug that prevented searching
@@ -264,7 +271,6 @@ searches of the index. It does not reduce the memory used by the index. Calls to
 
 ## Differences from Python Bindings
 
-* Multi-threading is not supported.
 * Arbitrary integer labeling is not supported. Where labels are used, e.g. in
 the return value of `getNNsList` or as input in `markDeleted`, the labels
 represent the order in which the items were added to the index, using 1-indexing
@@ -273,9 +279,6 @@ has a default of label `0`, but here it will have label `1`.
 * The interface roughly follows the Python one but deviates with naming and also
 rolls the declaration and initialization of the index into one call. And as
 noted above, you must pass arguments by position, not keyword.
-* I have made a change to the C++ `hnswalg.h` code to use the
-[`showUpdate` macro from RcppAnnoy](https://github.com/eddelbuettel/rcppannoy/blob/498a2c241df0fcac140d80f9ee0a6985d0f08687/inst/include/annoylib.h#L57),
-rather than `std::cerr` directly.
 
 ## License
 
