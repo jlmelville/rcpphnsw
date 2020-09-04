@@ -101,10 +101,10 @@ public:
     std::vector<dist_t> fv(dv.size());
     std::copy(dv.begin(), dv.end(), fv.begin());
 
-    addItemNoCopy(fv, cur_l) ;
+    addItemImpl(fv, cur_l) ;
   }
 
-  void addItemNoCopy(std::vector<dist_t>& dv, std::size_t id)
+  void addItemImpl(std::vector<dist_t>& dv, std::size_t id)
   {
     Normalizer<dist_t, DoNormalize>::normalize(dv);
 
@@ -134,7 +134,7 @@ public:
         for (std::size_t j = 0; j < ncol; j++) {
           dv[j] =  items_ptr[nrow * j + i];
         }
-        hnsw.addItemNoCopy(dv, index_start + i);
+        hnsw.addItemImpl(dv, index_start + i);
       }
     }
   };
