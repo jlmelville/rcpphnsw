@@ -11,7 +11,8 @@ hnsw_build(
   ef = 200,
   verbose = FALSE,
   progress = "bar",
-  n_threads = 0
+  n_threads = 0,
+  grain_size = 1
 )
 }
 \arguments{
@@ -45,7 +46,14 @@ Should be an integer value between 1 and the size of the dataset.}
 percent of run time) to tracking progress. Set \code{progress = NULL} to
 turn this off. Has no effect if \code{verbose = FALSE}.}
 
-\item{n_threads}{number of threads to use.}
+\item{n_threads}{Maximum number of threads to use. The exact number is
+determined by \code{grain_size}.}
+
+\item{grain_size}{Minimum amount of work to do (rows in \code{X} to add) per
+thread. If the number of rows in \code{X} isn't sufficient, then fewer than
+\code{n_threads} will be used. This is useful in cases where the overhead
+of context switching with too many threads outweighs the gains due to
+parallelism.}
 }
 \value{
 an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}

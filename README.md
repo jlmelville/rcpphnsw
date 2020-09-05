@@ -221,8 +221,18 @@ with `dim` dimensions from the specified `filename`.
 maximum capacity of `max_elements`. This is a way to increase the capacity of
 the index without a complete rebuild.
 * `setEf(ef)` set search parameter `ef`.
-* `setNumThreads(num_threads)` Use this number of threads when adding items
-(via `addItems`) and searching the index (via `getAllNNs` and `getAllNNsList`).
+* `setNumThreads(num_threads)` Use (at most) this number of threads when adding
+items (via `addItems`) and searching the index (via `getAllNNs` and
+`getAllNNsList`). See also the `setGrainSize` parameter.
+* `setGrainSize(grain_size)` The minimum amount of work to do (adding or
+searching items) per thread. If you don't have enough work for all the threads
+specified by `setNumThreads` to process `grain_size` items per thread, then
+fewer threads will be used. This is useful for cases where the cost of context
+switching between larger number of threads would outweigh the performance gain
+from parallelism. For example, if you have 100 items to process and asked for
+four threads, then 25 items will be processed per thread. However, setting the 
+`grain_size` to 50 will result in 50 items being processed per thread, and 
+therefore only two threads being used.
 * `addItem(v)` add vector `v` to the index. Internally, each vector gets an
 increasing integer label, with the first vector added getting the label `1`, the
 second `2` and so on. These labels are returned in `getNNs` and related methods

@@ -13,11 +13,12 @@ hnsw_knn(
   ef = 10,
   verbose = FALSE,
   progress = "bar",
-  n_threads = 0
+  n_threads = 0,
+  grain_size = 1
 )
 }
 \arguments{
-\item{X}{a numeric matrix of data to add. Each of the n rows is an item in
+\item{X}{a numeric matrix of data to search Each of the n rows is an item in
 the index.}
 
 \item{k}{Number of neighbors to return.}
@@ -54,7 +55,14 @@ than \code{ef_construction}. Typical values are \code{100 - 2000}.}
 percent of run time) to tracking progress. Set \code{progress = NULL} to
 turn this off. Has no effect if \code{verbose = FALSE}.}
 
-\item{n_threads}{number of threads to use.}
+\item{n_threads}{Maximum number of threads to use. The exact number is
+determined by \code{grain_size}.}
+
+\item{grain_size}{Minimum amount of work to do (rows in \code{X} to add or
+search for) per thread. If the number of rows in \code{X} isn't sufficient,
+then fewer than \code{n_threads} will be used. This is useful in cases
+where the overhead of context switching with too many threads outweighs
+the gains due to parallelism.}
 }
 \value{
 a list containing:
