@@ -114,17 +114,18 @@ public:
 
   struct AddWorker {
     Hnsw<dist_t, Distance, DoNormalize> &hnsw;
-    double * items_ptr;
+
+    const std::vector<double> &data;
     std::size_t nrow;
     std::size_t ncol;
     std::size_t index_start;
 
     AddWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
-              double *items_ptr,
+              const std::vector<double> &data,
               std::size_t nrow,
               std::size_t ncol,
               std::size_t index_start) :
-      hnsw(hnsw), items_ptr(items_ptr), nrow(nrow), ncol(ncol), index_start(index_start)
+      hnsw(hnsw), data(data), nrow(nrow), ncol(ncol), index_start(index_start)
     {}
 
     void operator()(std::size_t begin, std::size_t end) {
@@ -132,7 +133,7 @@ public:
 
       for (std::size_t i = begin; i < end; i++) {
         for (std::size_t j = 0; j < ncol; j++) {
-          dv[j] =  items_ptr[nrow * j + i];
+          dv[j] =  data[nrow * j + i];
         }
         hnsw.addItemImpl(dv, index_start + i);
       }
@@ -140,11 +141,11 @@ public:
   };
 
   void addItems(Rcpp::NumericMatrix items) {
-    int ncol = items.ncol();
-    int nrow = items.nrow();
-    double * items_ptr = reinterpret_cast<double *>(&items[0]);
+    const std::size_t nrow = items.nrow();
+    const std::size_t ncol = items.ncol();
+    auto data = Rcpp::as<std::vector<double>>(items);
 
-    AddWorker worker(*this, items_ptr, nrow, ncol, cur_l);
+    AddWorker worker(*this, data, nrow, ncol, cur_l);
     RcppPerpendicular::parallel_for(0, nrow, worker, numThreads, 1);
     cur_l = size();
   }
