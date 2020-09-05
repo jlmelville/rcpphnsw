@@ -5,7 +5,8 @@ Authors@R: c(person("James", "Melville", email = "jlmelville@gmail.com",
   role = c("aut", "cre")), 
   person("Aaron", "Lun", role = "ctb"), 
   person("Samuel", "Granjeaud", role = "ctb"),
-  person("Dmitriy", "Selivanov", role = "ctb"))
+  person("Dmitriy", "Selivanov", role = "ctb"),
+  person("Yuxing", "Liao", role = "ctb"))
 Description: 'Hnswlib' is a C++ library for Approximate Nearest Neighbors. This 
  package provides a minimal R interface by relying on the 'Rcpp' package. See 
  <https://github.com/nmslib/hnswlib> for more on 'hnswlib'. 'hnswlib' is 
