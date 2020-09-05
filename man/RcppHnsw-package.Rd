@@ -18,7 +18,7 @@ method for approximate nearest neighbor search.
 Details about hnswlib are available at the reference listed below.
 }
 \references{
-\url{https://github.com/nmslib/hnsw}
+\url{https://github.com/nmslib/hnswlib}
 
 Malkov, Y. A., & Yashunin, D. A. (2016).
 Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs.
