@@ -1,4 +1,15 @@
-# RcppHNSW 0.2.9000
+# RcppHNSW 0.3.0
+
+## New features
+
+* Multi-threading support is now available. Use the `setNumThreads` method if 
+using the object-based API, and the `n_threads` parameter in the `hnsw_*` 
+function API. For finer control, a `setGrainSize` and `grain_size` option is
+also available in the object and function interface respectively. Thank you
+to [Dmitriy Selivanov](https://github.com/dselivanov) for a lot of the work on
+this.
+* Updated hnswlib to 
+[version 0.4.0](https://github.com/nmslib/hnswlib/releases/tag/v0.4.0).
 
 ## Bug fixes and minor improvements
 
