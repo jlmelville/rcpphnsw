@@ -265,8 +265,10 @@ hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE, progress = "bar",
   ann$setEf(ef)
   ann$setNumThreads(n_threads)
   ann$setGrainSize(grain_size)
-  tsmessage("Searching HNSW index with ef = ", formatC(ef), " and ", n_threads,
-            " threads")
+  tsmessage(
+    "Searching HNSW index with ef = ", formatC(ef), " and ", n_threads,
+    " threads"
+  )
 
   nstars <- 50
   if (verbose && nr > nstars && !is.null(progress) && progress == "bar") {
