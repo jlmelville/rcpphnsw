@@ -153,26 +153,21 @@ public:
 
   std::vector<hnswlib::labeltype> getNNs(const std::vector<dist_t>& dv, std::size_t nnbrs)
   {
-    std::vector<dist_t> fv(dv.size());
-    std::copy(dv.begin(), dv.end(), fv.begin());
+    std::vector<dist_t> fv(dv);
 
     bool ok = true;
-    bool include_distances = false;
-    std::vector<dist_t> distances(0);
-    std::vector<hnswlib::labeltype> items =
-      getNNsImpl(fv, nnbrs, include_distances, distances, ok);
-
+    std::vector<hnswlib::labeltype> items = getNNsImpl(fv, nnbrs, ok);
     if (!ok) {
       Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
+
     return items;
   }
 
   Rcpp::List getNNsList(const std::vector<dist_t>& dv, std::size_t nnbrs,
                         bool include_distances)
   {
-    std::vector<dist_t> fv(dv.size());
-    std::copy(dv.begin(), dv.end(), fv.begin());
+    std::vector<dist_t> fv(dv);
 
     bool ok = true;
     std::vector<dist_t> distances(0);
@@ -245,6 +240,13 @@ public:
     return items;
   }
 
+  std::vector<hnswlib::labeltype> getNNsImpl(std::vector<dist_t>& fv,
+                                             std::size_t nnbrs, bool& ok)
+  {
+    bool include_distances = false;
+    std::vector<dist_t> distances(0);
+    return getNNsImpl(fv, nnbrs, include_distances, distances, ok);
+  }
 
   struct SearchListWorker {
     Hnsw<dist_t, Distance, DoNormalize> &hnsw;
