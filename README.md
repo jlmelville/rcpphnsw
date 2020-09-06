@@ -13,6 +13,9 @@ Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 
 ## Status
 
+*September 6 2020* RcppHNSW 0.3.0 is now available on CRAN, with multi-threading
+support.
+
 *August 30 2020*. Although not yet on CRAN, support for building and searching
 an index in parallel (via the `n_threads` function argument and `setNumThreads`
 object method) has been added to the current development version (available via
