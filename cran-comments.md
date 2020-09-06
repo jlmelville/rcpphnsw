@@ -1,19 +1,16 @@
 ## Release Summary
 
-This is a minor release to upgrade the HNSW library to a new version, add some
-new methods and to fix a user-reported bug with the search function. Also, a URL
-and BugReports entry has been added to the DESCRIPTION.
+This is a new minor release.
 
 ## Test environments
 
-* ubuntu 14.04 (on travis-ci), R 3.4.4, R 3.6.0, R-devel
+* ubuntu 16.04 (on travis-ci), R 3.6.3, R 4.0.0, R-devel
 * ubuntu 16.04 (on rhub), R 3.6.1
-* fedora 30 (on rhub), R-devel
-* debian (on rhub), R-devel
-* mac OS X High Sierra (on travis-ci), R 3.5.3, R 3.6.1
-* local Windows 10 build, R 3.6.1
+* fedora 32 (on rhub), R-devel
+* mac OS X High Sierra (on travis-ci), R 3.6.3, R 4.0.2
+* local Windows 10 build, R 4.0.2
 * Windows Server 2008 (on rhub) R-devel
-* Windows Server 2012 (on appveyor) R 3.6.1
+* Windows Server 2012 (on appveyor) R 4.0.2
 * win-builder (devel)
 
 ## R CMD check results
@@ -26,15 +23,28 @@ There was a message about possibly mis-spelled words in DESCRIPTION:
  
 This is spelled correctly.
 
-With r-hub checking on Windows only there was a message:
+With r-hub checking on Debian, there was the following message:
 
-"N  checking for non-standard things in the check directory
-   Found the following files/directories:
-     'examples_x64' 'tests_i386' 'tests_x64'
-     'RcppHNSW-Ex_i386.Rout' 'RcppHNSW-Ex_x64.Rout' 'examples_i386'"
+> * checking installed package size ... NOTE
+  installed size is  7.3Mb
+  sub-directories of 1Mb or more:
+    libs   7.1Mb
 
-This would seem to be something to do with r-hub rather than a real problem.
+This is expected due to the use of C++ templates in HNSW.
+
+## CRAN checks
+
+There are no ERRORs or WARNINGs.
+
+There are three flavors with NOTEs about installed package size 
+(r-devel-linux-x86_64-fedora-clang, r-release-macos-x86_64, 
+r-oldrel-macos-x86_64). This is expected and won't be fixed.
 
 ## Downstream dependencies
 
-None.
+There are 2 reverse dependencies (0 from CRAN + 2 from BioConductor):
+
+* BiocNeighbors has no ERRORs or WARNINGs.
+* Destiny fails to complete the R CMD check due to problems building vignettes.
+This is unrelated to either the current CRAN version of RcppHNSW or this new
+release.
