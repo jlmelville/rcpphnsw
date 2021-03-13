@@ -8,3 +8,4 @@
 ^codecov\.yml$
 ^cran-comments\.md$
 DONTCHECKMEIN.R
+^\.github$
