@@ -15,7 +15,6 @@ License: GPL (>= 3)
 URL: https://github.com/jlmelville/rcpphnsw
 BugReports: https://github.com/jlmelville/rcpphnsw/issues
 Encoding: UTF-8
-LazyData: true
 Imports: methods, Rcpp (>= 0.11.3)
 LinkingTo: Rcpp
 RoxygenNote: 7.1.2
