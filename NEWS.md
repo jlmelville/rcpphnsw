@@ -3,7 +3,7 @@
 ## New features
 
 * Updated hnswlib to 
-[version 0.5.0](https://github.com/nmslib/hnswlib/releases/tag/v0.5.0).
+[version 0.6.2](https://github.com/nmslib/hnswlib/releases/tag/v0.6.2).
 
 ## Bug fixes and minor improvements
 
