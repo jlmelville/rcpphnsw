@@ -78,14 +78,23 @@
 #' iris_nn_data <- hnsw_knn(as.matrix(iris[, -5]), k = 10)
 #' @references
 #' Malkov, Y. A., & Yashunin, D. A. (2016).
-#' Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs.
+#' Efficient and robust approximate nearest neighbor search using Hierarchical
+#' Navigable Small World graphs.
 #' \emph{arXiv preprint} \emph{arXiv:1603.09320}.
-hnsw_knn <- function(X, k = 10, distance = "euclidean",
-                     M = 16, ef_construction = 200, ef = 10,
-                     verbose = FALSE, progress = "bar", n_threads = 0,
+hnsw_knn <- function(X,
+                     k = 10,
+                     distance = "euclidean",
+                     M = 16,
+                     ef_construction = 200,
+                     ef = 10,
+                     verbose = FALSE,
+                     progress = "bar",
+                     n_threads = 0,
                      grain_size = 1) {
-  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && n_threads >= 0)
-  stopifnot(is.numeric(grain_size) && length(grain_size) == 1 && grain_size >= 0)
+  stopifnot(is.numeric(n_threads) &&
+    length(n_threads) == 1 && n_threads >= 0)
+  stopifnot(is.numeric(grain_size) &&
+    length(grain_size) == 1 && grain_size >= 0)
 
   if (!is.matrix(X)) {
     stop("X must be matrix")
@@ -100,16 +109,28 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
   if (k > max_k) {
     stop("k cannot be larger than ", max_k)
   }
-  distance <- match.arg(distance, c("l2", "euclidean", "cosine", "ip"))
+  distance <-
+    match.arg(distance, c("l2", "euclidean", "cosine", "ip"))
 
   ann <- hnsw_build(
-    X = X, distance = distance, M = M, ef = ef_construction,
-    verbose = verbose, progress = progress, n_threads = n_threads,
+    X = X,
+    distance = distance,
+    M = M,
+    ef = ef_construction,
+    verbose = verbose,
+    progress = progress,
+    n_threads = n_threads,
     grain_size = grain_size
   )
   hnsw_search(
-    X = X, ann = ann, k = k, ef = ef, verbose = verbose,
-    progress = progress, n_threads = n_threads, grain_size = grain_size
+    X = X,
+    ann = ann,
+    k = k,
+    ef = ef,
+    verbose = verbose,
+    progress = progress,
+    n_threads = n_threads,
+    grain_size = grain_size
   )
 }
 
@@ -152,11 +173,18 @@ hnsw_knn <- function(X, k = 10, distance = "euclidean",
 #' irism <- as.matrix(iris[, -5])
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
-hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
-                       verbose = FALSE, progress = "bar", n_threads = 0,
+hnsw_build <- function(X,
+                       distance = "euclidean",
+                       M = 16,
+                       ef = 200,
+                       verbose = FALSE,
+                       progress = "bar",
+                       n_threads = 0,
                        grain_size = 1) {
-  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && n_threads >= 0)
-  stopifnot(is.numeric(grain_size) && length(grain_size) == 1 && grain_size >= 0)
+  stopifnot(is.numeric(n_threads) &&
+    length(n_threads) == 1 && n_threads >= 0)
+  stopifnot(is.numeric(grain_size) &&
+    length(grain_size) == 1 && grain_size >= 0)
 
   if (!is.matrix(X)) {
     stop("X must be matrix")
@@ -164,7 +192,8 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
   if (M < 2) {
     stop("M cannot be < 2")
   }
-  distance <- match.arg(distance, c("l2", "euclidean", "cosine", "ip"))
+  distance <-
+    match.arg(distance, c("l2", "euclidean", "cosine", "ip"))
 
   nr <- nrow(X)
   nc <- ncol(X)
@@ -184,22 +213,30 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
   }
 
   tsmessage(
-    "Building HNSW index with metric '", distance, "'",
-    " ef = ", formatC(ef), " M = ", formatC(M), " using ", n_threads, " threads"
+    "Building HNSW index with metric '",
+    distance,
+    "'",
+    " ef = ",
+    formatC(ef),
+    " M = ",
+    formatC(M),
+    " using ",
+    n_threads,
+    " threads"
   )
   ann$setNumThreads(n_threads)
   ann$setGrainSize(grain_size)
 
   nstars <- 50
-  if (verbose && nr > nstars && !is.null(progress) && progress == "bar") {
+  if (verbose &&
+    nr > nstars && !is.null(progress) && progress == "bar") {
     progress_for(
       nr, nstars,
       function(chunk_start, chunk_end) {
         ann$addItems(X[chunk_start:chunk_end, , drop = FALSE])
       }
     )
-  }
-  else {
+  } else {
     ann$addItems(X)
   }
 
@@ -247,51 +284,64 @@ hnsw_build <- function(X, distance = "euclidean", M = 16, ef = 200,
 #' irism <- as.matrix(iris[, -5])
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
-hnsw_search <- function(X, ann, k, ef = 10, verbose = FALSE, progress = "bar",
-                        n_threads = 0, grain_size = 1) {
-  stopifnot(is.numeric(n_threads) && length(n_threads) == 1 && n_threads >= 0)
-  stopifnot(is.numeric(grain_size) && length(grain_size) == 1 && grain_size >= 0)
+hnsw_search <-
+  function(X,
+           ann,
+           k,
+           ef = 10,
+           verbose = FALSE,
+           progress = "bar",
+           n_threads = 0,
+           grain_size = 1) {
+    stopifnot(is.numeric(n_threads) &&
+      length(n_threads) == 1 && n_threads >= 0)
+    stopifnot(is.numeric(grain_size) &&
+      length(grain_size) == 1 && grain_size >= 0)
 
-  if (!is.matrix(X)) {
-    stop("X must be matrix")
-  }
-  nr <- nrow(X)
+    if (!is.matrix(X)) {
+      stop("X must be matrix")
+    }
+    nr <- nrow(X)
 
-  ef <- max(ef, k)
+    ef <- max(ef, k)
 
-  idx <- matrix(nrow = nr, ncol = k)
-  dist <- matrix(nrow = nr, ncol = k)
+    idx <- matrix(nrow = nr, ncol = k)
+    dist <- matrix(nrow = nr, ncol = k)
 
-  ann$setEf(ef)
-  ann$setNumThreads(n_threads)
-  ann$setGrainSize(grain_size)
-  tsmessage(
-    "Searching HNSW index with ef = ", formatC(ef), " and ", n_threads,
-    " threads"
-  )
-
-  nstars <- 50
-  if (verbose && nr > nstars && !is.null(progress) && progress == "bar") {
-    progress_for(
-      nr, nstars,
-      function(chunk_start, chunk_end) {
-        res <- ann$getAllNNsList(X[chunk_start:chunk_end, , drop = FALSE], k, TRUE)
-        idx[chunk_start:chunk_end, ] <<- as.integer(res$item)
-        dist[chunk_start:chunk_end, ] <<- res$distance
-      }
+    ann$setEf(ef)
+    ann$setNumThreads(n_threads)
+    ann$setGrainSize(grain_size)
+    tsmessage(
+      "Searching HNSW index with ef = ",
+      formatC(ef),
+      " and ",
+      n_threads,
+      " threads"
     )
-  }
-  else {
-    res <- ann$getAllNNsList(X, k, TRUE)
-    idx <- res$item
-    dist <- res$distance
-  }
 
-  if (!is.null(attr(ann, "distance")) &&
-    attr(ann, "distance") == "euclidean") {
-    dist <- sqrt(dist)
-  }
+    nstars <- 50
+    if (verbose &&
+      nr > nstars && !is.null(progress) && progress == "bar") {
+      progress_for(
+        nr, nstars,
+        function(chunk_start, chunk_end) {
+          res <-
+            ann$getAllNNsList(X[chunk_start:chunk_end, , drop = FALSE], k, TRUE)
+          idx[chunk_start:chunk_end, ] <<- as.integer(res$item)
+          dist[chunk_start:chunk_end, ] <<- res$distance
+        }
+      )
+    } else {
+      res <- ann$getAllNNsList(X, k, TRUE)
+      idx <- res$item
+      dist <- res$distance
+    }
 
-  tsmessage("Finished searching")
-  list(idx = idx, dist = dist)
-}
+    if (!is.null(attr(ann, "distance")) &&
+      attr(ann, "distance") == "euclidean") {
+      dist <- sqrt(dist)
+    }
+
+    tsmessage("Finished searching")
+    list(idx = idx, dist = dist)
+  }
