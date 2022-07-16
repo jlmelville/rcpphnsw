@@ -9,3 +9,4 @@
 ^cran-comments\.md$
 DONTCHECKMEIN.R
 ^\.github$
+^CRAN-SUBMISSION$

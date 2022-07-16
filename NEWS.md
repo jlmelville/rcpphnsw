@@ -1,4 +1,4 @@
-# RcppHNSW 0.3.0.9000
+# RcppHNSW 0.4.0
 
 ## New features
 

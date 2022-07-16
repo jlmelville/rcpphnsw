@@ -1,21 +1,29 @@
 ## Release Summary
 
-This is a new minor release.
+This is a new minor release and also fixes a 'LazyData' NOTE reported on the
+CRAN checks page.
 
 ## Test environments
 
-* ubuntu 16.04 (on travis-ci), R 3.6.3, R 4.0.0, R-devel
-* ubuntu 16.04 (on rhub), R 3.6.1
-* fedora 32 (on rhub), R-devel
-* mac OS X High Sierra (on travis-ci), R 3.6.3, R 4.0.2
-* local Windows 10 build, R 4.0.2
-* Windows Server 2008 (on rhub) R-devel
-* Windows Server 2012 (on appveyor) R 4.0.2
+* ubuntu 20.04 (on github actions), R 4.1.3, R 4.2.1, devel
+* local ubuntu 22.04 R 4.2.1
+* Windows Server 2022 (on github actions), R 4.1.3
+* local Windows 11 build, R 4.2.1
+* mac OS X Big Sur (on github actions) R 4.2.1
 * win-builder (devel)
 
 ## R CMD check results
 
 There were no ERRORs or WARNINGs.
+
+There was one NOTE:
+
+❯ checking installed package size ... NOTE
+    installed size is  5.4Mb
+    sub-directories of 1Mb or more:
+      libs   5.1Mb
+
+This is expected due to the use of C++ templates in hnswlib.
 
 There was a message about possibly mis-spelled words in DESCRIPTION:
 
@@ -23,28 +31,20 @@ There was a message about possibly mis-spelled words in DESCRIPTION:
  
 This is spelled correctly.
 
-With r-hub checking on Debian, there was the following message:
-
-> * checking installed package size ... NOTE
-  installed size is  7.3Mb
-  sub-directories of 1Mb or more:
-    libs   7.1Mb
-
-This is expected due to the use of C++ templates in HNSW.
-
 ## CRAN checks
 
 There are no ERRORs or WARNINGs.
 
-There are three flavors with NOTEs about installed package size 
-(r-devel-linux-x86_64-fedora-clang, r-release-macos-x86_64, 
+There is a NOTE for all flavors about LazyData. This release fixes that NOTE.
+
+There are four flavors with NOTEs about installed package size 
+(r-release-macos-arm64, r-release-macos-x86_64, r-oldrel-macos-arm64, 
 r-oldrel-macos-x86_64). This is expected and won't be fixed.
 
 ## Downstream dependencies
 
-There are 2 reverse dependencies (0 from CRAN + 2 from BioConductor):
+We checked 3 reverse dependencies (1 from CRAN + 2 from Bioconductor), comparing 
+R CMD check results across CRAN and dev versions of this package.
 
-* BiocNeighbors has no ERRORs or WARNINGs.
-* Destiny fails to complete the R CMD check due to problems building vignettes.
-This is unrelated to either the current CRAN version of RcppHNSW or this new
-release.
+ * We saw 0 new problems
+ * We failed to check 0 packages
