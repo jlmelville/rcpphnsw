@@ -1,3 +1,11 @@
+# RcppHNSW 0.4.1
+
+## Bug fixes and minor improvements
+
+* Rolled back to
+[hnswlib v0.4.0](https://github.com/nmslib/hnswlib/releases/tag/v0.4.0)
+due to valgrind problems in v0.6.2
+
 # RcppHNSW 0.4.0
 
 ## New features

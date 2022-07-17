@@ -1,7 +1,7 @@
 ## Release Summary
 
-This is a new minor release and also fixes a 'LazyData' NOTE reported on the
-CRAN checks page.
+This is a patch release to fix a valgrind error that was introduced with
+the previous submission.
 
 ## Test environments
 
@@ -40,6 +40,8 @@ There is a NOTE for all flavors about LazyData. This release fixes that NOTE.
 There are four flavors with NOTEs about installed package size 
 (r-release-macos-arm64, r-release-macos-x86_64, r-oldrel-macos-arm64, 
 r-oldrel-macos-x86_64). This is expected and won't be fixed.
+
+There is a valgrind issue. This releases fixes that issue.
 
 ## Downstream dependencies
 
