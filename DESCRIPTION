@@ -1,6 +1,6 @@
 Package: RcppHNSW
 Title: 'Rcpp' Bindings for 'hnswlib', a Library for Approximate Nearest Neighbors
-Version: 0.4.0
+Version: 0.4.0.9000
 Authors@R: c(person("James", "Melville", email = "jlmelville@gmail.com", 
   role = c("aut", "cre")), 
   person("Aaron", "Lun", role = "ctb"), 
