@@ -1,4 +1,5 @@
-//  RcppHNSW -- Rcpp bindings to hnswlib library for Approximate Nearest Neighbours
+//  RcppHNSW -- Rcpp bindings to hnswlib library for Approximate Nearest
+//  Neighbours
 //
 //  Copyright (C) 2018  James Melville
 //
@@ -29,17 +30,14 @@
 
 #include "RcppPerpendicular/RcppPerpendicular.h"
 
-
-template <typename dist_t, bool DoNormalize = false>
-struct Normalizer {
-  static void normalize(std::vector<dist_t>& vec) {}
+template <typename dist_t, bool DoNormalize = false> struct Normalizer {
+  static void normalize(std::vector<dist_t> &vec) {}
 };
 
-template <typename dist_t>
-struct Normalizer<dist_t, true> {
+template <typename dist_t> struct Normalizer<dist_t, true> {
   static const constexpr float FLOAT_MIN = 1e-30F;
 
-  static void normalize(std::vector<dist_t>& vec) {
+  static void normalize(std::vector<dist_t> &vec) {
     const std::size_t dim = vec.size();
     float norm = 0.0F;
     for (std::size_t i = 0; i < dim; i++) {
@@ -53,10 +51,11 @@ struct Normalizer<dist_t, true> {
   }
 };
 
-template<typename dist_t, typename Distance, bool DoNormalize = false>
+template <typename dist_t, typename Distance, bool DoNormalize = false>
 class Hnsw {
   static const constexpr std::size_t M_DEFAULT = 16;
   static const constexpr std::size_t EF_CONSTRUCTION_DEFAULT = 200;
+
 public:
   // dim - length of the vectors being added
   // max_elements - size of the data being added
@@ -68,47 +67,40 @@ public:
   //  improved recall at the expense of longer build time. Suggested range:
   //  100-2000 (default: 200).
   Hnsw(int dim, std::size_t max_elements, std::size_t M = M_DEFAULT,
-       std::size_t ef_construction = EF_CONSTRUCTION_DEFAULT) :
-  dim(dim), normalize(false), cur_l(0), numThreads(0), grainSize(1),
-  space(std::unique_ptr<Distance>(new Distance(dim))),
-  appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
-      new hnswlib::HierarchicalNSW<dist_t>(space.get(), max_elements, M,
-                                           ef_construction)))
-  { }
+       std::size_t ef_construction = EF_CONSTRUCTION_DEFAULT)
+      : dim(dim), normalize(false), cur_l(0), numThreads(0), grainSize(1),
+        space(std::unique_ptr<Distance>(new Distance(dim))),
+        appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
+            new hnswlib::HierarchicalNSW<dist_t>(space.get(), max_elements, M,
+                                                 ef_construction))) {}
 
-  Hnsw(int dim, const std::string &path_to_index) :
-  dim(dim), normalize(false), cur_l(0), numThreads(0), grainSize(1),
-  space(std::unique_ptr<Distance>(new Distance(dim))),
-  appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
-      new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index)))
-  {
+  Hnsw(int dim, const std::string &path_to_index)
+      : dim(dim), normalize(false), cur_l(0), numThreads(0), grainSize(1),
+        space(std::unique_ptr<Distance>(new Distance(dim))),
+        appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
+            new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index))) {
     cur_l = appr_alg->cur_element_count;
   }
 
-  Hnsw(int dim, const std::string &path_to_index, std::size_t max_elements) :
-  dim(dim), normalize(false), cur_l(0), numThreads(0), grainSize(1),
-  space(std::unique_ptr<Distance>(new Distance(dim))),
-  appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
-      new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index, false,
-                                           max_elements)))
-  {
+  Hnsw(int dim, const std::string &path_to_index, std::size_t max_elements)
+      : dim(dim), normalize(false), cur_l(0), numThreads(0), grainSize(1),
+        space(std::unique_ptr<Distance>(new Distance(dim))),
+        appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
+            new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index,
+                                                 false, max_elements))) {
     cur_l = appr_alg->cur_element_count;
   }
 
-  void setEf(std::size_t ef) {
-    appr_alg->ef_ = ef;
-  }
+  void setEf(std::size_t ef) { appr_alg->ef_ = ef; }
 
-  void addItem(Rcpp::NumericVector item)
-  {
+  void addItem(Rcpp::NumericVector item) {
     std::vector<dist_t> item_copy(item.size());
     std::copy(item.begin(), item.end(), item_copy.begin());
 
     addItemImpl(item_copy, cur_l);
   }
 
-  void addItemImpl(std::vector<dist_t>& item, std::size_t label)
-  {
+  void addItemImpl(std::vector<dist_t> &item, std::size_t label) {
     Normalizer<dist_t, DoNormalize>::normalize(item);
 
     appr_alg->addPoint(item.data(), label);
@@ -122,21 +114,19 @@ public:
     std::size_t ncol;
     std::size_t index_start;
 
-    public:
-        AddWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
-              const std::vector<double> &data,
-              std::size_t nrow,
-              std::size_t ncol,
-              std::size_t index_start) :
-      hnsw(hnsw), data(data), nrow(nrow), ncol(ncol), index_start(index_start)
-    {}
+  public:
+    AddWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
+              const std::vector<double> &data, std::size_t nrow,
+              std::size_t ncol, std::size_t index_start)
+        : hnsw(hnsw), data(data), nrow(nrow), ncol(ncol),
+          index_start(index_start) {}
 
     void operator()(std::size_t begin, std::size_t end) {
       std::vector<dist_t> item_copy(ncol);
 
       for (std::size_t i = begin; i < end; i++) {
         for (std::size_t j = 0; j < ncol; j++) {
-          item_copy[j] =  data[nrow * j + i];
+          item_copy[j] = data[nrow * j + i];
         }
         hnsw.addItemImpl(item_copy, index_start + i);
       }
@@ -153,13 +143,13 @@ public:
     cur_l = size();
   }
 
-
-  auto getNNs(const std::vector<dist_t>& item, std::size_t nnbrs) -> std::vector<hnswlib::labeltype> 
-  {
+  auto getNNs(const std::vector<dist_t> &item, std::size_t nnbrs)
+      -> std::vector<hnswlib::labeltype> {
     std::vector<dist_t> item_copy(item);
 
     bool found_all = true;
-    std::vector<hnswlib::labeltype> nbr_labels = getNNsImpl(item_copy, nnbrs, found_all);
+    std::vector<hnswlib::labeltype> nbr_labels =
+        getNNsImpl(item_copy, nnbrs, found_all);
     if (!found_all) {
       Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
@@ -167,15 +157,14 @@ public:
     return nbr_labels;
   }
 
-  auto getNNsList(const std::vector<dist_t>& item, std::size_t nnbrs,
-                        bool include_distances) -> Rcpp::List
-  {
+  auto getNNsList(const std::vector<dist_t> &item, std::size_t nnbrs,
+                  bool include_distances) -> Rcpp::List {
     std::vector<dist_t> item_copy(item);
 
     bool found_all = true;
     std::vector<dist_t> distances(0);
     std::vector<hnswlib::labeltype> nbr_labels =
-      getNNsImpl(item_copy, nnbrs, include_distances, distances, found_all);
+        getNNsImpl(item_copy, nnbrs, include_distances, distances, found_all);
     if (!found_all) {
       Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
@@ -187,15 +176,14 @@ public:
     return nbr_list;
   }
 
-  auto getNNsImpl(
-      std::vector<dist_t>& item, std::size_t nnbrs, bool include_distances,
-      std::vector<dist_t>& distances, bool& found_all) -> std::vector<hnswlib::labeltype>
-  {
+  auto getNNsImpl(std::vector<dist_t> &item, std::size_t nnbrs,
+                  bool include_distances, std::vector<dist_t> &distances,
+                  bool &found_all) -> std::vector<hnswlib::labeltype> {
     found_all = true;
     Normalizer<dist_t, DoNormalize>::normalize(item);
 
     std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
-      appr_alg->searchKnn(item.data(), nnbrs);
+        appr_alg->searchKnn(item.data(), nnbrs);
 
     const std::size_t nresults = result.size();
     if (nresults != nnbrs) {
@@ -224,8 +212,7 @@ public:
 
       std::reverse(distances.begin(), distances.end());
       std::reverse(items.begin(), items.end());
-    }
-    else {
+    } else {
       for (std::size_t i = 0; i < nresults; i++) {
         auto &result_tuple = result.top();
         items.push_back(result_tuple.second + 1);
@@ -243,9 +230,8 @@ public:
     return items;
   }
 
-  auto getNNsImpl(std::vector<dist_t>& item,
-                                             std::size_t nnbrs, bool& found_all) -> std::vector<hnswlib::labeltype>
-  {
+  auto getNNsImpl(std::vector<dist_t> &item, std::size_t nnbrs, bool &found_all)
+      -> std::vector<hnswlib::labeltype> {
     bool include_distances = false;
     std::vector<dist_t> distances(0);
     return getNNsImpl(item, nnbrs, include_distances, distances, found_all);
@@ -260,18 +246,18 @@ public:
     const std::size_t nnbrs;
     bool include_distances;
 
-public:
+  public:
     std::vector<hnswlib::labeltype> idx_vec;
     std::vector<dist_t> dist_vec;
     bool ok{true};
 
     SearchListWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
                      const std::vector<double> &data, std::size_t nitems,
-                     std::size_t ndim, std::size_t nnbrs, bool include_distances) :
-      hnsw(hnsw), data(data), nitems(nitems), ndim(ndim), nnbrs(nnbrs),
-      include_distances(include_distances), idx_vec(nitems * nnbrs),
-      dist_vec(nitems * nnbrs)
-    {}
+                     std::size_t ndim, std::size_t nnbrs,
+                     bool include_distances)
+        : hnsw(hnsw), data(data), nitems(nitems), ndim(ndim), nnbrs(nnbrs),
+          include_distances(include_distances), idx_vec(nitems * nnbrs),
+          dist_vec(nitems * nnbrs) {}
 
     void operator()(std::size_t begin, std::size_t end) {
       std::vector<dist_t> item_copy(ndim);
@@ -283,8 +269,8 @@ public:
           item_copy[j] = data[j * nitems + i];
         }
 
-        std::vector<hnswlib::labeltype> items =
-          hnsw.getNNsImpl(item_copy, nnbrs, include_distances, distances, ok_row);
+        std::vector<hnswlib::labeltype> items = hnsw.getNNsImpl(
+            item_copy, nnbrs, include_distances, distances, ok_row);
         if (!ok_row) {
           ok = false;
           break;
@@ -295,8 +281,7 @@ public:
             idx_vec[k * nitems + i] = items[k];
             dist_vec[k * nitems + i] = distances[k];
           }
-        }
-        else {
+        } else {
           for (std::size_t k = 0; k < nnbrs; k++) {
             idx_vec[k * nitems + i] = items[k];
           }
@@ -306,8 +291,7 @@ public:
   };
 
   auto getAllNNsList(const Rcpp::NumericMatrix &items, std::size_t nnbrs,
-                           bool include_distances = true) -> Rcpp::List
-  {
+                     bool include_distances = true) -> Rcpp::List {
     const std::size_t nrow = items.nrow();
     const std::size_t ncol = items.ncol();
     auto data = Rcpp::as<std::vector<double>>(items);
@@ -318,15 +302,14 @@ public:
       Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
 
-    auto result = Rcpp::List::create(
-      Rcpp::Named("item") = Rcpp::IntegerMatrix(nrow, nnbrs, worker.idx_vec.begin())
-    );
+    auto result = Rcpp::List::create(Rcpp::Named("item") = Rcpp::IntegerMatrix(
+                                         nrow, nnbrs, worker.idx_vec.begin()));
     if (include_distances) {
-      result["distance"] = Rcpp::NumericMatrix(nrow, nnbrs, worker.dist_vec.begin());
+      result["distance"] =
+          Rcpp::NumericMatrix(nrow, nnbrs, worker.dist_vec.begin());
     }
     return result;
   }
-
 
   class SearchWorker {
     Hnsw<dist_t, Distance, DoNormalize> &hnsw;
@@ -339,15 +322,15 @@ public:
     bool include_distances{false};
     std::vector<dist_t> distances;
 
-public:
+  public:
     std::vector<hnswlib::labeltype> idx_vec;
     bool ok{true};
 
     SearchWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
                  const std::vector<double> &data, std::size_t nitems,
-                 std::size_t ndim, std::size_t nnbrs) :
-      hnsw(hnsw), data(data), nitems(nitems), ndim(ndim), nnbrs(nnbrs), 
-      distances(0), idx_vec(nitems * nnbrs) {}
+                 std::size_t ndim, std::size_t nnbrs)
+        : hnsw(hnsw), data(data), nitems(nitems), ndim(ndim), nnbrs(nnbrs),
+          distances(0), idx_vec(nitems * nnbrs) {}
 
     void operator()(std::size_t begin, std::size_t end) {
       std::vector<dist_t> item_copy(ndim);
@@ -357,8 +340,8 @@ public:
         }
 
         bool ok_row = true;
-        std::vector<hnswlib::labeltype> items =
-          hnsw.getNNsImpl(item_copy, nnbrs, include_distances, distances, ok_row);
+        std::vector<hnswlib::labeltype> items = hnsw.getNNsImpl(
+            item_copy, nnbrs, include_distances, distances, ok_row);
         if (!ok_row) {
           ok = false;
           break;
@@ -371,8 +354,8 @@ public:
     }
   };
 
-  auto getAllNNs(const Rcpp::NumericMatrix &items, std::size_t nnbrs) -> Rcpp::IntegerMatrix
-  {
+  auto getAllNNs(const Rcpp::NumericMatrix &items, std::size_t nnbrs)
+      -> Rcpp::IntegerMatrix {
     const std::size_t nrow = items.nrow();
     const std::size_t ncol = items.ncol();
 
@@ -393,17 +376,11 @@ public:
     appr_alg->saveIndex(path_to_index);
   }
 
-  auto size() const -> std::size_t {
-    return appr_alg->cur_element_count;
-  }
+  auto size() const -> std::size_t { return appr_alg->cur_element_count; }
 
-  void setNumThreads(std::size_t numThreads) {
-    this->numThreads = numThreads;
-  }
+  void setNumThreads(std::size_t numThreads) { this->numThreads = numThreads; }
 
-  void setGrainSize(std::size_t grainSize) {
-    this->grainSize = grainSize;
-  }
+  void setGrainSize(std::size_t grainSize) { this->grainSize = grainSize; }
 
   void markDeleted(std::size_t label) {
     if (label < 1 || label > size()) {
@@ -413,9 +390,7 @@ public:
     appr_alg->markDelete(label - 1);
   }
 
-  void resizeIndex(std::size_t new_size) {
-    appr_alg->resizeIndex(new_size);
-  }
+  void resizeIndex(std::size_t new_size) { appr_alg->resizeIndex(new_size); }
 
 private:
   int dim;
@@ -432,66 +407,96 @@ using HnswCosine = Hnsw<float, hnswlib::InnerProductSpace, true>;
 using HnswIp = Hnsw<float, hnswlib::InnerProductSpace, false>;
 
 RCPP_EXPOSED_CLASS_NODECL(HnswL2)
-  RCPP_MODULE(HnswL2) {
-    Rcpp::class_<HnswL2>("HnswL2")
-    .constructor<int32_t, std::size_t, std::size_t, std::size_t>("constructor with dimension, number of items, M, ef")
-    .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
-    .constructor<int32_t, std::string, std::size_t>("constructor with dimension, loading from filename, number of items")
-    .method("setEf",      &HnswL2::setEf,      "set ef value")
-    .method("addItem",    &HnswL2::addItem,    "add item")
-    .method("addItems",   &HnswL2::addItems,   "add items")
-    .method("save",       &HnswL2::callSave,   "save index to file")
-    .method("getNNs",     &HnswL2::getNNs,     "retrieve Nearest Neigbours given vector")
-    .method("getNNsList", &HnswL2::getNNsList, "retrieve Nearest Neigbours given vector")
-    .method("getAllNNs",  &HnswL2::getAllNNs,  "retrieve Nearest Neigbours given matrix")
-    .method("getAllNNsList",  &HnswL2::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
-    .method("size",       &HnswL2::size,        "number of items added to the index")
-    .method("setNumThreads",  &HnswL2::setNumThreads, "set the number of threads to use")
-    .method("setGrainSize",  &HnswL2::setGrainSize, "set minimum grain size for using multiple threads")
-    .method("markDeleted",  &HnswL2::markDeleted, "remove the item with the specified label from the index")
-    .method("resizeIndex",  &HnswL2::resizeIndex, "resize the index to use this number of items")
-    ;
-  }
+RCPP_MODULE(HnswL2) {
+  Rcpp::class_<HnswL2>("HnswL2")
+      .constructor<int32_t, std::size_t, std::size_t, std::size_t>(
+          "constructor with dimension, number of items, M, ef")
+      .constructor<int32_t, std::string>(
+          "constructor with dimension, loading from filename")
+      .constructor<int32_t, std::string, std::size_t>(
+          "constructor with dimension, loading from filename, number of items")
+      .method("setEf", &HnswL2::setEf, "set ef value")
+      .method("addItem", &HnswL2::addItem, "add item")
+      .method("addItems", &HnswL2::addItems, "add items")
+      .method("save", &HnswL2::callSave, "save index to file")
+      .method("getNNs", &HnswL2::getNNs,
+              "retrieve Nearest Neigbours given vector")
+      .method("getNNsList", &HnswL2::getNNsList,
+              "retrieve Nearest Neigbours given vector")
+      .method("getAllNNs", &HnswL2::getAllNNs,
+              "retrieve Nearest Neigbours given matrix")
+      .method("getAllNNsList", &HnswL2::getAllNNsList,
+              "retrieve Nearest Neigbours given matrix")
+      .method("size", &HnswL2::size, "number of items added to the index")
+      .method("setNumThreads", &HnswL2::setNumThreads,
+              "set the number of threads to use")
+      .method("setGrainSize", &HnswL2::setGrainSize,
+              "set minimum grain size for using multiple threads")
+      .method("markDeleted", &HnswL2::markDeleted,
+              "remove the item with the specified label from the index")
+      .method("resizeIndex", &HnswL2::resizeIndex,
+              "resize the index to use this number of items");
+}
 
 RCPP_EXPOSED_CLASS_NODECL(HnswCosine)
-  RCPP_MODULE(HnswCosine) {
-    Rcpp::class_<HnswCosine>("HnswCosine")
-    .constructor<int32_t, std::size_t, std::size_t, std::size_t>("constructor with dimension, number of items, M, ef")
-    .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
-    .constructor<int32_t, std::string, std::size_t>("constructor with dimension, loading from filename, number of items")
-    .method("setEf",      &HnswCosine::setEf,      "set ef value")
-    .method("addItem",    &HnswCosine::addItem,    "add item")
-    .method("addItems",   &HnswCosine::addItems,   "add items")
-    .method("save",       &HnswCosine::callSave,   "save index to file")
-    .method("getNNs",     &HnswCosine::getNNs,     "retrieve Nearest Neigbours given vector")
-    .method("getNNsList", &HnswCosine::getNNsList, "retrieve Nearest Neigbours given vector")
-    .method("getAllNNs",  &HnswCosine::getAllNNs,  "retrieve Nearest Neigbours given matrix")
-    .method("getAllNNsList",  &HnswCosine::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
-    .method("size",       &HnswCosine::size,       "number of items added to the index")
-    .method("setNumThreads",  &HnswCosine::setNumThreads, "set the number of threads to use")
-    .method("setGrainSize",  &HnswCosine::setGrainSize, "set minimum grain size for using multiple threads")
-    .method("markDeleted",  &HnswCosine::markDeleted, "remove the item with the specified label from the index")
-    .method("resizeIndex",  &HnswCosine::resizeIndex, "resize the index to use this number of items")
-    ;
-  }
+RCPP_MODULE(HnswCosine) {
+  Rcpp::class_<HnswCosine>("HnswCosine")
+      .constructor<int32_t, std::size_t, std::size_t, std::size_t>(
+          "constructor with dimension, number of items, M, ef")
+      .constructor<int32_t, std::string>(
+          "constructor with dimension, loading from filename")
+      .constructor<int32_t, std::string, std::size_t>(
+          "constructor with dimension, loading from filename, number of items")
+      .method("setEf", &HnswCosine::setEf, "set ef value")
+      .method("addItem", &HnswCosine::addItem, "add item")
+      .method("addItems", &HnswCosine::addItems, "add items")
+      .method("save", &HnswCosine::callSave, "save index to file")
+      .method("getNNs", &HnswCosine::getNNs,
+              "retrieve Nearest Neigbours given vector")
+      .method("getNNsList", &HnswCosine::getNNsList,
+              "retrieve Nearest Neigbours given vector")
+      .method("getAllNNs", &HnswCosine::getAllNNs,
+              "retrieve Nearest Neigbours given matrix")
+      .method("getAllNNsList", &HnswCosine::getAllNNsList,
+              "retrieve Nearest Neigbours given matrix")
+      .method("size", &HnswCosine::size, "number of items added to the index")
+      .method("setNumThreads", &HnswCosine::setNumThreads,
+              "set the number of threads to use")
+      .method("setGrainSize", &HnswCosine::setGrainSize,
+              "set minimum grain size for using multiple threads")
+      .method("markDeleted", &HnswCosine::markDeleted,
+              "remove the item with the specified label from the index")
+      .method("resizeIndex", &HnswCosine::resizeIndex,
+              "resize the index to use this number of items");
+}
 
 RCPP_EXPOSED_CLASS_NODECL(HnswIp)
-  RCPP_MODULE(HnswIp) {
-    Rcpp::class_<HnswIp>("HnswIp")
-    .constructor<int32_t, std::size_t, std::size_t, std::size_t>("constructor with dimension, number of items, M, ef")
-    .constructor<int32_t, std::string>("constructor with dimension, loading from filename")
-    .constructor<int32_t, std::string, std::size_t>("constructor with dimension, loading from filename, number of items")
-    .method("setEf",      &HnswIp::setEf,      "set ef value")
-    .method("addItem",    &HnswIp::addItem,    "add item")
-    .method("save",       &HnswIp::callSave,   "save index to file")
-    .method("getNNs",     &HnswIp::getNNs,     "retrieve Nearest Neigbours given vector")
-    .method("getNNsList", &HnswIp::getNNsList, "retrieve Nearest Neigbours given vector")
-    .method("getAllNNs",  &HnswIp::getAllNNs,  "retrieve Nearest Neigbours given matrix")
-    .method("getAllNNsList",  &HnswIp::getAllNNsList,  "retrieve Nearest Neigbours given matrix")
-    .method("size",       &HnswIp::size,       "number of items added to the index")
-    .method("setNumThreads",  &HnswIp::setNumThreads, "set the number of threads to use")
-    .method("setGrainSize",  &HnswIp::setGrainSize, "set minimum grain size for using multiple threads")
-    .method("markDeleted",  &HnswIp::markDeleted, "remove the item with the specified label from the index")
-    .method("resizeIndex",  &HnswIp::resizeIndex, "resize the index to use this number of items")
-    ;
-  }
+RCPP_MODULE(HnswIp) {
+  Rcpp::class_<HnswIp>("HnswIp")
+      .constructor<int32_t, std::size_t, std::size_t, std::size_t>(
+          "constructor with dimension, number of items, M, ef")
+      .constructor<int32_t, std::string>(
+          "constructor with dimension, loading from filename")
+      .constructor<int32_t, std::string, std::size_t>(
+          "constructor with dimension, loading from filename, number of items")
+      .method("setEf", &HnswIp::setEf, "set ef value")
+      .method("addItem", &HnswIp::addItem, "add item")
+      .method("save", &HnswIp::callSave, "save index to file")
+      .method("getNNs", &HnswIp::getNNs,
+              "retrieve Nearest Neigbours given vector")
+      .method("getNNsList", &HnswIp::getNNsList,
+              "retrieve Nearest Neigbours given vector")
+      .method("getAllNNs", &HnswIp::getAllNNs,
+              "retrieve Nearest Neigbours given matrix")
+      .method("getAllNNsList", &HnswIp::getAllNNsList,
+              "retrieve Nearest Neigbours given matrix")
+      .method("size", &HnswIp::size, "number of items added to the index")
+      .method("setNumThreads", &HnswIp::setNumThreads,
+              "set the number of threads to use")
+      .method("setGrainSize", &HnswIp::setGrainSize,
+              "set minimum grain size for using multiple threads")
+      .method("markDeleted", &HnswIp::markDeleted,
+              "remove the item with the specified label from the index")
+      .method("resizeIndex", &HnswIp::resizeIndex,
+              "resize the index to use this number of items");
+}
