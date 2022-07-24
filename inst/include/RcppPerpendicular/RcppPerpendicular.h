@@ -17,7 +17,8 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+// USA.
 
 #ifndef RCPP_PERPENDICULAR
 #define RCPP_PERPENDICULAR
@@ -38,6 +39,15 @@ auto worker_thread(Worker &worker, const IndexRange &range) -> void {
   }
 }
 
+template <typename Worker>
+auto worker_thread_id(Worker &worker, const IndexRange &range,
+                      std::size_t thread_id) -> void {
+  try {
+    worker(range.first, range.second, thread_id);
+  } catch (...) {
+  }
+}
+
 // Function to calculate the ranges for a given input
 inline auto split_input_range(const IndexRange &range, std::size_t n_threads,
                               std::size_t grain_size)
@@ -50,12 +60,13 @@ inline auto split_input_range(const IndexRange &range, std::size_t n_threads,
 
   // compute grain_size (including enforcing requested minimum)
   std::size_t length = range.second - range.first;
-  if (n_threads == 1)
+  if (n_threads == 1) {
     grain_size = length;
-  else if ((length % n_threads) == 0) // perfect division
+  } else if ((length % n_threads) == 0) { // perfect division
     grain_size = (std::max)(length / n_threads, grain_size);
-  else // imperfect division, divide by threads - 1
+  } else { // imperfect division, divide by threads - 1
     grain_size = (std::max)(length / (n_threads - 1), grain_size);
+  }
 
   // allocate ranges
   std::vector<IndexRange> ranges;
@@ -80,6 +91,7 @@ inline void parallel_for(std::size_t begin, std::size_t end, Worker &worker,
         split_input_range(input_range, n_threads, grain_size);
 
     std::vector<std::thread> threads;
+    threads.reserve(ranges.size());
     for (auto &range : ranges) {
       threads.push_back(
           std::thread(&worker_thread<Worker>, std::ref(worker), range));
@@ -88,10 +100,44 @@ inline void parallel_for(std::size_t begin, std::size_t end, Worker &worker,
     for (auto &thread : threads) {
       thread.join();
     }
-  }
-  else {
+  } else {
     worker(begin, end);
   }
+}
+
+template <typename Worker>
+inline void parallel_for(std::size_t end, Worker &worker, std::size_t n_threads,
+                         std::size_t grain_size = 1) {
+  parallel_for(0, end, worker, n_threads, grain_size);
+}
+
+template <typename Worker>
+inline void pfor(std::size_t begin, std::size_t end, Worker &worker,
+                 std::size_t n_threads, std::size_t grain_size = 1) {
+  if (n_threads > 0) {
+    IndexRange input_range(begin, end);
+    std::vector<IndexRange> ranges =
+        split_input_range(input_range, n_threads, grain_size);
+
+    std::vector<std::thread> threads;
+    for (std::size_t thread_id = 0; thread_id < ranges.size(); ++thread_id) {
+      auto &range = ranges[thread_id];
+      threads.push_back(std::thread(&worker_thread_id<Worker>, std::ref(worker),
+                                    range, thread_id));
+    }
+
+    for (auto &thread : threads) {
+      thread.join();
+    }
+  } else {
+    worker(begin, end, 0);
+  }
+}
+
+template <typename Worker>
+inline void pfor(std::size_t end, Worker &worker, std::size_t n_threads,
+                 std::size_t grain_size = 1) {
+  pfor(0, end, worker, n_threads, grain_size);
 }
 
 } // namespace RcppPerpendicular
