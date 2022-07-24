@@ -21,12 +21,12 @@ the index.}
 
 \item{distance}{Type of distance to calculate. One of:
 \itemize{
-  \item \code{"l2"} Squared L2, i.e. squared Euclidean.
-  \item \code{"euclidean"} Euclidean.
-  \item \code{"cosine"} Cosine.
-  \item \code{"ip"} Inner product: 1 - sum(ai * bi), i.e. the cosine distance
-  where the vectors are not normalized. This can lead to negative distances
-  and other non-metric behavior.
+\item \code{"l2"} Squared L2, i.e. squared Euclidean.
+\item \code{"euclidean"} Euclidean.
+\item \code{"cosine"} Cosine.
+\item \code{"ip"} Inner product: 1 - sum(ai * bi), i.e. the cosine distance
+where the vectors are not normalized. This can lead to negative distances
+and other non-metric behavior.
 }}
 
 \item{M}{Controls the number of bi-directional links created for each element
@@ -57,7 +57,7 @@ parallelism.}
 }
 \value{
 an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
-  class.
+class.
 }
 \description{
 Build an hnswlib nearest neighbor index

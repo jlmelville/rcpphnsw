@@ -27,5 +27,5 @@ Efficient and robust approximate nearest neighbor search using Hierarchical Navi
 \author{
 James Melville for the R interface; Yury Malkov for hnswlib itself.
 
-Maintainer: James Melville <jlmelville@gmail.com>
+Maintainer: James Melville \href{mailto:jlmelville@gmail.com}{jlmelville@gmail.com}
 }

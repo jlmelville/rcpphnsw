@@ -20,3 +20,4 @@ LinkingTo: Rcpp
 RoxygenNote: 7.2.0
 Suggests: testthat,
     covr
+Roxygen: list(markdown = TRUE)

@@ -9,14 +9,14 @@
 #' @name RcppHnsw-package
 #' @aliases HnswL2 Rcpp_HnswL2-class HnswCosine Rcpp_HnswCosine-class HnswIp Rcpp_HnswIp-class
 #' @references
-#' \url{https://github.com/nmslib/hnswlib}
+#' <https://github.com/nmslib/hnswlib>
 #' @author James Melville for the R interface; Yury Malkov for hnswlib itself.
 #'
 #' Maintainer: James Melville <jlmelville@gmail.com>
 #' @references
 #' Malkov, Y. A., & Yashunin, D. A. (2016).
 #' Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs.
-#' \emph{arXiv preprint} \emph{arXiv:1603.09320}.
+#' *arXiv preprint* *arXiv:1603.09320*.
 #' @useDynLib RcppHNSW, .registration = TRUE
 #' @import Rcpp
 #' @import methods

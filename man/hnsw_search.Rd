@@ -49,9 +49,9 @@ to parallelism.}
 \value{
 a list containing:
 \itemize{
-  \item \code{idx} an n by k matrix containing the nearest neighbor indices.
-  \item \code{dist} an n by k matrix containing the nearest neighbor
-   distances.
+\item \code{idx} an n by k matrix containing the nearest neighbor indices.
+\item \code{dist} an n by k matrix containing the nearest neighbor
+distances.
 }
 
 Every item in the dataset is considered to be a neighbor of itself, so the

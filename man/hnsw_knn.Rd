@@ -25,12 +25,12 @@ the index.}
 
 \item{distance}{Type of distance to calculate. One of:
 \itemize{
-  \item \code{"l2"} Squared L2, i.e. squared Euclidean.
-  \item \code{"euclidean"} Euclidean.
-  \item \code{"cosine"} Cosine.
-  \item \code{"ip"} Inner product: 1 - sum(ai * bi), i.e. the cosine distance
-  where the vectors are not normalized. This can lead to negative distances
-  and other non-metric behavior.
+\item \code{"l2"} Squared L2, i.e. squared Euclidean.
+\item \code{"euclidean"} Euclidean.
+\item \code{"cosine"} Cosine.
+\item \code{"ip"} Inner product: 1 - sum(ai * bi), i.e. the cosine distance
+where the vectors are not normalized. This can lead to negative distances
+and other non-metric behavior.
 }}
 
 \item{M}{Controls the number of bi-directional links created for each element
@@ -67,9 +67,9 @@ the gains due to parallelism.}
 \value{
 a list containing:
 \itemize{
-  \item \code{idx} an n by k matrix containing the nearest neighbor indices.
-  \item \code{dist} an n by k matrix containing the nearest neighbor
-   distances.
+\item \code{idx} an n by k matrix containing the nearest neighbor indices.
+\item \code{dist} an n by k matrix containing the nearest neighbor
+distances.
 }
 Every item in the dataset is considered to be a neighbor of itself, so the
 first neighbor of item \code{i} should always be \code{i} itself. If that
@@ -87,23 +87,22 @@ Some details on the parameters used for index construction and search, based
 on \url{https://github.com/nmslib/hnswlib/blob/master/ALGO_PARAMS.md}:
 
 \itemize{
-  \item \code{M} Controls the number of bi-directional links created for each
-  element during index construction. Higher values lead to better results at
-  the expense of memory consumption, which is around \code{M * 8-10} bytes
-  per bytes per stored element. High intrinsic dimensionalities will require
-  higher values of \code{M}. A range of \code{2 - 100} is typical, but
-  \code{12 - 48} is ok for most use cases.
-  \item \code{ef_construction} Size of the dynamic list used during
-  construction. A larger value means a better quality index, but increases
-  build time. Should be an integer value between 1 and the size of the
-  dataset. A typical range is \code{100 - 2000}. Beyond a certain point,
-  increasing \code{ef_construction} has no effect. A sufficient value of
-  \code{ef_construction} can be determined by searching with \code{ef =
-  ef_construction}, and ensuring that the recall is at least 0.9.
-  \item \code{ef} Size of the dynamic list used during index search. Can
-  differ from \code{ef_construction} and be any value between \code{k} (the
-  number of neighbors sought) and the number of elements in the index being
-  searched.
+\item \code{M} Controls the number of bi-directional links created for each
+element during index construction. Higher values lead to better results at
+the expense of memory consumption, which is around \code{M * 8-10} bytes
+per bytes per stored element. High intrinsic dimensionalities will require
+higher values of \code{M}. A range of \code{2 - 100} is typical, but
+\code{12 - 48} is ok for most use cases.
+\item \code{ef_construction} Size of the dynamic list used during
+construction. A larger value means a better quality index, but increases
+build time. Should be an integer value between 1 and the size of the
+dataset. A typical range is \code{100 - 2000}. Beyond a certain point,
+increasing \code{ef_construction} has no effect. A sufficient value of
+\code{ef_construction} can be determined by searching with \code{ef = ef_construction}, and ensuring that the recall is at least 0.9.
+\item \code{ef} Size of the dynamic list used during index search. Can
+differ from \code{ef_construction} and be any value between \code{k} (the
+number of neighbors sought) and the number of elements in the index being
+searched.
 }
 }
 
