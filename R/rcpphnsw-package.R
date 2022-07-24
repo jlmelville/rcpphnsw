@@ -17,6 +17,12 @@
 #' Malkov, Y. A., & Yashunin, D. A. (2016).
 #' Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs.
 #' \emph{arXiv preprint} \emph{arXiv:1603.09320}.
+#' @useDynLib RcppHNSW, .registration = TRUE
+#' @import Rcpp
+#' @import methods
+#' @export HnswL2
+#' @export HnswCosine
+#' @export HnswIp
 NULL
 
 ## ensure module gets loaded

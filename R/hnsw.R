@@ -81,6 +81,7 @@
 #' Efficient and robust approximate nearest neighbor search using Hierarchical
 #' Navigable Small World graphs.
 #' \emph{arXiv preprint} \emph{arXiv:1603.09320}.
+#' @export
 hnsw_knn <- function(X,
                      k = 10,
                      distance = "euclidean",
@@ -173,6 +174,7 @@ hnsw_knn <- function(X,
 #' irism <- as.matrix(iris[, -5])
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
+#' @export
 hnsw_build <- function(X,
                        distance = "euclidean",
                        M = 16,
@@ -284,6 +286,7 @@ hnsw_build <- function(X,
 #' irism <- as.matrix(iris[, -5])
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
+#' @export
 hnsw_search <-
   function(X,
            ann,
