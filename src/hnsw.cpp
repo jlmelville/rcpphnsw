@@ -32,41 +32,44 @@
 
 template <typename dist_t, bool DoNormalize = false>
 struct Normalizer {
-  static void normalize(std::vector<dist_t>& v) {}
+  static void normalize(std::vector<dist_t>& vec) {}
 };
 
 template <typename dist_t>
 struct Normalizer<dist_t, true> {
-  static void normalize(std::vector<dist_t>& v) {
-    const std::size_t dim = v.size();
-    float norm = 0.0f;
+  static const constexpr float FLOAT_MIN = 1e-30F;
+
+  static void normalize(std::vector<dist_t>& vec) {
+    const std::size_t dim = vec.size();
+    float norm = 0.0F;
     for (std::size_t i = 0; i < dim; i++) {
-      norm += v[i] * v[i];
+      norm += vec[i] * vec[i];
     }
-    norm = 1.0f / (std::sqrt(norm) + 1e-30f);
+    norm = 1.0F / (std::sqrt(norm) + FLOAT_MIN);
 
     for (std::size_t i = 0; i < dim; i++) {
-      v[i] *= norm;
+      vec[i] *= norm;
     }
   }
 };
 
 template<typename dist_t, typename Distance, bool DoNormalize = false>
 class Hnsw {
+  static const constexpr std::size_t M_DEFAULT = 16;
+  static const constexpr std::size_t EF_CONSTRUCTION_DEFAULT = 200;
 public:
-
   // dim - length of the vectors being added
   // max_elements - size of the data being added
   // M - Controls maximum number of neighbors in the zero and above-zero
-  //  layers. Higher values lead t better recall and shorter retrieval times,
+  //  layers. Higher values lead to better recall and shorter retrieval times,
   //  at the expense of longer indexing time. Suggested range: 5-100
   //  (default: 16).
   // ef_construction - controls the quality of the graph. Higher values lead to
   //  improved recall at the expense of longer build time. Suggested range:
   //  100-2000 (default: 200).
-  Hnsw(int dim, std::size_t max_elements, std::size_t M = 16,
-       std::size_t ef_construction = 200) :
-  dim(dim), cur_l(0), numThreads(0), grainSize(1),
+  Hnsw(int dim, std::size_t max_elements, std::size_t M = M_DEFAULT,
+       std::size_t ef_construction = EF_CONSTRUCTION_DEFAULT) :
+  dim(dim), normalize(false), cur_l(0), numThreads(0), grainSize(1),
   space(std::unique_ptr<Distance>(new Distance(dim))),
   appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
       new hnswlib::HierarchicalNSW<dist_t>(space.get(), max_elements, M,
@@ -74,7 +77,7 @@ public:
   { }
 
   Hnsw(int dim, const std::string &path_to_index) :
-  dim(dim), cur_l(0), numThreads(0), grainSize(1),
+  dim(dim), normalize(false), cur_l(0), numThreads(0), grainSize(1),
   space(std::unique_ptr<Distance>(new Distance(dim))),
   appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
       new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index)))
@@ -83,7 +86,7 @@ public:
   }
 
   Hnsw(int dim, const std::string &path_to_index, std::size_t max_elements) :
-  dim(dim), cur_l(0), numThreads(0), grainSize(1),
+  dim(dim), normalize(false), cur_l(0), numThreads(0), grainSize(1),
   space(std::unique_ptr<Distance>(new Distance(dim))),
   appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
       new hnswlib::HierarchicalNSW<dist_t>(space.get(), path_to_index, false,
@@ -96,31 +99,31 @@ public:
     appr_alg->ef_ = ef;
   }
 
-  void addItem(Rcpp::NumericVector dv)
+  void addItem(Rcpp::NumericVector item)
   {
-    std::vector<dist_t> fv(dv.size());
-    std::copy(dv.begin(), dv.end(), fv.begin());
+    std::vector<dist_t> item_copy(item.size());
+    std::copy(item.begin(), item.end(), item_copy.begin());
 
-    addItemImpl(fv, cur_l) ;
+    addItemImpl(item_copy, cur_l);
   }
 
-  void addItemImpl(std::vector<dist_t>& dv, std::size_t id)
+  void addItemImpl(std::vector<dist_t>& item, std::size_t label)
   {
-    Normalizer<dist_t, DoNormalize>::normalize(dv);
+    Normalizer<dist_t, DoNormalize>::normalize(item);
 
-    appr_alg->addPoint(dv.data(), static_cast<std::size_t>(id));
+    appr_alg->addPoint(item.data(), label);
     ++cur_l;
   }
 
-  struct AddWorker {
+  class AddWorker {
     Hnsw<dist_t, Distance, DoNormalize> &hnsw;
-
     const std::vector<double> &data;
     std::size_t nrow;
     std::size_t ncol;
     std::size_t index_start;
 
-    AddWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
+    public:
+        AddWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
               const std::vector<double> &data,
               std::size_t nrow,
               std::size_t ncol,
@@ -129,74 +132,74 @@ public:
     {}
 
     void operator()(std::size_t begin, std::size_t end) {
-      std::vector<dist_t> dv(ncol);
+      std::vector<dist_t> item_copy(ncol);
 
       for (std::size_t i = begin; i < end; i++) {
         for (std::size_t j = 0; j < ncol; j++) {
-          dv[j] =  data[nrow * j + i];
+          item_copy[j] =  data[nrow * j + i];
         }
-        hnsw.addItemImpl(dv, index_start + i);
+        hnsw.addItemImpl(item_copy, index_start + i);
       }
     }
   };
 
-  void addItems(Rcpp::NumericMatrix items) {
+  void addItems(const Rcpp::NumericMatrix &items) {
     const std::size_t nrow = items.nrow();
     const std::size_t ncol = items.ncol();
     auto data = Rcpp::as<std::vector<double>>(items);
 
     AddWorker worker(*this, data, nrow, ncol, cur_l);
-    RcppPerpendicular::parallel_for(0, nrow, worker, numThreads, 1);
+    RcppPerpendicular::parallel_for(nrow, worker, numThreads);
     cur_l = size();
   }
 
 
-  std::vector<hnswlib::labeltype> getNNs(const std::vector<dist_t>& dv, std::size_t nnbrs)
+  auto getNNs(const std::vector<dist_t>& item, std::size_t nnbrs) -> std::vector<hnswlib::labeltype> 
   {
-    std::vector<dist_t> fv(dv);
+    std::vector<dist_t> item_copy(item);
 
-    bool ok = true;
-    std::vector<hnswlib::labeltype> items = getNNsImpl(fv, nnbrs, ok);
-    if (!ok) {
+    bool found_all = true;
+    std::vector<hnswlib::labeltype> nbr_labels = getNNsImpl(item_copy, nnbrs, found_all);
+    if (!found_all) {
       Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
 
-    return items;
+    return nbr_labels;
   }
 
-  Rcpp::List getNNsList(const std::vector<dist_t>& dv, std::size_t nnbrs,
-                        bool include_distances)
+  auto getNNsList(const std::vector<dist_t>& item, std::size_t nnbrs,
+                        bool include_distances) -> Rcpp::List
   {
-    std::vector<dist_t> fv(dv);
+    std::vector<dist_t> item_copy(item);
 
-    bool ok = true;
+    bool found_all = true;
     std::vector<dist_t> distances(0);
-    std::vector<hnswlib::labeltype> items =
-      getNNsImpl(fv, nnbrs, include_distances, distances, ok);
-    if (!ok) {
+    std::vector<hnswlib::labeltype> nbr_labels =
+      getNNsImpl(item_copy, nnbrs, include_distances, distances, found_all);
+    if (!found_all) {
       Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
 
-    auto result = Rcpp::List::create(Rcpp::Named("item") = items);
+    auto nbr_list = Rcpp::List::create(Rcpp::Named("item") = nbr_labels);
     if (include_distances) {
-      result["distance"] = distances;
+      nbr_list["distance"] = distances;
     }
-    return result;
+    return nbr_list;
   }
 
-  std::vector<hnswlib::labeltype> getNNsImpl(
-      std::vector<dist_t>& fv, std::size_t nnbrs, bool include_distances,
-      std::vector<dist_t>& distances, bool& ok)
+  auto getNNsImpl(
+      std::vector<dist_t>& item, std::size_t nnbrs, bool include_distances,
+      std::vector<dist_t>& distances, bool& found_all) -> std::vector<hnswlib::labeltype>
   {
-    ok = true;
-    Normalizer<dist_t, DoNormalize>::normalize(fv);
+    found_all = true;
+    Normalizer<dist_t, DoNormalize>::normalize(item);
 
     std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
-      appr_alg->searchKnn(fv.data(), nnbrs);
+      appr_alg->searchKnn(item.data(), nnbrs);
 
     const std::size_t nresults = result.size();
     if (nresults != nnbrs) {
-      ok = false;
+      found_all = false;
     }
 
     std::vector<hnswlib::labeltype> items;
@@ -212,7 +215,7 @@ public:
         items.push_back(result_tuple.second + 1);
         result.pop();
       }
-      if (!ok) {
+      if (!found_all) {
         for (std::size_t i = 0; i != nnbrs - nresults; i++) {
           distances.push_back((std::numeric_limits<dist_t>::max)());
           items.push_back(-1);
@@ -228,7 +231,7 @@ public:
         items.push_back(result_tuple.second + 1);
         result.pop();
       }
-      if (!ok) {
+      if (!found_all) {
         for (std::size_t i = 0; i != nnbrs - nresults; i++) {
           items.push_back(-1);
         }
@@ -240,76 +243,77 @@ public:
     return items;
   }
 
-  std::vector<hnswlib::labeltype> getNNsImpl(std::vector<dist_t>& fv,
-                                             std::size_t nnbrs, bool& ok)
+  auto getNNsImpl(std::vector<dist_t>& item,
+                                             std::size_t nnbrs, bool& found_all) -> std::vector<hnswlib::labeltype>
   {
     bool include_distances = false;
     std::vector<dist_t> distances(0);
-    return getNNsImpl(fv, nnbrs, include_distances, distances, ok);
+    return getNNsImpl(item, nnbrs, include_distances, distances, found_all);
   }
 
-  struct SearchListWorker {
+  class SearchListWorker {
     Hnsw<dist_t, Distance, DoNormalize> &hnsw;
     const std::vector<double> &data;
 
-    const std::size_t nr;
-    const std::size_t nc;
+    const std::size_t nitems;
+    const std::size_t ndim;
     const std::size_t nnbrs;
     bool include_distances;
 
+public:
     std::vector<hnswlib::labeltype> idx_vec;
     std::vector<dist_t> dist_vec;
-    bool ok;
+    bool ok{true};
 
     SearchListWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
-                     const std::vector<double> &data, std::size_t nr,
-                     std::size_t nc, std::size_t nnbrs, bool include_distances) :
-      hnsw(hnsw), data(data), nr(nr), nc(nc), nnbrs(nnbrs),
-      include_distances(include_distances), idx_vec(nr * nnbrs),
-      dist_vec(nr * nnbrs), ok(true)
+                     const std::vector<double> &data, std::size_t nitems,
+                     std::size_t ndim, std::size_t nnbrs, bool include_distances) :
+      hnsw(hnsw), data(data), nitems(nitems), ndim(ndim), nnbrs(nnbrs),
+      include_distances(include_distances), idx_vec(nitems * nnbrs),
+      dist_vec(nitems * nnbrs)
     {}
 
     void operator()(std::size_t begin, std::size_t end) {
-      std::vector<dist_t> dv(nc);
+      std::vector<dist_t> item_copy(ndim);
       std::vector<dist_t> distances(0);
 
       for (std::size_t i = begin; i < end; i++) {
         bool ok_row = true;
-        for (std::size_t j = 0; j < nc; j++) {
-          dv[j] = data[j * nr + i];
+        for (std::size_t j = 0; j < ndim; j++) {
+          item_copy[j] = data[j * nitems + i];
         }
 
         std::vector<hnswlib::labeltype> items =
-          hnsw.getNNsImpl(dv, nnbrs, include_distances, distances, ok_row);
+          hnsw.getNNsImpl(item_copy, nnbrs, include_distances, distances, ok_row);
         if (!ok_row) {
           ok = false;
           break;
         }
 
         if (include_distances) {
-          for (std::size_t k = 0; k < items.size(); k++) {
-            idx_vec[k * nr + i] = items[k];
-            dist_vec[k * nr + i] = distances[k];
+          for (std::size_t k = 0; k < nnbrs; k++) {
+            idx_vec[k * nitems + i] = items[k];
+            dist_vec[k * nitems + i] = distances[k];
           }
         }
         else {
-          for (std::size_t k = 0; k < items.size(); k++) {
-            idx_vec[k * nr + i] = items[k];
+          for (std::size_t k = 0; k < nnbrs; k++) {
+            idx_vec[k * nitems + i] = items[k];
           }
         }
       }
     }
   };
 
-  Rcpp::List getAllNNsList(Rcpp::NumericMatrix fm, std::size_t nnbrs,
-                           bool include_distances = true)
+  auto getAllNNsList(const Rcpp::NumericMatrix &items, std::size_t nnbrs,
+                           bool include_distances = true) -> Rcpp::List
   {
-    const std::size_t nrow = fm.nrow();
-    const std::size_t ncol = fm.ncol();
-    auto data = Rcpp::as<std::vector<double>>(fm);
+    const std::size_t nrow = items.nrow();
+    const std::size_t ncol = items.ncol();
+    auto data = Rcpp::as<std::vector<double>>(items);
 
     SearchListWorker worker(*this, data, nrow, ncol, nnbrs, include_distances);
-    RcppPerpendicular::parallel_for(0, nrow, worker, numThreads, 1);
+    RcppPerpendicular::parallel_for(nrow, worker, numThreads);
     if (!worker.ok) {
       Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
@@ -324,58 +328,59 @@ public:
   }
 
 
-  struct SearchWorker {
-
+  class SearchWorker {
     Hnsw<dist_t, Distance, DoNormalize> &hnsw;
     const std::vector<double> &data;
 
-    const std::size_t nr;
-    const std::size_t nc;
+    const std::size_t nitems;
+    const std::size_t ndim;
     const std::size_t nnbrs;
 
-    std::vector<hnswlib::labeltype> idx_vec;
-    bool ok;
-    bool include_distances = false;
+    bool include_distances{false};
     std::vector<dist_t> distances;
 
+public:
+    std::vector<hnswlib::labeltype> idx_vec;
+    bool ok{true};
+
     SearchWorker(Hnsw<dist_t, Distance, DoNormalize> &hnsw,
-                 const std::vector<double> &data, std::size_t nr,
-                 std::size_t nc, std::size_t nnbrs) :
-      hnsw(hnsw), data(data), nr(nr), nc(nc), nnbrs(nnbrs), idx_vec(nr * nnbrs),
-      ok(true), include_distances(false), distances(0) {}
+                 const std::vector<double> &data, std::size_t nitems,
+                 std::size_t ndim, std::size_t nnbrs) :
+      hnsw(hnsw), data(data), nitems(nitems), ndim(ndim), nnbrs(nnbrs), 
+      distances(0), idx_vec(nitems * nnbrs) {}
 
     void operator()(std::size_t begin, std::size_t end) {
-      std::vector<dist_t> dv(nc);
+      std::vector<dist_t> item_copy(ndim);
       for (std::size_t i = begin; i < end; i++) {
-        for (std::size_t j = 0; j < nc; j++) {
-          dv[j] = data[j * nr + i];
+        for (std::size_t j = 0; j < ndim; j++) {
+          item_copy[j] = data[j * nitems + i];
         }
 
         bool ok_row = true;
         std::vector<hnswlib::labeltype> items =
-          hnsw.getNNsImpl(dv, nnbrs, include_distances, distances, ok_row);
+          hnsw.getNNsImpl(item_copy, nnbrs, include_distances, distances, ok_row);
         if (!ok_row) {
           ok = false;
           break;
         }
 
-        for (std::size_t k = 0; k < items.size(); k++) {
-          idx_vec[k * nr + i] = items[k];
+        for (std::size_t k = 0; k < nnbrs; k++) {
+          idx_vec[k * nitems + i] = items[k];
         }
       }
     }
   };
 
-  Rcpp::IntegerMatrix getAllNNs(Rcpp::NumericMatrix fm, std::size_t nnbrs)
+  auto getAllNNs(const Rcpp::NumericMatrix &items, std::size_t nnbrs) -> Rcpp::IntegerMatrix
   {
-    const std::size_t nrow = fm.nrow();
-    const std::size_t ncol = fm.ncol();
+    const std::size_t nrow = items.nrow();
+    const std::size_t ncol = items.ncol();
 
-    auto data = Rcpp::as<std::vector<double>>(fm);
+    auto data = Rcpp::as<std::vector<double>>(items);
 
     SearchWorker worker(*this, data, nrow, ncol, nnbrs);
 
-    RcppPerpendicular::parallel_for(0, nrow, worker, numThreads, 1);
+    RcppPerpendicular::parallel_for(nrow, worker, numThreads);
     if (!worker.ok) {
       Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
@@ -388,7 +393,7 @@ public:
     appr_alg->saveIndex(path_to_index);
   }
 
-  std::size_t size() const {
+  auto size() const -> std::size_t {
     return appr_alg->cur_element_count;
   }
 
@@ -412,6 +417,7 @@ public:
     appr_alg->resizeIndex(new_size);
   }
 
+private:
   int dim;
   bool normalize;
   hnswlib::labeltype cur_l;
@@ -421,9 +427,9 @@ public:
   std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>> appr_alg;
 };
 
-typedef Hnsw<float, hnswlib::L2Space, false> HnswL2;
-typedef Hnsw<float, hnswlib::InnerProductSpace, true> HnswCosine;
-typedef Hnsw<float, hnswlib::InnerProductSpace, false> HnswIp;
+using HnswL2 = Hnsw<float, hnswlib::L2Space, false>;
+using HnswCosine = Hnsw<float, hnswlib::InnerProductSpace, true>;
+using HnswIp = Hnsw<float, hnswlib::InnerProductSpace, false>;
 
 RCPP_EXPOSED_CLASS_NODECL(HnswL2)
   RCPP_MODULE(HnswL2) {
