@@ -221,15 +221,14 @@ public:
     return getNNsImpl(item, nnbrs, include_distances, distances, found_all);
   }
 
-  auto getAllNNsList(const Rcpp::NumericMatrix &items, std::size_t nnbrs,
-                     bool include_distances = true) -> Rcpp::List {
+  void getAllNNsListImpl(const Rcpp::NumericMatrix &items, std::size_t nnbrs,
+                         bool include_distances,
+                         std::vector<hnswlib::labeltype> &idx_vec,
+                         std::vector<dist_t> &dist_vec) {
     auto nitems = items.nrow();
     const std::size_t ndim = items.ncol();
     auto data = Rcpp::as<std::vector<double>>(items);
 
-    std::vector<hnswlib::labeltype> idx_vec(nitems * nnbrs);
-    std::vector<dist_t> dist_vec(nitems * nnbrs);
-    
     // this can be set to false inside the threaded code, but is never read from
     // until after the threaded section, so the race condition doesn't matter
     bool found_all = true;
@@ -268,6 +267,15 @@ public:
     if (!found_all) {
       Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
     }
+  }
+
+  auto getAllNNsList(const Rcpp::NumericMatrix &items, std::size_t nnbrs,
+                     bool include_distances = true) -> Rcpp::List {
+    auto nitems = items.nrow();
+    std::vector<hnswlib::labeltype> idx_vec(nitems * nnbrs);
+    std::vector<dist_t> dist_vec(include_distances ? nitems * nnbrs : 0);
+
+    getAllNNsListImpl(items, nnbrs, include_distances, idx_vec, dist_vec);
 
     auto result = Rcpp::List::create(
         Rcpp::Named("item") = Rcpp::IntegerMatrix(
@@ -282,46 +290,12 @@ public:
   auto getAllNNs(const Rcpp::NumericMatrix &items, std::size_t nnbrs)
       -> Rcpp::IntegerMatrix {
     auto nitems = items.nrow();
-    const std::size_t ndim = items.ncol();
-    auto data = Rcpp::as<std::vector<double>>(items);
-    bool include_distances = false;
-
     std::vector<hnswlib::labeltype> idx_vec(nitems * nnbrs);
-    
-    // this can be set to false inside the threaded code, but is never read from
-    // until after the threaded section, so the race condition doesn't matter
-    bool found_all = true;
+    std::vector<dist_t> dist_vec(0);
 
-    auto worker = [&](std::size_t begin, std::size_t end) {
-      std::vector<dist_t> item_copy(ndim);
-      std::vector<dist_t> distances(0);
-      
-      for (auto i = begin; i < end; i++) {
-        for (std::size_t j = 0; j < ndim; j++) {
-          item_copy[j] = data[j * nitems + i];
-        }
+    getAllNNsListImpl(items, nnbrs, false, idx_vec, dist_vec);
 
-        bool ok_row = true;
-        std::vector<hnswlib::labeltype> items =
-            getNNsImpl(item_copy, nnbrs, include_distances, distances, ok_row);
-        if (!ok_row) {
-          found_all = false;
-          break;
-        }
-
-        for (std::size_t k = 0; k < nnbrs; k++) {
-          idx_vec[k * nitems + i] = items[k];
-        }
-      }
-    };
-
-    RcppPerpendicular::parallel_for(nitems, worker, numThreads);
-    if (!found_all) {
-      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
-    }
-
-    Rcpp::IntegerMatrix idx(nitems, static_cast<int>(nnbrs), idx_vec.begin());
-    return idx;
+    return {nitems, static_cast<int>(nnbrs), idx_vec.begin()};
   }
 
   void callSave(const std::string &path_to_index) {
