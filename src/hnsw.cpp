@@ -221,16 +221,13 @@ public:
     return getNNsImpl(item, nnbrs, include_distances, distances, found_all);
   }
 
-  void getAllNNsListImpl(const Rcpp::NumericMatrix &items, std::size_t nnbrs,
+  auto getAllNNsListImpl(const std::vector<double> &data, std::size_t nitems,
+                         std::size_t ndim, std::size_t nnbrs,
                          bool include_distances,
                          std::vector<hnswlib::labeltype> &idx_vec,
-                         std::vector<dist_t> &dist_vec) {
-    auto nitems = items.nrow();
-    const std::size_t ndim = items.ncol();
-    auto data = Rcpp::as<std::vector<double>>(items);
-
-    // this can be set to false inside the threaded code, but is never read from
-    // until after the threaded section, so the race condition doesn't matter
+                         std::vector<dist_t> &dist_vec) -> bool {
+    // race condition for writing found_all false, but it is never read from
+    // until after the threaded section, so it doesn't matter
     bool found_all = true;
 
     auto worker = [&](std::size_t begin, std::size_t end) {
@@ -243,7 +240,7 @@ public:
         }
 
         bool ok_row = true;
-        std::vector<hnswlib::labeltype> items =
+        std::vector<hnswlib::labeltype> nbr_labels =
             getNNsImpl(item_copy, nnbrs, include_distances, distances, ok_row);
         if (!ok_row) {
           found_all = false;
@@ -252,30 +249,35 @@ public:
 
         if (include_distances) {
           for (std::size_t k = 0; k < nnbrs; k++) {
-            idx_vec[k * nitems + i] = items[k];
+            idx_vec[k * nitems + i] = nbr_labels[k];
             dist_vec[k * nitems + i] = distances[k];
           }
         } else {
           for (std::size_t k = 0; k < nnbrs; k++) {
-            idx_vec[k * nitems + i] = items[k];
+            idx_vec[k * nitems + i] = nbr_labels[k];
           }
         }
       }
     };
 
     RcppPerpendicular::parallel_for(nitems, worker, numThreads);
-    if (!found_all) {
-      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
-    }
+
+    return found_all;
   }
 
   auto getAllNNsList(const Rcpp::NumericMatrix &items, std::size_t nnbrs,
                      bool include_distances = true) -> Rcpp::List {
     auto nitems = items.nrow();
+    const std::size_t ndim = items.ncol();
+    auto data = Rcpp::as<std::vector<double>>(items);
+
     std::vector<hnswlib::labeltype> idx_vec(nitems * nnbrs);
     std::vector<dist_t> dist_vec(include_distances ? nitems * nnbrs : 0);
-
-    getAllNNsListImpl(items, nnbrs, include_distances, idx_vec, dist_vec);
+    bool found_all = getAllNNsListImpl(data, nitems, ndim, nnbrs,
+                                       include_distances, idx_vec, dist_vec);
+    if (!found_all) {
+      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
+    }
 
     auto result = Rcpp::List::create(
         Rcpp::Named("item") = Rcpp::IntegerMatrix(
@@ -290,10 +292,16 @@ public:
   auto getAllNNs(const Rcpp::NumericMatrix &items, std::size_t nnbrs)
       -> Rcpp::IntegerMatrix {
     auto nitems = items.nrow();
+    const std::size_t ndim = items.ncol();
+    auto data = Rcpp::as<std::vector<double>>(items);
+
     std::vector<hnswlib::labeltype> idx_vec(nitems * nnbrs);
     std::vector<dist_t> dist_vec(0);
-
-    getAllNNsListImpl(items, nnbrs, false, idx_vec, dist_vec);
+    bool found_all =
+        getAllNNsListImpl(data, nitems, ndim, nnbrs, false, idx_vec, dist_vec);
+    if (!found_all) {
+      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
+    }
 
     return {nitems, static_cast<int>(nnbrs), idx_vec.begin()};
   }
