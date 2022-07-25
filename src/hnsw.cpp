@@ -110,7 +110,7 @@ public:
   void addItems(const Rcpp::NumericMatrix &items) {
     const std::size_t nrow = items.nrow();
     const std::size_t ncol = items.ncol();
-    auto data = Rcpp::as<std::vector<double>>(items);
+    auto data = Rcpp::as<std::vector<dist_t>>(items);
     const std::size_t index_start = cur_l;
 
     auto worker = [&](std::size_t begin, std::size_t end) {
@@ -221,7 +221,7 @@ public:
     return getNNsImpl(item, nnbrs, include_distances, distances, found_all);
   }
 
-  auto getAllNNsListImpl(const std::vector<double> &data, std::size_t nitems,
+  auto getAllNNsListImpl(const std::vector<dist_t> &data, std::size_t nitems,
                          std::size_t ndim, std::size_t nnbrs,
                          bool include_distances,
                          std::vector<hnswlib::labeltype> &idx_vec,
@@ -269,7 +269,7 @@ public:
                      bool include_distances = true) -> Rcpp::List {
     auto nitems = items.nrow();
     const std::size_t ndim = items.ncol();
-    auto data = Rcpp::as<std::vector<double>>(items);
+    auto data = Rcpp::as<std::vector<dist_t>>(items);
 
     std::vector<hnswlib::labeltype> idx_vec(nitems * nnbrs);
     std::vector<dist_t> dist_vec(include_distances ? nitems * nnbrs : 0);
@@ -293,7 +293,7 @@ public:
       -> Rcpp::IntegerMatrix {
     auto nitems = items.nrow();
     const std::size_t ndim = items.ncol();
-    auto data = Rcpp::as<std::vector<double>>(items);
+    auto data = Rcpp::as<std::vector<dist_t>>(items);
 
     std::vector<hnswlib::labeltype> idx_vec(nitems * nnbrs);
     std::vector<dist_t> dist_vec(0);
