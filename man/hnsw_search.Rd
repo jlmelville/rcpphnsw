@@ -17,7 +17,9 @@ hnsw_search(
 )
 }
 \arguments{
-\item{X}{A numeric matrix of data to search for neighbors.}
+\item{X}{A numeric matrix of data to search for neighbors. If \code{byrow = TRUE}
+(the default) then each row of \code{X} is an item to be searched. Otherwise,
+each item should be stored in the columns of \code{X}.}
 
 \item{ann}{an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
 class.}

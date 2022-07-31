@@ -133,8 +133,9 @@ hnsw_knn <- function(X,
 
 #' Build an hnswlib nearest neighbor index
 #'
-#' @param X a numeric matrix of data to add. Each of the n rows is an item in
-#'   the index.
+#' @param X A numeric matrix of data to search for neighbors. If `byrow = TRUE`
+#'   (the default) then each row of `X` is an item to be searched. Otherwise,
+#'   each item should be stored in the columns of `X`.
 #' @param distance Type of distance to calculate. One of:
 #' \itemize{
 #'   \item `"l2"` Squared L2, i.e. squared Euclidean.
@@ -161,8 +162,11 @@ hnsw_knn <- function(X,
 #'   `n_threads` will be used. This is useful in cases where the overhead
 #'   of context switching with too many threads outweighs the gains due to
 #'   parallelism.
-#' @return an instance of a `HnswL2`, `HnswCosine` or `HnswIp`
-#'   class.
+#' @param byrow if `TRUE` (the default), this indicates that the items in `X`
+#'   to be indexed are stored in each row. Otherwise, the items are stored in
+#'   the columns of `X`. Storing items in each column reduces the overhead of 
+#'   copying data to a form that can be indexed by the `hnsw` library.
+#' @return an instance of a `HnswL2`, `HnswCosine` or `HnswIp` class.
 #' @examples
 #' irism <- as.matrix(iris[, -5])
 #' ann <- hnsw_build(irism)
@@ -175,7 +179,8 @@ hnsw_build <- function(X,
                        verbose = FALSE,
                        progress = "bar",
                        n_threads = 0,
-                       grain_size = 1) {
+                       grain_size = 1,
+                       byrow = TRUE) {
   stopifnot(is.numeric(n_threads) &&
     length(n_threads) == 1 && n_threads >= 0)
   stopifnot(is.numeric(grain_size) &&
@@ -190,9 +195,13 @@ hnsw_build <- function(X,
   distance <-
     match.arg(distance, c("l2", "euclidean", "cosine", "ip"))
 
-  nitems <- nrow(X)
-  ndim <- ncol(X)
-
+  if (byrow) {
+    nitems <- nrow(X)
+    ndim <- ncol(X)
+  } else {
+    nitems <- ncol(X)
+    ndim <- nrow(X)
+  }
   clazz <- switch(distance,
     "l2" = RcppHNSW::HnswL2,
     "euclidean" = RcppHNSW::HnswL2,
@@ -222,7 +231,11 @@ hnsw_build <- function(X,
   ann$setNumThreads(n_threads)
   ann$setGrainSize(grain_size)
 
-  ann$addItems(X)
+  if (byrow) {
+    ann$addItems(X)
+  } else {
+    ann$addItemsCol(X)
+  }
 
   tsmessage("Finished building index")
   ann
@@ -230,7 +243,9 @@ hnsw_build <- function(X,
 
 #' Search an hnswlib nearest neighbor index
 #'
-#' @param X A numeric matrix of data to search for neighbors.
+#' @param X A numeric matrix of data to search for neighbors. If `byrow = TRUE`
+#'   (the default) then each row of `X` is an item to be searched. Otherwise,
+#'   each item should be stored in the columns of `X`.
 #' @param ann an instance of a `HnswL2`, `HnswCosine` or `HnswIp`
 #'   class.
 #' @param k Number of neighbors to return. This can't be larger than the number

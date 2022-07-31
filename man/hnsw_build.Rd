@@ -12,12 +12,14 @@ hnsw_build(
   verbose = FALSE,
   progress = "bar",
   n_threads = 0,
-  grain_size = 1
+  grain_size = 1,
+  byrow = TRUE
 )
 }
 \arguments{
-\item{X}{a numeric matrix of data to add. Each of the n rows is an item in
-the index.}
+\item{X}{A numeric matrix of data to search for neighbors. If \code{byrow = TRUE}
+(the default) then each row of \code{X} is an item to be searched. Otherwise,
+each item should be stored in the columns of \code{X}.}
 
 \item{distance}{Type of distance to calculate. One of:
 \itemize{
@@ -51,10 +53,14 @@ thread. If the number of rows in \code{X} isn't sufficient, then fewer than
 \code{n_threads} will be used. This is useful in cases where the overhead
 of context switching with too many threads outweighs the gains due to
 parallelism.}
+
+\item{byrow}{if \code{TRUE} (the default), this indicates that the items in \code{X}
+to be indexed are stored in each row. Otherwise, the items are stored in
+the columns of \code{X}. Storing items in each column reduces the overhead of
+copying data to a form that can be indexed by the \code{hnsw} library.}
 }
 \value{
-an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
-class.
+an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp} class.
 }
 \description{
 Build an hnswlib nearest neighbor index
