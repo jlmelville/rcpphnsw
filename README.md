@@ -211,7 +211,7 @@ most annoying in constructors, which take multiple integer arguments, e.g.
 num_elements <- 100
 M <- 200
 ef_construction <- 16
-index <- new(HnswL2, dim, num_elements, M, ef)
+index <- new(HnswL2, dim, num_elements, M, ef_construction)
 
 ### DON'T DO THIS ###
 index <- new(HnswL2, dim, ef_construction = 16, M = 200, num_elements = 100)
