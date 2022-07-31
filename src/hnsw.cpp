@@ -336,6 +336,91 @@ public:
     return {nitems, static_cast<int>(nnbrs), idx_vec.begin()};
   }
 
+  auto getAllNNsListCol(const Rcpp::NumericMatrix &items, std::size_t nnbrs,
+                        bool include_distances = true) -> Rcpp::List {
+    auto nitems = items.ncol();
+    const std::size_t ndim = items.nrow();
+    auto data = Rcpp::as<std::vector<dist_t>>(items);
+
+    std::vector<hnswlib::labeltype> idx_vec(nitems * nnbrs);
+    std::vector<dist_t> dist_vec(include_distances ? nitems * nnbrs : 0);
+    bool found_all = getAllNNsListColImpl(data, nitems, ndim, nnbrs,
+                                          include_distances, idx_vec, dist_vec);
+    if (!found_all) {
+      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
+    }
+
+    auto result = Rcpp::List::create(
+        Rcpp::Named("item") = Rcpp::IntegerMatrix(static_cast<int>(nnbrs),
+                                                  nitems, idx_vec.begin()));
+    if (include_distances) {
+      result["distance"] = Rcpp::NumericMatrix(static_cast<int>(nnbrs), nitems,
+                                               dist_vec.begin());
+    }
+    return result;
+  }
+
+  auto getAllNNsCol(const Rcpp::NumericMatrix &items, std::size_t nnbrs)
+      -> Rcpp::IntegerMatrix {
+    auto nitems = items.ncol();
+    const std::size_t ndim = items.nrow();
+    auto data = Rcpp::as<std::vector<dist_t>>(items);
+
+    std::vector<hnswlib::labeltype> idx_vec(nitems * nnbrs);
+    std::vector<dist_t> dist_vec(0);
+    bool found_all = getAllNNsListColImpl(data, nitems, ndim, nnbrs, false,
+                                          idx_vec, dist_vec);
+    if (!found_all) {
+      Rcpp::stop("Unable to find nnbrs results. Probably ef or M is too small");
+    }
+
+    return {static_cast<int>(nnbrs), nitems, idx_vec.begin()};
+  }
+
+  auto getAllNNsListColImpl(const std::vector<dist_t> &data, std::size_t nitems,
+                            std::size_t ndim, std::size_t nnbrs,
+                            bool include_distances,
+                            std::vector<hnswlib::labeltype> &idx_vec,
+                            std::vector<dist_t> &dist_vec) -> bool {
+    // race condition for writing found_all false, but it is never read from
+    // until after the threaded section, so it doesn't matter
+    bool found_all = true;
+
+    auto worker = [&](std::size_t begin, std::size_t end) {
+      std::vector<dist_t> item_copy(ndim);
+      std::vector<dist_t> distances(0);
+
+      for (auto i = begin; i < end; i++) {
+        for (std::size_t j = 0; j < ndim; j++) {
+          item_copy[j] = data[ndim * i + j];
+        }
+
+        bool ok_row = true;
+        std::vector<hnswlib::labeltype> nbr_labels =
+            getNNsImpl(item_copy, nnbrs, include_distances, distances, ok_row);
+        if (!ok_row) {
+          found_all = false;
+          break;
+        }
+
+        if (include_distances) {
+          for (std::size_t k = 0; k < nnbrs; k++) {
+            idx_vec[nnbrs * i + k] = nbr_labels[k];
+            dist_vec[nnbrs * i + k] = distances[k];
+          }
+        } else {
+          for (std::size_t k = 0; k < nnbrs; k++) {
+            idx_vec[nnbrs * i + k] = nbr_labels[k];
+          }
+        }
+      }
+    };
+
+    RcppPerpendicular::parallel_for(nitems, worker, numThreads);
+
+    return found_all;
+  }
+
   void callSave(const std::string &path_to_index) {
     appr_alg->saveIndex(path_to_index);
   }
@@ -391,9 +476,17 @@ RCPP_MODULE(HnswL2) {
       .method("getNNsList", &HnswL2::getNNsList,
               "retrieve Nearest Neigbours given vector")
       .method("getAllNNs", &HnswL2::getAllNNs,
-              "retrieve Nearest Neigbours given matrix")
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "row-wise")
       .method("getAllNNsList", &HnswL2::getAllNNsList,
-              "retrieve Nearest Neigbours given matrix")
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "row-wise")
+      .method("getAllNNsCol", &HnswL2::getAllNNsCol,
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "column-wise. Nearest Neighbours data is also returned column-wise")
+      .method("getAllNNsListCol", &HnswL2::getAllNNsListCol,
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "column-wise. Nearest Neighbours data is also returned column-wise")
       .method("size", &HnswL2::size, "number of items added to the index")
       .method("setNumThreads", &HnswL2::setNumThreads,
               "set the number of threads to use")
@@ -426,9 +519,17 @@ RCPP_MODULE(HnswCosine) {
       .method("getNNsList", &HnswCosine::getNNsList,
               "retrieve Nearest Neigbours given vector")
       .method("getAllNNs", &HnswCosine::getAllNNs,
-              "retrieve Nearest Neigbours given matrix")
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "row-wise")
       .method("getAllNNsList", &HnswCosine::getAllNNsList,
-              "retrieve Nearest Neigbours given matrix")
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "row-wise")
+      .method("getAllNNsCol", &HnswCosine::getAllNNsCol,
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "column-wise. Nearest Neighbours data is also returned column-wise")
+      .method("getAllNNsListCol", &HnswCosine::getAllNNsListCol,
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "column-wise. Nearest Neighbours data is also returned column-wise")
       .method("size", &HnswCosine::size, "number of items added to the index")
       .method("setNumThreads", &HnswCosine::setNumThreads,
               "set the number of threads to use")
@@ -461,9 +562,17 @@ RCPP_MODULE(HnswIp) {
       .method("getNNsList", &HnswIp::getNNsList,
               "retrieve Nearest Neigbours given vector")
       .method("getAllNNs", &HnswIp::getAllNNs,
-              "retrieve Nearest Neigbours given matrix")
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "row-wise")
       .method("getAllNNsList", &HnswIp::getAllNNsList,
-              "retrieve Nearest Neigbours given matrix")
+              "retrieve Nearest Neigbours given matrix where items are stored" 
+              "row-wise")
+      .method("getAllNNsCol", &HnswIp::getAllNNsCol,
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "column-wise. Nearest Neighbours data is also returned column-wise")
+      .method("getAllNNsListCol", &HnswIp::getAllNNsListCol,
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "column-wise. Nearest Neighbours data is also returned column-wise")
       .method("size", &HnswIp::size, "number of items added to the index")
       .method("setNumThreads", &HnswIp::setNumThreads,
               "set the number of threads to use")

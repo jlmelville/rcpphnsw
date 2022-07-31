@@ -22,13 +22,13 @@ expect_equal(items, self_nn_index4, check.attributes = FALSE)
 ann2 <- new(HnswL2, ncol(ui10), nrow(ui10), M = 200, ef = 16)
 ui10t <- t(ui10)
 ann2$addItemsCol(ui10t)
-res <- ann2$getAllNNsList(ui10, k = 4, include_distances = TRUE)
-expect_equal(res$item, self_nn_index4, check.attributes = FALSE)
-expect_equal(sqrt(res$dist), self_nn_dist4, check.attributes = FALSE,
+res <- ann2$getAllNNsListCol(ui10t, k = 4, include_distances = TRUE)
+expect_equal(t(res$item), self_nn_index4, check.attributes = FALSE)
+expect_equal(sqrt(t(res$dist)), self_nn_dist4, check.attributes = FALSE,
              tol = 1e-6)
 
-res <- ann2$getAllNNsList(ui10, k = 4, include_distances = FALSE)
-expect_equal(res$item, self_nn_index4, check.attributes = FALSE)
+res <- ann2$getAllNNsListCol(ui10t, k = 4, include_distances = FALSE)
+expect_equal(t(res$item), self_nn_index4, check.attributes = FALSE)
 
 items <- ann2$getAllNNs(ui10, k = 4)
 expect_equal(items, self_nn_index4, check.attributes = FALSE)
