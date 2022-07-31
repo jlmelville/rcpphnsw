@@ -116,10 +116,12 @@ data <- as.matrix(iris[, -5])
 # is created. But you can increase this number: see the next example
 M <- 16
 ef <- 200
-ann <- new(HnswL2, ncol(data), nrow(data), M, ef)
+dim <- ncol(data)
+nitems <- nrow(data)
+ann <- new(HnswL2, dim, nitems, M, ef)
 
 # Add items to index
-for (i in 1:nrow(data)) {
+for (i in 1:nitems) {
   ann$addItem(data[i, ])
 }
 
@@ -127,6 +129,24 @@ for (i in 1:nrow(data)) {
 # indexes are in res$item, distances in res$distance
 # set include_distances = TRUE to get distances as well as index
 res <- ann$getNNsList(data[1, ], k = 4, include_distances = TRUE)
+
+# It's more efficient to use the batch methods if you have all the data you
+# need at once
+ann2 <- new(HnswL2, dim, nitems, M, ef)
+ann2$addItems(data)
+# Retrieve the 4 nearest neighbors for every item in data
+res2 <- ann2$getAllNNsList(data, k = 4, include_distances = TRUE)
+# labels of the data are in res$item, distances in res$distance
+
+# If you are able to store your data column-wise, then the overhead of copying
+# the data into a form usable by hnsw can be noticeably reduced
+data_by_col <- t(data)
+ann3 <- new(HnswL2, dim, nitems, M, ef)
+ann3$addItemsCol(data_by_col)
+# Retrieve the 4 nearest neighbors for every item in data_by_col
+res3 <- ann3$getAllNNsListCol(data_by_col, k = 4, include_distances = TRUE)
+# The returned neared neighbor data matrices are also returned column-wise
+all(res2$item == t(res3$item) & res2$distance == t(res3$distance))
 
 # other distance classes:
 # Cosine: HnswCosine
@@ -208,6 +228,7 @@ most annoying in constructors, which take multiple integer arguments, e.g.
 
 ```R
 ### DO THIS ###
+dim <- 10
 num_elements <- 100
 M <- 200
 ef_construction <- 16
@@ -256,6 +277,9 @@ getting the label `1`, the second `2` and so on. These labels are returned in
 `getNNs` and related methods to identify which vector in the index are
 neighbors. The number of threads specified by `setNumThreads` is used for
 building the index and may be non-deterministic.
+* `addItemsCol(m)` Like `addItems` but adds the *column* vectors of `m` to the
+index. Storing data column-wise makes copying the data for use by `hnsw` more
+efficient.
 * `save(filename)` saves an index to the specified `filename`. To load an index,
 use the `new(HnswL2, dim, filename)` constructor (see above).
 * `getNNs(v, k)` return a vector of the labels of the `k`-nearest neighbors of
@@ -282,6 +306,18 @@ order into the index, e.g. the label `1` represents the first item added to the
 index. If `include_distances = TRUE` then also return a matrix `distance`
 containing the distances. If `k` neighbors can't be found, an error is thrown.
 The number  of threads specified by `setNumThreads` is used for searching.
+* `getAllNNsCol(m, k)` like `getAllNNs` but each item to be searched in `m` is
+stored by *column*, not row. In addition the returned matrix of `k`-nearest
+neighbors is also stored column-wise: i.e. the dimension of the return value
+matrix is `k x n` where `n` is the number of items (columns) in `m`. By passing
+the data column-wise, some overhead associated with copying data to and from
+`hnsw` can be reduced.
+* `getAllNNsListCol(m, k)` like `getAllNNsList` but each item to be searched in
+`m` is stored by *column*, not row. In addition, the matrices in the returned 
+list are also stored column-wise: i.e. the dimension of the return value matrix
+is `k x n` where `n` is the number of items (columns) in `m`. By passing the 
+data column-wise, some overhead associated with copying data to and from `hnsw`
+can be reduced.
 * `size()` returns the number of items in the index. This is an upper limit on
 the number of neighbors you can expect to return from `getNNs` and the other
 search methods.

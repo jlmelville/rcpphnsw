@@ -1,3 +1,23 @@
+# RcppHNSW 0.4.9000
+
+## New features
+
+* For high-dimensional data, there can be a noticeable CPU overhead in copying 
+data out of the non-contiguous memory regions when row-wise data is used. The
+following new methods have been added to the class-based API for batch
+index-creation and retrieval using matrices where the items are stored
+column-wise, i.e. there is one item per column: `addItemsCol` and `getAllNNsCol`
+`getAllNNsListCol`. These are the column-based equivalents of `addItems`,
+`getAllNNs` and `getAllNNsList`, respectively. Note that the returned nearest
+neighbor data from `getAllNNsCol` and `getAllNNsListCol` are *also* stored
+by column, i.e. the matrices have dimensions `k x n` where `k` is the number
+of neighbors, and `n` the number of items in the data being searched.
+
+## Bug fixes and minor improvements
+
+* The `progress` parameter in the functional interface no longer does anything. When 
+`verbose = TRUE`, a progress bar is no longer shown.
+
 # RcppHNSW 0.4.1
 
 ## Bug fixes and minor improvements
