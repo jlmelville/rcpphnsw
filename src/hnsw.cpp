@@ -107,23 +107,53 @@ public:
     ++cur_l;
   }
 
-  void addItems(const Rcpp::NumericMatrix &items) {
-    const std::size_t nrow = items.nrow();
-    const std::size_t ncol = items.ncol();
-    auto data = Rcpp::as<std::vector<dist_t>>(items);
+  void addItemsCol(const Rcpp::NumericMatrix &items) {
+    // items: ndim * nitems
+    const std::size_t nitems = items.ncol();
+    const std::size_t ndim = items.nrow();
     const std::size_t index_start = cur_l;
 
+    if (static_cast<int>(ndim) != dim) {
+      Rcpp::stop("Items to add have incorrect dimensions");
+    }
+
+    auto data = Rcpp::as<std::vector<dist_t>>(items);
+
     auto worker = [&](std::size_t begin, std::size_t end) {
-      std::vector<dist_t> item_copy(ncol);
+      std::vector<dist_t> item_copy(ndim);
       for (auto i = begin; i < end; i++) {
-        for (std::size_t j = 0; j < ncol; j++) {
-          item_copy[j] = data[nrow * j + i];
+        for (std::size_t j = 0; j < ndim; j++) {
+          item_copy[j] = data[ndim * i + j];
+        }
+        addItemImpl(item_copy, index_start + i);
+      }
+    };
+    RcppPerpendicular::parallel_for(nitems, worker, numThreads);
+    cur_l = size();
+  }
+
+  void addItems(const Rcpp::NumericMatrix &items) {
+    // items: nitems * ndim
+    const std::size_t nitems = items.nrow();
+    const std::size_t ndim = items.ncol();
+    const std::size_t index_start = cur_l;
+
+    if (static_cast<int>(ndim) != dim) {
+      Rcpp::stop("Items to add have incorrect dimensions");
+    }
+
+    auto data = Rcpp::as<std::vector<dist_t>>(items);
+    auto worker = [&](std::size_t begin, std::size_t end) {
+      std::vector<dist_t> item_copy(ndim);
+      for (auto i = begin; i < end; i++) {
+        for (std::size_t j = 0; j < ndim; j++) {
+          item_copy[j] = data[nitems * j + i];
         }
         addItemImpl(item_copy, index_start + i);
       }
     };
 
-    RcppPerpendicular::parallel_for(nrow, worker, numThreads);
+    RcppPerpendicular::parallel_for(nitems, worker, numThreads);
     cur_l = size();
   }
 
@@ -351,7 +381,10 @@ RCPP_MODULE(HnswL2) {
           "constructor with dimension, loading from filename, number of items")
       .method("setEf", &HnswL2::setEf, "set ef value")
       .method("addItem", &HnswL2::addItem, "add item")
-      .method("addItems", &HnswL2::addItems, "add items")
+      .method("addItems", &HnswL2::addItems,
+              "add items where each item is stored row-wise")
+      .method("addItemsCol", &HnswL2::addItemsCol,
+              "add items where each item is stored column-wise")
       .method("save", &HnswL2::callSave, "save index to file")
       .method("getNNs", &HnswL2::getNNs,
               "retrieve Nearest Neigbours given vector")
@@ -383,7 +416,10 @@ RCPP_MODULE(HnswCosine) {
           "constructor with dimension, loading from filename, number of items")
       .method("setEf", &HnswCosine::setEf, "set ef value")
       .method("addItem", &HnswCosine::addItem, "add item")
-      .method("addItems", &HnswCosine::addItems, "add items")
+      .method("addItems", &HnswCosine::addItems,
+              "add items where each item is stored row-wise")
+      .method("addItemsCol", &HnswCosine::addItemsCol,
+              "add items where each item is stored column-wise")
       .method("save", &HnswCosine::callSave, "save index to file")
       .method("getNNs", &HnswCosine::getNNs,
               "retrieve Nearest Neigbours given vector")
@@ -415,7 +451,10 @@ RCPP_MODULE(HnswIp) {
           "constructor with dimension, loading from filename, number of items")
       .method("setEf", &HnswIp::setEf, "set ef value")
       .method("addItem", &HnswIp::addItem, "add item")
-      .method("addItems", &HnswIp::addItems, "add items")
+      .method("addItems", &HnswIp::addItems, 
+        "add items where each item is stored row-wise")
+      .method("addItemsCol", &HnswIp::addItemsCol,
+              "add items where each item is stored column-wise")
       .method("save", &HnswIp::callSave, "save index to file")
       .method("getNNs", &HnswIp::getNNs,
               "retrieve Nearest Neigbours given vector")
