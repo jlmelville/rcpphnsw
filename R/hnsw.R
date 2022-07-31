@@ -8,39 +8,35 @@
 #' Some details on the parameters used for index construction and search, based
 #' on <https://github.com/nmslib/hnswlib/blob/master/ALGO_PARAMS.md>:
 #'
-#' \itemize{
-#'   \item `M` Controls the number of bi-directional links created for each
+#' * `M` Controls the number of bi-directional links created for each
 #'   element during index construction. Higher values lead to better results at
 #'   the expense of memory consumption, which is around `M * 8-10` bytes
 #'   per bytes per stored element. High intrinsic dimensionalities will require
 #'   higher values of `M`. A range of `2 - 100` is typical, but
 #'   `12 - 48` is ok for most use cases.
-#'   \item `ef_construction` Size of the dynamic list used during
+#' * `ef_construction` Size of the dynamic list used during
 #'   construction. A larger value means a better quality index, but increases
 #'   build time. Should be an integer value between 1 and the size of the
 #'   dataset. A typical range is `100 - 2000`. Beyond a certain point,
 #'   increasing `ef_construction` has no effect. A sufficient value of
 #'   `ef_construction` can be determined by searching with `ef =
 #'   ef_construction`, and ensuring that the recall is at least 0.9.
-#'   \item `ef` Size of the dynamic list used during index search. Can
+#' * `ef` Size of the dynamic list used during index search. Can
 #'   differ from `ef_construction` and be any value between `k` (the
 #'   number of neighbors sought) and the number of elements in the index being
 #'   searched.
-#' }
 #'
 #' @param X A numeric matrix of `n` items to search for neighbors. If
 #'   `byrow = TRUE` (the default) then each row of `X` stores an item to be
 #'   searched. Otherwise, each item should be stored in the columns of `X`.
 #' @param k Number of neighbors to return.
 #' @param distance Type of distance to calculate. One of:
-#' \itemize{
-#'   \item `"l2"` Squared L2, i.e. squared Euclidean.
-#'   \item `"euclidean"` Euclidean.
-#'   \item `"cosine"` Cosine.
-#'   \item `"ip"` Inner product: 1 - sum(ai * bi), i.e. the cosine distance
+#' * `"l2"` Squared L2, i.e. squared Euclidean.
+#' * `"euclidean"` Euclidean.
+#' * `"cosine"` Cosine.
+#' * `"ip"` Inner product: 1 - sum(ai * bi), i.e. the cosine distance
 #'   where the vectors are not normalized. This can lead to negative distances
 #'   and other non-metric behavior.
-#' }
 #' @param M Controls the number of bi-directional links created for each element
 #'   during index construction. Higher values lead to better results at the
 #'   expense of memory consumption. Typical values are `2 - 100`, but
@@ -69,10 +65,8 @@
 #'   library. Note that if `byrow = FALSE`, any matrices returned from this
 #'   function will also store the items by column.
 #' @return a list containing:
-#' \itemize{
-#'   \item `idx` a matrix containing the nearest neighbor indices.
-#'   \item `dist` a matrix containing the nearest neighbor distances.
-#' }
+#'   * `idx` a matrix containing the nearest neighbor indices.
+#'   * `dist` a matrix containing the nearest neighbor distances.
 #'
 #' The dimensions of the matrices respect the storage (row or column-based) of
 #' `X` as indicated by the `byrow` parameter. If `byrow = TRUE` (the default)
@@ -154,14 +148,12 @@ hnsw_knn <- function(X,
 #'   (the default) then each row of `X` is an item to be searched. Otherwise,
 #'   each item should be stored in the columns of `X`.
 #' @param distance Type of distance to calculate. One of:
-#' \itemize{
-#'   \item `"l2"` Squared L2, i.e. squared Euclidean.
-#'   \item `"euclidean"` Euclidean.
-#'   \item `"cosine"` Cosine.
-#'   \item `"ip"` Inner product: 1 - sum(ai * bi), i.e. the cosine distance
+#'   * `"l2"` Squared L2, i.e. squared Euclidean.
+#'   * `"euclidean"` Euclidean.
+#'   * `"cosine"` Cosine.
+#'   * `"ip"` Inner product: 1 - sum(ai * bi), i.e. the cosine distance
 #'   where the vectors are not normalized. This can lead to negative distances
 #'   and other non-metric behavior.
-#' }
 #' @param M Controls the number of bi-directional links created for each element
 #'   during index construction. Higher values lead to better results at the
 #'   expense of memory consumption. Typical values are `2 - 100`, but
@@ -288,10 +280,8 @@ hnsw_build <- function(X,
 #'   library. Note that if `byrow = FALSE`, any matrices returned from this
 #'   function will also store the items by column.
 #' @return a list containing:
-#' \itemize{
-#'   \item `idx` a matrix containing the nearest neighbor indices.
-#'   \item `dist` a matrix containing the nearest neighbor distances.
-#' }
+#'   * `idx` a matrix containing the nearest neighbor indices.
+#'   * `dist` a matrix containing the nearest neighbor distances.
 #'
 #' The dimensions of the matrices respect the storage (row or column-based) of
 #' `X` as indicated by the `byrow` parameter. If `byrow = TRUE` (the default)

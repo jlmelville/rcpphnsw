@@ -98,7 +98,6 @@ A k-nearest neighbor algorithm using the hnswlib library
 
 Some details on the parameters used for index construction and search, based
 on \url{https://github.com/nmslib/hnswlib/blob/master/ALGO_PARAMS.md}:
-
 \itemize{
 \item \code{M} Controls the number of bi-directional links created for each
 element during index construction. Higher values lead to better results at
