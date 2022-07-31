@@ -41,10 +41,7 @@ Should be an integer value between 1 and the size of the dataset.}
 
 \item{verbose}{If \code{TRUE}, log messages to the console.}
 
-\item{progress}{If \code{"bar"} (the default), also log a progress bar when
-\code{verbose = TRUE}. There is a small but noticeable overhead (a few
-percent of run time) to tracking progress. Set \code{progress = NULL} to
-turn this off. Has no effect if \code{verbose = FALSE}.}
+\item{progress}{defunct and has no effect.}
 
 \item{n_threads}{Maximum number of threads to use. The exact number is
 determined by \code{grain_size}.}

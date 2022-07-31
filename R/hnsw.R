@@ -53,10 +53,7 @@
 #'   between `k` and the size of the dataset and may be greater or smaller
 #'   than `ef_construction`. Typical values are `100 - 2000`.
 #' @param verbose If `TRUE`, log messages to the console.
-#' @param progress If `"bar"` (the default), also log a progress bar when
-#'   `verbose = TRUE`. There is a small but noticeable overhead (a few
-#'   percent of run time) to tracking progress. Set `progress = NULL` to
-#'   turn this off. Has no effect if `verbose = FALSE`.
+#' @param progress defunct and has no effect.
 #' @param n_threads Maximum number of threads to use. The exact number is
 #'   determined by `grain_size`.
 #' @param grain_size Minimum amount of work to do (rows in `X` to add or
@@ -156,10 +153,7 @@ hnsw_knn <- function(X,
 #'   A larger value means a better quality index, but increases build time.
 #'   Should be an integer value between 1 and the size of the dataset.
 #' @param verbose If `TRUE`, log messages to the console.
-#' @param progress If `"bar"` (the default), also log a progress bar when
-#'   `verbose = TRUE`. There is a small but noticeable overhead (a few
-#'   percent of run time) to tracking progress. Set `progress = NULL` to
-#'   turn this off. Has no effect if `verbose = FALSE`.
+#' @param progress defunct and has no effect.
 #' @param n_threads Maximum number of threads to use. The exact number is
 #'   determined by `grain_size`.
 #' @param grain_size Minimum amount of work to do (rows in `X` to add) per
@@ -247,10 +241,7 @@ hnsw_build <- function(X,
 #'   between `k` and the size of the dataset. Typical values are
 #'   `100 - 2000`.
 #' @param verbose If `TRUE`, log messages to the console.
-#' @param progress If `"bar"` (the default), also log a progress bar when
-#'   `verbose = TRUE`. There is a small but noticeable overhead (a few
-#'   percent of run time) to tracking progress. Set `progress = NULL` to
-#'   turn this off. Has no effect if `verbose = FALSE`.
+#' @param progress defunct and has no effect.
 #' @param n_threads Maximum number of threads to use. The exact number is
 #'   determined by `grain_size`.
 #' @param grain_size Minimum amount of work to do (rows in `X` to search)
