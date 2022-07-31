@@ -244,22 +244,34 @@ hnsw_build <- function(X,
 #' @param progress defunct and has no effect.
 #' @param n_threads Maximum number of threads to use. The exact number is
 #'   determined by `grain_size`.
-#' @param grain_size Minimum amount of work to do (rows in `X` to search)
-#'   per thread. If the number of rows in `X` isn't sufficient, then fewer
+#' @param grain_size Minimum amount of work to do (items in `X` to search)
+#'   per thread. If the number of items in `X` isn't sufficient, then fewer
 #'   than `n_threads` will be used. This is useful in cases where the
 #'   overhead of context switching with too many threads outweighs the gains due
 #'   to parallelism.
+#' @param byrow if `TRUE` (the default), this indicates that the items to be
+#'   searched in `X` are stored in each row of `X`. Otherwise, the items are
+#'   stored in the columns of `X`. Storing items in each column reduces the
+#'   overhead of copying data to a form that can be searched by the `hnsw`
+#'   library. Note that if `byrow = FALSE`, any matrices returned from this
+#'   function will also store the items by column.
 #' @return a list containing:
 #' \itemize{
-#'   \item `idx` an n by k matrix containing the nearest neighbor indices.
-#'   \item `dist` an n by k matrix containing the nearest neighbor
-#'    distances.
+#'   \item `idx` a matrix containing the nearest neighbor indices.
+#'   \item `dist` a matrix containing the nearest neighbor distances.
 #' }
 #'
+#' The dimensions of the matrices respect the storage (row or column-based) of
+#' `X` as indicated by the `byrow` parameter. If `byrow = TRUE` (the default)
+#' each row of `idx` and `dist` contain the neighbor information for the item
+#' passed in the equivalent row of `X`, i.e. the dimensions are `n x k` where
+#' `n` is the number of items in `X`. If `byrow = FALSE`, then each column of
+#' `idx` and `dist` contain the neighbor  information for the item passed in
+#' the equivalent column of `X`, i.e. the dimensions are `k x n`.
+#'
 #' Every item in the dataset is considered to be a neighbor of itself, so the
-#' first neighbor of item `i` should always be `i` itself. If that
-#' isn't the case, then any of `M`, `ef_construction` and `ef`
-#' may need increasing.
+#' first neighbor of item `i` should always be `i` itself. If that isn't the
+#' case, then any of `M` or `ef` may need increasing.
 #'
 #' @examples
 #' irism <- as.matrix(iris[, -5])
@@ -274,7 +286,8 @@ hnsw_search <-
            verbose = FALSE,
            progress = "bar",
            n_threads = 0,
-           grain_size = 1) {
+           grain_size = 1,
+           byrow = TRUE) {
     stopifnot(is.numeric(n_threads) &&
       length(n_threads) == 1 && n_threads >= 0)
     stopifnot(is.numeric(grain_size) &&
@@ -283,12 +296,9 @@ hnsw_search <-
     if (!is.matrix(X)) {
       stop("X must be matrix")
     }
-    nitems <- nrow(X)
+    nitems <- ifelse(byrow, nrow(X), ncol(X))
 
     ef <- max(ef, k)
-
-    idx <- matrix(nrow = nitems, ncol = k)
-    dist <- matrix(nrow = nitems, ncol = k)
 
     ann$setEf(ef)
     ann$setNumThreads(n_threads)
@@ -301,15 +311,18 @@ hnsw_search <-
       " threads"
     )
 
-    res <- ann$getAllNNsList(X, k, TRUE)
-    idx <- res$item
-    dist <- res$distance
+    if (byrow) {
+      res <- ann$getAllNNsList(X, k, TRUE)
+    } else {
+      res <- ann$getAllNNsListCol(X, k, TRUE)
+    }
 
+    dist <- res$distance
     if (!is.null(attr(ann, "distance")) &&
       attr(ann, "distance") == "euclidean") {
       dist <- sqrt(dist)
     }
 
     tsmessage("Finished searching")
-    list(idx = idx, dist = dist)
+    list(idx = res$item, dist = dist)
   }
