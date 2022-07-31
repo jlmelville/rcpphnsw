@@ -14,3 +14,8 @@ expect_is(res$idx, "matrix")
 expect_is(res$dist, "matrix")
 expect_equal(res$idx, self_nn_index4[, 1], check.attributes = FALSE)
 expect_equal(res$dist, self_nn_dist4[, 1], check.attributes = FALSE, tol = 1e-6)
+
+# test byrow = TRUE
+res <- hnsw_knn(t(ui10), k = 4, byrow = FALSE)
+expect_equal(t(res$idx), self_nn_index4, check.attributes = FALSE)
+expect_equal(t(res$dist), self_nn_dist4, check.attributes = FALSE, tol = 1e-6)

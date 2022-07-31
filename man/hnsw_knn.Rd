@@ -14,12 +14,14 @@ hnsw_knn(
   verbose = FALSE,
   progress = "bar",
   n_threads = 0,
-  grain_size = 1
+  grain_size = 1,
+  byrow = TRUE
 )
 }
 \arguments{
-\item{X}{a numeric matrix of data to search Each of the n rows is an item in
-the index.}
+\item{X}{A numeric matrix of \code{n} items to search for neighbors. If
+\code{byrow = TRUE} (the default) then each row of \code{X} stores an item to be
+searched. Otherwise, each item should be stored in the columns of \code{X}.}
 
 \item{k}{Number of neighbors to return.}
 
@@ -60,18 +62,32 @@ search for) per thread. If the number of rows in \code{X} isn't sufficient,
 then fewer than \code{n_threads} will be used. This is useful in cases
 where the overhead of context switching with too many threads outweighs
 the gains due to parallelism.}
+
+\item{byrow}{if \code{TRUE} (the default), this indicates that the items to be
+processed in \code{X} are stored in each row of \code{X}. Otherwise, the items are
+stored in the columns of \code{X}. Storing items in each column reduces the
+overhead of copying data to a form that can be used by the \code{hnsw}
+library. Note that if \code{byrow = FALSE}, any matrices returned from this
+function will also store the items by column.}
 }
 \value{
 a list containing:
 \itemize{
-\item \code{idx} an n by k matrix containing the nearest neighbor indices.
-\item \code{dist} an n by k matrix containing the nearest neighbor
-distances.
+\item \code{idx} a matrix containing the nearest neighbor indices.
+\item \code{dist} a matrix containing the nearest neighbor distances.
 }
+
+The dimensions of the matrices respect the storage (row or column-based) of
+\code{X} as indicated by the \code{byrow} parameter. If \code{byrow = TRUE} (the default)
+each row of \code{idx} and \code{dist} contain the neighbor information for the item
+passed in the equivalent row of \code{X}, i.e. the dimensions are \verb{n x k} where
+\code{n} is the number of items in \code{X}. If \code{byrow = FALSE}, then each column of
+\code{idx} and \code{dist} contain the neighbor  information for the item passed in
+the equivalent column of \code{X}, i.e. the dimensions are \verb{k x n}.
+
 Every item in the dataset is considered to be a neighbor of itself, so the
-first neighbor of item \code{i} should always be \code{i} itself. If that
-isn't the case, then any of \code{M}, \code{ef_construction} and \code{ef}
-may need increasing.
+first neighbor of item \code{i} should always be \code{i} itself. If that isn't the
+case, then any of \code{M}, \code{ef_construction} or \code{ef} may need increasing.
 }
 \description{
 A k-nearest neighbor algorithm using the hnswlib library
