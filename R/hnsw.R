@@ -228,18 +228,7 @@ hnsw_build <- function(X,
   ann$setNumThreads(n_threads)
   ann$setGrainSize(grain_size)
 
-  nstars <- 50
-  if (verbose &&
-    nitems > nstars && !is.null(progress) && progress == "bar") {
-    progress_for(
-      nitems, nstars,
-      function(chunk_start, chunk_end) {
-        ann$addItems(X[chunk_start:chunk_end, , drop = FALSE])
-      }
-    )
-  } else {
-    ann$addItems(X)
-  }
+  ann$addItems(X)
 
   tsmessage("Finished building index")
   ann
@@ -321,23 +310,9 @@ hnsw_search <-
       " threads"
     )
 
-    nstars <- 50
-    if (verbose &&
-      nitems > nstars && !is.null(progress) && progress == "bar") {
-      progress_for(
-        nitems, nstars,
-        function(chunk_start, chunk_end) {
-          res <-
-            ann$getAllNNsList(X[chunk_start:chunk_end, , drop = FALSE], k, TRUE)
-          idx[chunk_start:chunk_end, ] <<- as.integer(res$item)
-          dist[chunk_start:chunk_end, ] <<- res$distance
-        }
-      )
-    } else {
-      res <- ann$getAllNNsList(X, k, TRUE)
-      idx <- res$item
-      dist <- res$distance
-    }
+    res <- ann$getAllNNsList(X, k, TRUE)
+    idx <- res$item
+    dist <- res$distance
 
     if (!is.null(attr(ann, "distance")) &&
       attr(ann, "distance") == "euclidean") {
