@@ -415,6 +415,7 @@ RCPP_MODULE(HnswIp) {
           "constructor with dimension, loading from filename, number of items")
       .method("setEf", &HnswIp::setEf, "set ef value")
       .method("addItem", &HnswIp::addItem, "add item")
+      .method("addItems", &HnswIp::addItems, "add items")
       .method("save", &HnswIp::callSave, "save index to file")
       .method("getNNs", &HnswIp::getNNs,
               "retrieve Nearest Neigbours given vector")
