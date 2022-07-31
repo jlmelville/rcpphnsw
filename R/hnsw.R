@@ -105,8 +105,7 @@ hnsw_knn <- function(X,
   }
   ef_construction <- max(ef_construction, k)
 
-  nr <- nrow(X)
-  max_k <- nr
+  max_k <- nrow(X)
   if (k > max_k) {
     stop("k cannot be larger than ", max_k)
   }
@@ -197,8 +196,8 @@ hnsw_build <- function(X,
   distance <-
     match.arg(distance, c("l2", "euclidean", "cosine", "ip"))
 
-  nr <- nrow(X)
-  nc <- ncol(X)
+  nitems <- nrow(X)
+  ndim <- ncol(X)
 
   clazz <- switch(distance,
     "l2" = RcppHNSW::HnswL2,
@@ -207,8 +206,8 @@ hnsw_build <- function(X,
     "ip" = RcppHNSW::HnswIp
   )
   # Create the indexing object. You must say up front the number of items that
-  # will be stored (nr).
-  ann <- methods::new(clazz, nc, nr, M, ef)
+  # will be stored (nitems).
+  ann <- methods::new(clazz, ndim, nitems, M, ef)
 
   if (distance == "euclidean") {
     attr(ann, "distance") <- "euclidean"
@@ -231,9 +230,9 @@ hnsw_build <- function(X,
 
   nstars <- 50
   if (verbose &&
-    nr > nstars && !is.null(progress) && progress == "bar") {
+    nitems > nstars && !is.null(progress) && progress == "bar") {
     progress_for(
-      nr, nstars,
+      nitems, nstars,
       function(chunk_start, chunk_end) {
         ann$addItems(X[chunk_start:chunk_end, , drop = FALSE])
       }
@@ -304,12 +303,12 @@ hnsw_search <-
     if (!is.matrix(X)) {
       stop("X must be matrix")
     }
-    nr <- nrow(X)
+    nitems <- nrow(X)
 
     ef <- max(ef, k)
 
-    idx <- matrix(nrow = nr, ncol = k)
-    dist <- matrix(nrow = nr, ncol = k)
+    idx <- matrix(nrow = nitems, ncol = k)
+    dist <- matrix(nrow = nitems, ncol = k)
 
     ann$setEf(ef)
     ann$setNumThreads(n_threads)
@@ -324,9 +323,9 @@ hnsw_search <-
 
     nstars <- 50
     if (verbose &&
-      nr > nstars && !is.null(progress) && progress == "bar") {
+      nitems > nstars && !is.null(progress) && progress == "bar") {
       progress_for(
-        nr, nstars,
+        nitems, nstars,
         function(chunk_start, chunk_end) {
           res <-
             ann$getAllNNsList(X[chunk_start:chunk_end, , drop = FALSE], k, TRUE)
