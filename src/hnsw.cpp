@@ -451,8 +451,8 @@ RCPP_MODULE(HnswIp) {
           "constructor with dimension, loading from filename, number of items")
       .method("setEf", &HnswIp::setEf, "set ef value")
       .method("addItem", &HnswIp::addItem, "add item")
-      .method("addItems", &HnswIp::addItems, 
-        "add items where each item is stored row-wise")
+      .method("addItems", &HnswIp::addItems,
+              "add items where each item is stored row-wise")
       .method("addItemsCol", &HnswIp::addItemsCol,
               "add items where each item is stored column-wise")
       .method("save", &HnswIp::callSave, "save index to file")
