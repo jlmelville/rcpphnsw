@@ -122,12 +122,11 @@ public:
 
     auto data = Rcpp::as<std::vector<dist_t>>(items);
 
+    auto data_begin = data.cbegin();
     auto worker = [&](std::size_t begin, std::size_t end) {
-      std::vector<dist_t> item_copy(ndim);
       for (auto i = begin; i < end; i++) {
-        for (std::size_t j = 0; j < ndim; j++) {
-          item_copy[j] = data[ndim * i + j];
-        }
+        auto first = data_begin + ndim * i;
+        std::vector<dist_t> item_copy(first, first + ndim);
         addItemImpl(item_copy, index_start + i);
       }
     };
@@ -399,16 +398,15 @@ public:
     // race condition for writing found_all false, but it is never read from
     // until after the threaded section, so it doesn't matter
     bool found_all = true;
+    auto data_begin = data.cbegin();
 
     auto worker = [&](std::size_t begin, std::size_t end) {
-      std::vector<dist_t> item_copy(ndim);
       std::vector<dist_t> distances(0);
 
       for (auto i = begin; i < end; i++) {
-        for (std::size_t j = 0; j < ndim; j++) {
-          item_copy[j] = data[ndim * i + j];
-        }
-
+        auto first = data_begin + ndim * i;
+        std::vector<dist_t> item_copy(first, first + ndim);
+        
         bool ok_row = true;
         std::vector<hnswlib::labeltype> nbr_labels =
             getNNsImpl(item_copy, nnbrs, include_distances, distances, ok_row);
