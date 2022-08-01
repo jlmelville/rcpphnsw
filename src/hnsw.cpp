@@ -569,7 +569,7 @@ RCPP_MODULE(HnswIp) {
               "retrieve Nearest Neigbours given matrix where items are stored "
               "row-wise")
       .method("getAllNNsList", &HnswIp::getAllNNsList,
-              "retrieve Nearest Neigbours given matrix where items are stored" 
+              "retrieve Nearest Neigbours given matrix where items are stored"
               "row-wise")
       .method("getAllNNsCol", &HnswIp::getAllNNsCol,
               "retrieve Nearest Neigbours given matrix where items are stored "
