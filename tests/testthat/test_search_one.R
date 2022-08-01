@@ -17,6 +17,8 @@ expect_equal(res$dist, self_nn_dist4[1, , drop = FALSE], tol = 1e-6)
 expect_error(hnsw_search(ui10[1, , drop = FALSE], index, k = 500))
 
 # Neighbors of one item
+expect_error(index$getNNs(ui10[1, ], 15), "(?i)unable to find")
+expect_equal(index$getNNs(ui10[1, ], 4), self_nn_index4[1, ])
 expect_equal(index$getNNsList(ui10[1, ], 4, FALSE)$item, self_nn_index4[1, ])
 nbrs_with_distances <- index$getNNsList(ui10[1, ], 4, TRUE)
 expect_equal(nbrs_with_distances$item, self_nn_index4[1, ])
