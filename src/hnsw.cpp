@@ -1,5 +1,5 @@
 //  RcppHNSW -- Rcpp bindings to hnswlib library for Approximate Nearest
-//  Neighbours
+//  Neighbors
 //
 //  Copyright (C) 2018  James Melville
 //
@@ -483,10 +483,12 @@ RCPP_MODULE(HnswL2) {
               "row-wise")
       .method("getAllNNsCol", &HnswL2::getAllNNsCol,
               "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbours data is also returned column-wise")
+              "column-wise. Nearest Neighbors data is also returned "
+              "column-wise")
       .method("getAllNNsListCol", &HnswL2::getAllNNsListCol,
               "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbours data is also returned column-wise")
+              "column-wise. Nearest Neighbors data is also returned "
+              "column-wise")
       .method("size", &HnswL2::size, "number of items added to the index")
       .method("setNumThreads", &HnswL2::setNumThreads,
               "set the number of threads to use")
@@ -526,10 +528,12 @@ RCPP_MODULE(HnswCosine) {
               "row-wise")
       .method("getAllNNsCol", &HnswCosine::getAllNNsCol,
               "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbours data is also returned column-wise")
+              "column-wise. Nearest Neighbors data is also returned "
+              "column-wise")
       .method("getAllNNsListCol", &HnswCosine::getAllNNsListCol,
               "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbours data is also returned column-wise")
+              "column-wise. Nearest Neighbors data is also returned "
+              "column-wise")
       .method("size", &HnswCosine::size, "number of items added to the index")
       .method("setNumThreads", &HnswCosine::setNumThreads,
               "set the number of threads to use")
@@ -569,10 +573,12 @@ RCPP_MODULE(HnswIp) {
               "row-wise")
       .method("getAllNNsCol", &HnswIp::getAllNNsCol,
               "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbours data is also returned column-wise")
+              "column-wise. Nearest Neighbors data is also returned "
+              "column-wise")
       .method("getAllNNsListCol", &HnswIp::getAllNNsListCol,
               "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbours data is also returned column-wise")
+              "column-wise. Nearest Neighbors data is also returned "
+              "column-wise")
       .method("size", &HnswIp::size, "number of items added to the index")
       .method("setNumThreads", &HnswIp::setNumThreads,
               "set the number of threads to use")
