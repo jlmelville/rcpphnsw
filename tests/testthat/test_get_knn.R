@@ -1,6 +1,8 @@
 library(RcppHNSW)
 context("hnsw_knn")
 
+expect_error(hnsw_knn(uiris), "(?i)matrix")
+expect_error(hnsw_knn(ui10, M = 1), "M cannot")
 res <- hnsw_knn(ui10, k = 4)
 expect_equal(res$idx, self_nn_index4, check.attributes = FALSE)
 expect_equal(res$dist, self_nn_dist4, check.attributes = FALSE, tol = 1e-6)

@@ -116,6 +116,9 @@ public:
     if (static_cast<int>(ndim) != dim) {
       Rcpp::stop("Items to add have incorrect dimensions");
     }
+    if (index_start + nitems > appr_alg->max_elements_) {
+      Rcpp::stop("Index is too small to contain all items");
+    }
 
     auto data = Rcpp::as<std::vector<dist_t>>(items);
 
@@ -140,6 +143,9 @@ public:
 
     if (static_cast<int>(ndim) != dim) {
       Rcpp::stop("Items to add have incorrect dimensions");
+    }
+    if (index_start + nitems > appr_alg->max_elements_) {
+      Rcpp::stop("Index is too small to contain all items");
     }
 
     auto data = Rcpp::as<std::vector<dist_t>>(items);
@@ -299,6 +305,10 @@ public:
                      bool include_distances = true) -> Rcpp::List {
     auto nitems = items.nrow();
     const std::size_t ndim = items.ncol();
+    if (static_cast<int>(ndim) != dim) {
+      Rcpp::stop("Items to add have incorrect dimensions");
+    }
+
     auto data = Rcpp::as<std::vector<dist_t>>(items);
 
     std::vector<hnswlib::labeltype> idx_vec(nitems * nnbrs);
@@ -340,6 +350,10 @@ public:
                         bool include_distances = true) -> Rcpp::List {
     auto nitems = items.ncol();
     const std::size_t ndim = items.nrow();
+    if (static_cast<int>(ndim) != dim) {
+      Rcpp::stop("Items to add have incorrect dimensions");
+    }
+
     auto data = Rcpp::as<std::vector<dist_t>>(items);
 
     std::vector<hnswlib::labeltype> idx_vec(nitems * nnbrs);
