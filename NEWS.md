@@ -3,15 +3,22 @@
 ## New features
 
 * For high-dimensional data, there can be a noticeable CPU overhead in copying 
-data out of the non-contiguous memory regions when row-wise data is used. The
-following new methods have been added to the class-based API for batch
-index-creation and retrieval using matrices where the items are stored
-column-wise, i.e. there is one item per column: `addItemsCol` and `getAllNNsCol`
-`getAllNNsListCol`. These are the column-based equivalents of `addItems`,
-`getAllNNs` and `getAllNNsList`, respectively. Note that the returned nearest
-neighbor data from `getAllNNsCol` and `getAllNNsListCol` are *also* stored
-by column, i.e. the matrices have dimensions `k x n` where `k` is the number
-of neighbors, and `n` the number of items in the data being searched.
+data out of the non-contiguous memory regions when row-wise data is used. If
+you wish to provide data where each *column* of the input matrix contains an
+item to be indexed/search then see the following additions to the API:
+    * For the class-based API: `addItemsCol`, `getAllNNsCol` and 
+    `getAllNNsListCol` are the column-based equivalents of `addItems`, 
+    `getAllNNs` and `getAllNNsList`, respectively. Note that the returned 
+    nearest neighbor data from `getAllNNsCol` and `getAllNNsListCol` are *also* 
+    stored by column, i.e. the matrices have dimensions `k x n` where `k` is the
+    number of neighbors, and `n` the number of items in the data being searched.
+    * For the function-based API, a new parameter `byrow` has been added to 
+    `hnsw_knn`, `hnsw_build` and `hnsw_search`. By default this is set to `TRUE`
+    and indicates that the items in the input matrix are found in each row. To 
+    pass column-stored items, set `byrow = FALSE`. Any matrices returned by 
+    `hnsw_search` and `hnsw_knn` will now follow the convention provided by the
+    value of `byrow`: i.e. if  `byrow = FALSE`, the matrices contain nearest 
+    neighbor information in each column.
 
 ## Bug fixes and minor improvements
 
