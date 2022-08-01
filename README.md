@@ -87,17 +87,26 @@ install.packages("RcppHNSW")
 Development versions from github:
 
 ```R
-remotes::install_github("jlmelville/RcppHNSW")
+devtools::install_github("jlmelville/RcppHNSW")
 ```
 
 ## Function example
 
 ```R
+irism <- as.matrix(iris[, -5])
+
 # function interface returns results for all rows in nr x k matrices
-all_knn <- RcppHNSW::hnsw_knn(data, k = 4, distance = "l2")
+all_knn <- RcppHNSW::hnsw_knn(irism, k = 4, distance = "l2")
 # other distance options: "euclidean", "cosine" and "ip" (inner product distance)
 
-# or it can be split into two steps, so you can build with one set of data
+# for high-dimensional data you may see a speed-up if you store the data
+# where each *column* is an item to be indexed and searched. Set byrow = TRUE
+# for this.
+# Admittedly, the iris dataset is *not* high-dimensional
+iris_by_col <- t(irism)
+all_knn <- RcppHNSW::hnsw_knn(iris_by_col, k = 4, distance = "l2", byrow = FALSE)
+
+# process can be split into two steps, so you can build with one set of data
 # and search with another
 ann <- hnsw_build(irism[1:100, ])
 iris_nn <- hnsw_search(irism[101:150, ], ann, k = 5)
