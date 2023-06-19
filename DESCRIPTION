@@ -1,6 +1,6 @@
 Package: RcppHNSW
 Title: 'Rcpp' Bindings for 'hnswlib', a Library for Approximate Nearest Neighbors
-Version: 0.4.1.9000
+Version: 0.70.0.9000
 Authors@R: c(person("James", "Melville", email = "jlmelville@gmail.com", 
   role = c("aut", "cre")), 
   person("Aaron", "Lun", role = "ctb"), 
@@ -17,7 +17,7 @@ BugReports: https://github.com/jlmelville/rcpphnsw/issues
 Encoding: UTF-8
 Imports: methods, Rcpp (>= 0.11.3)
 LinkingTo: Rcpp
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.3
 Suggests: testthat,
     covr
 Roxygen: list(markdown = TRUE)
