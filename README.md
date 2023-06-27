@@ -291,6 +291,11 @@ index. Storing data column-wise makes copying the data for use by `hnsw` more
 efficient.
 * `save(filename)` saves an index to the specified `filename`. To load an index,
 use the `new(HnswL2, dim, filename)` constructor (see above).
+* `getItems(ids)` returns a matrix where each row is the data vector from the
+index associated with integer indices in the vector of `ids`. For cosine
+similarity, the l2 row-normalized vectors are returned. `ids` are one-indexed,
+i.e. to get the first and tenth vectors that were added to the index, use
+`getItems(c(1, 10))`, not `getItems(c(0, 9))`.
 * `getNNs(v, k)` return a vector of the labels of the `k`-nearest neighbors of
 the vector `v`. Labels are integers numbered from one, representing the
 insertion order into the index, e.g. the label `1` represents the first item
@@ -340,10 +345,10 @@ searches of the index. It does not reduce the memory used by the index. Calls to
 ## Differences from Python Bindings
 
 * Arbitrary integer labeling is not supported. Where labels are used, e.g. in
-the return value of `getNNsList` or as input in `markDeleted`, the labels
-represent the order in which the items were added to the index, using 1-indexing
-to be consistent with R. So in the Python bindings, the first item in the index
-has a default of label `0`, but here it will have label `1`.
+the return value of `getNNsList` or as input in `markDeleted` or `getItems`, the 
+labels represent the order in which the items were added to the index, using 
+1-indexing to be consistent with R. So in the Python bindings, the first item in
+the index has a default of label `0`, but here it will have label `1`.
 * The interface roughly follows the Python one but deviates with naming and also
 rolls the declaration and initialization of the index into one call. And as
 noted above, you must pass arguments by position, not keyword.
