@@ -434,8 +434,8 @@ public:
   }
 
   auto getItemsImpl(const std::vector<hnswlib::labeltype> &ids)
-    -> std::vector<dist_t> {
-      // this method assumes all the ids are valid
+      -> std::vector<dist_t> {
+    // this method assumes all the ids are valid
     const std::size_t nitems = ids.size();
     std::vector<dist_t> data(dim * nitems);
 
@@ -459,8 +459,8 @@ public:
       // over them rather than use Rcpp::as here
       auto idx = static_cast<hnswlib::labeltype>(ids[i] - 1);
       if (idx >= size()) {
-        Rcpp::stop("Invalid index requested: %i but index has size %lu",
-                   ids[i], size());
+        Rcpp::stop("Invalid index requested: %i but index has size %lu", ids[i],
+                   size());
       }
       ids_[i] = idx;
     }
