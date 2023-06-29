@@ -433,23 +433,39 @@ public:
     return found_all;
   }
 
-  auto getItems(const Rcpp::IntegerVector &ids) -> Rcpp::NumericMatrix {
-    auto nitems = ids.size();
-
-    auto ids_ = Rcpp::as<std::vector<hnswlib::labeltype>>(ids);
-
+  auto getItemsImpl(const std::vector<hnswlib::labeltype> &ids)
+    -> std::vector<dist_t> {
+      // this method assumes all the ids are valid
+    const std::size_t nitems = ids.size();
     std::vector<dist_t> data(dim * nitems);
 
-    for (std::size_t i = 0; i != ids_.size(); i++) {
-      auto idx = ids_[i] - 1;
+    auto worker = [&](std::size_t begin, std::size_t end) {
+      for (std::size_t i = begin; i != end; i++) {
+        auto obs = appr_alg->template getDataByLabel<dist_t>(ids[i]);
+        std::copy(obs.begin(), obs.end(), data.begin() + i * dim);
+      }
+    };
+
+    RcppPerpendicular::parallel_for(nitems, worker, numThreads);
+
+    return data;
+  }
+
+  auto getItems(const Rcpp::IntegerVector &ids) -> Rcpp::NumericMatrix {
+    auto nitems = ids.size();
+    auto ids_ = std::vector<hnswlib::labeltype>(nitems);
+    for (int i = 0; i != nitems; i++) {
+      // need to validate the ids as well as subtract 1 so may as well iterate
+      // over them rather than use Rcpp::as here
+      auto idx = static_cast<hnswlib::labeltype>(ids[i] - 1);
       if (idx >= size()) {
         Rcpp::stop("Invalid index requested: %i but index has size %lu",
-                   ids_[i], size());
+                   ids[i], size());
       }
-      auto obs = appr_alg->template getDataByLabel<dist_t>(idx);
-
-      std::copy(obs.begin(), obs.end(), data.begin() + i * dim);
+      ids_[i] = idx;
     }
+
+    std::vector<dist_t> data = getItemsImpl(ids_);
 
     return Rcpp::transpose(Rcpp::NumericMatrix(dim, nitems, data.begin()));
   }
