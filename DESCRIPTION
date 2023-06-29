@@ -17,7 +17,7 @@ BugReports: https://github.com/jlmelville/rcpphnsw/issues
 Encoding: UTF-8
 Imports: methods, Rcpp (>= 0.11.3)
 LinkingTo: Rcpp
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.3
 Suggests: testthat,
     covr
 Roxygen: list(markdown = TRUE)
