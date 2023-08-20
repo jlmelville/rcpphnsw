@@ -9,6 +9,7 @@
 \alias{Rcpp_HnswCosine-class}
 \alias{HnswIp}
 \alias{Rcpp_HnswIp-class}
+\alias{RcppHNSW-package}
 \title{Rcpp bindings for the hnswlib C++ library for approximate nearest neighbors.}
 \description{
 hnswlib is a library implementing the Hierarchical Navigable Small World
