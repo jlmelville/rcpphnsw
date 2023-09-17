@@ -8,7 +8,7 @@
 #' @docType package
 #' @name RcppHnsw-package
 #' @aliases HnswL2 Rcpp_HnswL2-class HnswCosine Rcpp_HnswCosine-class HnswIp
-#' @aliases Rcpp_HnswIp-class
+#' @aliases Rcpp_HnswIp-class RcppHNSW-package
 #' @references
 #' <https://github.com/nmslib/hnswlib>
 #' @author James Melville for the R interface; Yury Malkov for hnswlib itself.
@@ -19,13 +19,7 @@
 #' Efficient and robust approximate nearest neighbor search using Hierarchical
 #' Navigable Small World graphs.
 #' *arXiv preprint* *arXiv:1603.09320*.
-#' @useDynLib RcppHNSW, .registration = TRUE
-#' @import Rcpp
-#' @import methods
-#' @export HnswL2
-#' @export HnswCosine
-#' @export HnswIp
-NULL
+"_PACKAGE"
 
 ## ensure module gets loaded
 Rcpp::loadModule("HnswL2", TRUE)

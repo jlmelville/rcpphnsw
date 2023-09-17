@@ -406,7 +406,7 @@ public:
       for (auto i = begin; i < end; i++) {
         auto first = data_begin + ndim * i;
         std::vector<dist_t> item_copy(first, first + ndim);
-        
+
         bool ok_row = true;
         std::vector<hnswlib::labeltype> nbr_labels =
             getNNsImpl(item_copy, nnbrs, include_distances, distances, ok_row);
@@ -431,6 +431,43 @@ public:
     RcppPerpendicular::parallel_for(nitems, worker, numThreads);
 
     return found_all;
+  }
+
+  auto getItemsImpl(const std::vector<hnswlib::labeltype> &ids)
+      -> std::vector<dist_t> {
+    // this method assumes all the ids are valid
+    const std::size_t nitems = ids.size();
+    std::vector<dist_t> data(dim * nitems);
+
+    auto worker = [&](std::size_t begin, std::size_t end) {
+      for (std::size_t i = begin; i != end; i++) {
+        auto obs = appr_alg->template getDataByLabel<dist_t>(ids[i]);
+        std::copy(obs.begin(), obs.end(), data.begin() + i * dim);
+      }
+    };
+
+    RcppPerpendicular::parallel_for(nitems, worker, numThreads);
+
+    return data;
+  }
+
+  auto getItems(const Rcpp::IntegerVector &ids) -> Rcpp::NumericMatrix {
+    auto nitems = ids.size();
+    auto ids_ = std::vector<hnswlib::labeltype>(nitems);
+    for (int i = 0; i != nitems; i++) {
+      // need to validate the ids as well as subtract 1 so may as well iterate
+      // over them rather than use Rcpp::as here
+      auto idx = static_cast<hnswlib::labeltype>(ids[i] - 1);
+      if (idx >= size()) {
+        Rcpp::stop("Invalid index requested: %i but index has size %lu", ids[i],
+                   size());
+      }
+      ids_[i] = idx;
+    }
+
+    std::vector<dist_t> data = getItemsImpl(ids_);
+
+    return Rcpp::transpose(Rcpp::NumericMatrix(dim, nitems, data.begin()));
   }
 
   void callSave(const std::string &path_to_index) {
@@ -482,6 +519,11 @@ RCPP_MODULE(HnswL2) {
               "add items where each item is stored row-wise")
       .method("addItemsCol", &HnswL2::addItemsCol,
               "add items where each item is stored column-wise")
+      .method("getItems", &HnswL2::getItems,
+              "returns a matrix of vectors with the integer identifiers "
+              "specified in ids vector. "
+              "Note that for cosine similarity, "
+              "normalized vectors are returned")
       .method("save", &HnswL2::callSave, "save index to file")
       .method("getNNs", &HnswL2::getNNs,
               "retrieve Nearest Neigbours given vector")
@@ -527,6 +569,11 @@ RCPP_MODULE(HnswCosine) {
               "add items where each item is stored row-wise")
       .method("addItemsCol", &HnswCosine::addItemsCol,
               "add items where each item is stored column-wise")
+      .method("getItems", &HnswCosine::getItems,
+              "returns a matrix of vectors with the integer identifiers "
+              "specified in ids vector. "
+              "Note that for cosine similarity, "
+              "normalized vectors are returned")
       .method("save", &HnswCosine::callSave, "save index to file")
       .method("getNNs", &HnswCosine::getNNs,
               "retrieve Nearest Neigbours given vector")
@@ -572,6 +619,11 @@ RCPP_MODULE(HnswIp) {
               "add items where each item is stored row-wise")
       .method("addItemsCol", &HnswIp::addItemsCol,
               "add items where each item is stored column-wise")
+      .method("getItems", &HnswIp::getItems,
+              "returns a matrix of vectors with the integer identifiers "
+              "specified in ids vector. "
+              "Note that for cosine similarity, "
+              "normalized vectors are returned")
       .method("save", &HnswIp::callSave, "save index to file")
       .method("getNNs", &HnswIp::getNNs,
               "retrieve Nearest Neigbours given vector")

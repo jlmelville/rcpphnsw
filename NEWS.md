@@ -19,6 +19,9 @@ item to be indexed/search then see the following additions to the API:
     `hnsw_search` and `hnsw_knn` will now follow the convention provided by the
     value of `byrow`: i.e. if  `byrow = FALSE`, the matrices contain nearest 
     neighbor information in each column.
+* new method: `getItems`, which returns a matrix of the data vectors in the 
+index with the specified integer identifiers. From a feature request made by
+[d4tum](https://github.com/d4tum) (<https://github.com/jlmelville/rcpphnsw/issues/18>).
 
 ## Bug fixes and minor improvements
 

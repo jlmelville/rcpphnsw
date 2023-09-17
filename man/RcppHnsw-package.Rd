@@ -3,12 +3,14 @@
 \docType{package}
 \name{RcppHnsw-package}
 \alias{RcppHnsw-package}
+\alias{_PACKAGE}
 \alias{HnswL2}
 \alias{Rcpp_HnswL2-class}
 \alias{HnswCosine}
 \alias{Rcpp_HnswCosine-class}
 \alias{HnswIp}
 \alias{Rcpp_HnswIp-class}
+\alias{RcppHNSW-package}
 \title{Rcpp bindings for the hnswlib C++ library for approximate nearest neighbors.}
 \description{
 hnswlib is a library implementing the Hierarchical Navigable Small World
@@ -24,6 +26,14 @@ Malkov, Y. A., & Yashunin, D. A. (2016).
 Efficient and robust approximate nearest neighbor search using Hierarchical
 Navigable Small World graphs.
 \emph{arXiv preprint} \emph{arXiv:1603.09320}.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/jlmelville/rcpphnsw}
+  \item Report bugs at \url{https://github.com/jlmelville/rcpphnsw/issues}
+}
+
 }
 \author{
 James Melville for the R interface; Yury Malkov for hnswlib itself.
