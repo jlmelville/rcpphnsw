@@ -19,12 +19,6 @@
 #' Efficient and robust approximate nearest neighbor search using Hierarchical
 #' Navigable Small World graphs.
 #' *arXiv preprint* *arXiv:1603.09320*.
-#' @useDynLib RcppHNSW, .registration = TRUE
-#' @import Rcpp
-#' @import methods
-#' @export HnswL2
-#' @export HnswCosine
-#' @export HnswIp
 "_PACKAGE"
 
 ## ensure module gets loaded
