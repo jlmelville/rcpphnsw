@@ -25,7 +25,7 @@
 #' @export HnswL2
 #' @export HnswCosine
 #' @export HnswIp
-NULL
+"_PACKAGE"
 
 ## ensure module gets loaded
 Rcpp::loadModule("HnswL2", TRUE)
