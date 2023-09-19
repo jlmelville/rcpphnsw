@@ -13,6 +13,12 @@ Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 
 ## Status
 
+*September 19 2023* RcppHNSW 0.5.0 is released to CRAN, supporting
+[hnswlib version 0.7.0](https://github.com/nmslib/hnswlib/releases/tag/v0.7.0),
+a `getItems` method for returning the items used to build the index and some
+performance improvements if your data is already column-stored. Also, a small
+roxygen problem with the package documentation was fixed.
+
 *July 18 2022* RcppHNSW 0.4.1 is released. Unfortunately, there are valgrind
 problems with the version of hnswlib used in RcppHNSW 0.4.0, so that has been
 rolled back.
