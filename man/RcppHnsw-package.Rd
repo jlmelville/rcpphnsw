@@ -2,8 +2,8 @@
 % Please edit documentation in R/rcpphnsw-package.R
 \docType{package}
 \name{RcppHnsw-package}
+\alias{RcppHNSW}
 \alias{RcppHnsw-package}
-\alias{_PACKAGE}
 \alias{HnswL2}
 \alias{Rcpp_HnswL2-class}
 \alias{HnswCosine}
