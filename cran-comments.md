@@ -58,7 +58,7 @@ fixed.
 
 ## Downstream dependencies
 
-We checked 2 reverse dependencies (0 from CRAN + 2 from Bioconductor), comparing R CMD check
+We checked 3 reverse dependencies (1 from CRAN + 2 from Bioconductor), comparing R CMD check
 results across CRAN and dev versions of this package.
 
 * We saw 0 new problems
