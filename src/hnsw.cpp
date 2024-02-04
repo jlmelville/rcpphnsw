@@ -26,7 +26,7 @@
 
 #include <Rcpp.h>
 
-#include "hnswlib.h"
+#include "rcpphnsw.h"
 
 #include "RcppPerpendicular/RcppPerpendicular.h"
 
