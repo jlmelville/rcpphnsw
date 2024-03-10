@@ -123,6 +123,11 @@ iris_nn <- hnsw_search(irism[101:150, ], ann, k = 5)
 
 ## Class Example
 
+As noted in the "Do not use named parameters" section below, you should avoid
+using named parameters when using class methods. But I do use them in a few
+places below to document the name of the parameters the positional arguments
+refer to.
+
 ```R
 library(RcppHNSW)
 data <- as.matrix(iris[, -5])
@@ -153,7 +158,7 @@ res <- ann$getNNsList(data[1, ], k = 4, include_distances = TRUE)
 ann2 <- new(HnswL2, dim, nitems, M, ef)
 ann2$addItems(data)
 # Retrieve the 4 nearest neighbors for every item in data
-res2 <- ann2$getAllNNsList(data, k = 4, include_distances = TRUE)
+res2 <- ann2$getAllNNsList(data, 4, TRUE)
 # labels of the data are in res$item, distances in res$distance
 
 # If you are able to store your data column-wise, then the overhead of copying
@@ -162,9 +167,17 @@ data_by_col <- t(data)
 ann3 <- new(HnswL2, dim, nitems, M, ef)
 ann3$addItemsCol(data_by_col)
 # Retrieve the 4 nearest neighbors for every item in data_by_col
-res3 <- ann3$getAllNNsListCol(data_by_col, k = 4, include_distances = TRUE)
+res3 <- ann3$getAllNNsListCol(data_by_col, 4, TRUE)
 # The returned neared neighbor data matrices are also returned column-wise
 all(res2$item == t(res3$item) & res2$distance == t(res3$distance))
+
+# Save the index
+ann$save("iris.hnsw")
+
+# load it back in: you do need to know the dimension of the original data
+ann4 <- new(HnswL2, dim, "iris.hnsw")
+# new index should behave like the original
+all(ann$getNNs(data[1, ], 4) == ann4$getNNs(data[1, ], 4))
 
 # other distance classes:
 # Cosine: HnswCosine
