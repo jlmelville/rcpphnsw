@@ -13,7 +13,7 @@ Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 
 ## Status
 
-*February 4 2023* RcppHNSW 0.6.0 is released to CRAN, supporting
+*February 4 2024* RcppHNSW 0.6.0 is released to CRAN, supporting
 [hnswlib version 0.8.0](https://github.com/nmslib/hnswlib/releases/tag/v0.8.0).
 
 *September 19 2023* RcppHNSW 0.5.0 is released to CRAN, supporting
