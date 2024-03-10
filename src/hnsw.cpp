@@ -28,7 +28,7 @@
 
 #include "rcpphnsw.h"
 
-#include "RcppPerpendicular/RcppPerpendicular.h"
+#include "pforr/pforr.h"
 
 template <typename dist_t, bool DoNormalize = false> struct Normalizer {
   static void normalize(std::vector<dist_t> &vec) {}
@@ -130,7 +130,7 @@ public:
         addItemImpl(item_copy, index_start + i);
       }
     };
-    RcppPerpendicular::parallel_for(nitems, worker, numThreads);
+    pforr::parallel_for(0, nitems, worker, numThreads);
     cur_l = size();
   }
 
@@ -158,7 +158,7 @@ public:
       }
     };
 
-    RcppPerpendicular::parallel_for(nitems, worker, numThreads);
+    pforr::parallel_for(0, nitems, worker, numThreads);
     cur_l = size();
   }
 
@@ -295,7 +295,7 @@ public:
       }
     };
 
-    RcppPerpendicular::parallel_for(nitems, worker, numThreads);
+    pforr::parallel_for(0, nitems, worker, numThreads);
 
     return found_all;
   }
@@ -428,7 +428,7 @@ public:
       }
     };
 
-    RcppPerpendicular::parallel_for(nitems, worker, numThreads);
+    pforr::parallel_for(0, nitems, worker, numThreads);
 
     return found_all;
   }
@@ -446,7 +446,7 @@ public:
       }
     };
 
-    RcppPerpendicular::parallel_for(nitems, worker, numThreads);
+    pforr::parallel_for(0, nitems, worker, numThreads);
 
     return data;
   }
