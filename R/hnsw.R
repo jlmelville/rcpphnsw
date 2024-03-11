@@ -174,7 +174,8 @@ hnsw_knn <- function(X,
 #'   to be indexed are stored in each row. Otherwise, the items are stored in
 #'   the columns of `X`. Storing items in each column reduces the overhead of
 #'   copying data to a form that can be indexed by the `hnsw` library.
-#' @return an instance of a `HnswL2`, `HnswCosine` or `HnswIp` class.
+#' @return an instance of an `HnswEuclidean`, `HnswL2`, `HnswCosine` or
+#'   `HnswIp` class.
 #' @examples
 #' irism <- as.matrix(iris[, -5])
 #' ann <- hnsw_build(irism)
@@ -211,17 +212,13 @@ hnsw_build <- function(X,
   }
   clazz <- switch(distance,
     "l2" = RcppHNSW::HnswL2,
-    "euclidean" = RcppHNSW::HnswL2,
+    "euclidean" = RcppHNSW::HnswEuclidean,
     "cosine" = RcppHNSW::HnswCosine,
     "ip" = RcppHNSW::HnswIp
   )
   # Create the indexing object. You must say up front the number of items that
   # will be stored (nitems).
   ann <- methods::new(clazz, ndim, nitems, M, ef)
-
-  if (distance == "euclidean") {
-    attr(ann, "distance") <- "euclidean"
-  }
 
   tsmessage(
     "Building HNSW index with metric '",
@@ -253,8 +250,8 @@ hnsw_build <- function(X,
 #' @param X A numeric matrix of data to search for neighbors. If `byrow = TRUE`
 #'   (the default) then each row of `X` is an item to be searched. Otherwise,
 #'   each item should be stored in the columns of `X`.
-#' @param ann an instance of a `HnswL2`, `HnswCosine` or `HnswIp`
-#'   class.
+#' @param ann an instance of an `HnswEuclidean`, `HnswL2`, `HnswCosine` or
+#'   `HnswIp` class.
 #' @param k Number of neighbors to return. This can't be larger than the number
 #'   of items that were added to the index `ann`. To check the size of the
 #'   index, call `ann$size()`.
@@ -336,11 +333,6 @@ hnsw_search <-
     }
 
     dist <- res$distance
-    if (!is.null(attr(ann, "distance")) &&
-      attr(ann, "distance") == "euclidean") {
-      dist <- sqrt(dist)
-    }
-
     tsmessage("Finished searching")
     list(idx = res$item, dist = dist)
   }

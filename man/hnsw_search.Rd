@@ -21,8 +21,8 @@ hnsw_search(
 (the default) then each row of \code{X} is an item to be searched. Otherwise,
 each item should be stored in the columns of \code{X}.}
 
-\item{ann}{an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp}
-class.}
+\item{ann}{an instance of an \code{HnswEuclidean}, \code{HnswL2}, \code{HnswCosine} or
+\code{HnswIp} class.}
 
 \item{k}{Number of neighbors to return. This can't be larger than the number
 of items that were added to the index \code{ann}. To check the size of the

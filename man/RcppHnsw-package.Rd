@@ -10,6 +10,8 @@
 \alias{Rcpp_HnswCosine-class}
 \alias{HnswIp}
 \alias{Rcpp_HnswIp-class}
+\alias{HnswEuclidean}
+\alias{Rcpp_HnswEuclidean-class}
 \alias{RcppHNSW-package}
 \title{Rcpp bindings for the hnswlib C++ library for approximate nearest neighbors.}
 \description{

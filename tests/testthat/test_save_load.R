@@ -45,3 +45,20 @@ for (i in 1:num_elements) {
 }
 expect_equal(nn4idx, nn4idx_afterload)
 expect_equal(nn4dist, nn4dist_afterload)
+
+# 21: no way to use hnsw_search to get Euclidean distances after save/load
+test_that("euclidean search is more consistent with save/load", {
+  ann <- hnsw_build(ui10, distance = "euclidean")
+  iris_nn <- hnsw_search(ui10, ann, k = 4)
+  expect_equal(iris_nn$dist, self_nn_dist4, tol = 1e-6)
+  expect_equal(iris_nn$idx, self_nn_index4)
+
+  temp_file <- tempfile()
+  on.exit(unlink(temp_file), add = TRUE)
+  ann$save(temp_file)
+
+  ann2 <- methods::new(RcppHNSW::HnswEuclidean, 4, temp_file)
+  iris_nn2 <- hnsw_search(ui10, ann, k = 4)
+  expect_equal(iris_nn2$dist, self_nn_dist4, tol = 1e-6)
+  expect_equal(iris_nn2$idx, self_nn_index4)
+})

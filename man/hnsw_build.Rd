@@ -60,7 +60,8 @@ the columns of \code{X}. Storing items in each column reduces the overhead of
 copying data to a form that can be indexed by the \code{hnsw} library.}
 }
 \value{
-an instance of a \code{HnswL2}, \code{HnswCosine} or \code{HnswIp} class.
+an instance of an \code{HnswEuclidean}, \code{HnswL2}, \code{HnswCosine} or
+\code{HnswIp} class.
 }
 \description{
 Build an hnswlib nearest neighbor index

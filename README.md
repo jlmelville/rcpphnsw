@@ -182,6 +182,7 @@ all(ann$getNNs(data[1, ], 4) == ann4$getNNs(data[1, ], 4))
 # other distance classes:
 # Cosine: HnswCosine
 # Inner Product: HnswIP
+# Euclidean: HnswEuclidean
 ```
 
 Here's a rough equivalent of the serialization/deserialization example from

@@ -1,3 +1,15 @@
+# RcppHNSW (development version)
+
+## New features
+
+* New class: `HnswEuclidean`. This uses Euclidean distances internally and will
+be returned from `hnsw_build` when `distance = "euclidean"` is specified. This
+fixes an issue where if you created an index with `hnsw_build` and 
+`distance = "euclidean"` (the default), then after saving, you would be unable
+to reload the index and have it find Euclidean distances. You would have to
+create it as an `HsnwL2` object and take the square root of the distances
+yourself (<https://github.com/jlmelville/rcpphnsw/issues/21>).
+
 # RcppHNSW 0.6.0
 
 ## New features

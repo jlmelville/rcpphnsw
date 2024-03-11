@@ -51,7 +51,24 @@ template <typename dist_t> struct Normalizer<dist_t, true> {
   }
 };
 
-template <typename dist_t, typename Distance, bool DoNormalize = false>
+
+struct NoDistanceProcess {
+  template <typename dist_t>
+  static void process_distances(std::vector<dist_t> &vec) {
+  }
+};
+
+struct SquareRootDistanceProcess {
+  template <typename dist_t>
+  static void process_distances(std::vector<dist_t> &vec) {
+    for (std::size_t i = 0; i < vec.size(); i++) {
+      vec[i] = std::sqrt(vec[i]);
+    }
+  }
+};
+
+
+template <typename dist_t, typename Distance, bool DoNormalize, typename DistanceProcess>
 class Hnsw {
   static const constexpr std::size_t M_DEFAULT = 16;
   static const constexpr std::size_t EF_CONSTRUCTION_DEFAULT = 200;
@@ -190,6 +207,7 @@ public:
 
     auto nbr_list = Rcpp::List::create(Rcpp::Named("item") = nbr_labels);
     if (include_distances) {
+      DistanceProcess::process_distances(distances);
       nbr_list["distance"] = distances;
     }
     return nbr_list;
@@ -322,6 +340,7 @@ public:
         Rcpp::Named("item") = Rcpp::IntegerMatrix(
             nitems, static_cast<int>(nnbrs), idx_vec.begin()));
     if (include_distances) {
+      DistanceProcess::process_distances(dist_vec);
       result["distance"] = Rcpp::NumericMatrix(nitems, static_cast<int>(nnbrs),
                                                dist_vec.begin());
     }
@@ -367,6 +386,7 @@ public:
         Rcpp::Named("item") = Rcpp::IntegerMatrix(static_cast<int>(nnbrs),
                                                   nitems, idx_vec.begin()));
     if (include_distances) {
+      DistanceProcess::process_distances(dist_vec);
       result["distance"] = Rcpp::NumericMatrix(static_cast<int>(nnbrs), nitems,
                                                dist_vec.begin());
     }
@@ -500,9 +520,10 @@ private:
   std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>> appr_alg;
 };
 
-using HnswL2 = Hnsw<float, hnswlib::L2Space, false>;
-using HnswCosine = Hnsw<float, hnswlib::InnerProductSpace, true>;
-using HnswIp = Hnsw<float, hnswlib::InnerProductSpace, false>;
+using HnswL2 = Hnsw<float, hnswlib::L2Space, false, NoDistanceProcess>;
+using HnswCosine = Hnsw<float, hnswlib::InnerProductSpace, true, NoDistanceProcess>;
+using HnswIp = Hnsw<float, hnswlib::InnerProductSpace, false, NoDistanceProcess>;
+using HnswEuclidean = Hnsw<float, hnswlib::L2Space, false, SquareRootDistanceProcess>;
 
 RCPP_EXPOSED_CLASS_NODECL(HnswL2)
 RCPP_MODULE(HnswL2) {
@@ -651,5 +672,55 @@ RCPP_MODULE(HnswIp) {
       .method("markDeleted", &HnswIp::markDeleted,
               "remove the item with the specified label from the index")
       .method("resizeIndex", &HnswIp::resizeIndex,
+              "resize the index to use this number of items");
+}
+
+RCPP_EXPOSED_CLASS_NODECL(HnswEuclidean)
+RCPP_MODULE(HnswEuclidean) {
+  Rcpp::class_<HnswEuclidean>("HnswEuclidean")
+      .constructor<int32_t, std::size_t, std::size_t, std::size_t>(
+          "constructor with dimension, number of items, M, ef")
+      .constructor<int32_t, std::string>(
+          "constructor with dimension, loading from filename")
+      .constructor<int32_t, std::string, std::size_t>(
+          "constructor with dimension, loading from filename, number of items")
+      .method("setEf", &HnswEuclidean::setEf, "set ef value")
+      .method("addItem", &HnswEuclidean::addItem, "add item")
+      .method("addItems", &HnswEuclidean::addItems,
+              "add items where each item is stored row-wise")
+      .method("addItemsCol", &HnswEuclidean::addItemsCol,
+              "add items where each item is stored column-wise")
+      .method("getItems", &HnswEuclidean::getItems,
+              "returns a matrix of vectors with the integer identifiers "
+              "specified in ids vector. "
+              "Note that for cosine similarity, "
+              "normalized vectors are returned")
+      .method("save", &HnswEuclidean::callSave, "save index to file")
+      .method("getNNs", &HnswEuclidean::getNNs,
+              "retrieve Nearest Neigbours given vector")
+      .method("getNNsList", &HnswEuclidean::getNNsList,
+              "retrieve Nearest Neigbours given vector")
+      .method("getAllNNs", &HnswEuclidean::getAllNNs,
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "row-wise")
+      .method("getAllNNsList", &HnswEuclidean::getAllNNsList,
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "row-wise")
+      .method("getAllNNsCol", &HnswEuclidean::getAllNNsCol,
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "column-wise. Nearest Neighbors data is also returned "
+              "column-wise")
+      .method("getAllNNsListCol", &HnswEuclidean::getAllNNsListCol,
+              "retrieve Nearest Neigbours given matrix where items are stored "
+              "column-wise. Nearest Neighbors data is also returned "
+              "column-wise")
+      .method("size", &HnswEuclidean::size, "number of items added to the index")
+      .method("setNumThreads", &HnswEuclidean::setNumThreads,
+              "set the number of threads to use")
+      .method("setGrainSize", &HnswEuclidean::setGrainSize,
+              "set minimum grain size for using multiple threads")
+      .method("markDeleted", &HnswEuclidean::markDeleted,
+              "remove the item with the specified label from the index")
+      .method("resizeIndex", &HnswEuclidean::resizeIndex,
               "resize the index to use this number of items");
 }
