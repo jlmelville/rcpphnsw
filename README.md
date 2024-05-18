@@ -280,6 +280,8 @@ with `dim` dimensions and a maximum size of `max_elements` items. `ef` and `M`
 determine the speed vs accuracy trade off. Other classes for different distances
 are: `HnswCosine` for the cosine distance and `HnswIp` for the "Inner Product"
 distance (like the cosine distance without normalizing).
+* `new(HnswL2, dim, max_elements, M, ef_contruction, random_seed)` same as the
+previous constructor, but with a specified random seed.
 * `new(HnswL2, dim, filename)` load a previously saved index (see `save` below)
 with `dim` dimensions from the specified `filename`.
 * `new(HnswL2, dim, filename, max_elements)` load a previously saved index (see

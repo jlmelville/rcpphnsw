@@ -9,6 +9,13 @@ fixes an issue where if you created an index with `hnsw_build` and
 to reload the index and have it find Euclidean distances. You would have to
 create it as an `HsnwL2` object and take the square root of the distances
 yourself (<https://github.com/jlmelville/rcpphnsw/issues/21>).
+* The `Hnsw` constructors now expose a `random_seed` parameter that you can use
+to set the random seed used in constructing the HNSW index. Internally, the
+`hnsw_build` and `hnsw_knn` functions will use a random seed based on R's RNG
+state. This means that if you want to reproduce results, you need to set the
+random seed in R via `set.seed` before calling those functions. Based on a
+request by [Maciej Beręsewicz](https://github.com/BERENZ) 
+(<https://github.com/jlmelville/rcpphnsw/issues/23>).
 
 # RcppHNSW 0.6.0
 

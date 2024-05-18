@@ -51,11 +51,9 @@ template <typename dist_t> struct Normalizer<dist_t, true> {
   }
 };
 
-
 struct NoDistanceProcess {
   template <typename dist_t>
-  static void process_distances(std::vector<dist_t> &vec) {
-  }
+  static void process_distances(std::vector<dist_t> &vec) {}
 };
 
 struct SquareRootDistanceProcess {
@@ -67,8 +65,8 @@ struct SquareRootDistanceProcess {
   }
 };
 
-
-template <typename dist_t, typename Distance, bool DoNormalize, typename DistanceProcess>
+template <typename dist_t, typename Distance, bool DoNormalize,
+          typename DistanceProcess>
 class Hnsw {
   static const constexpr std::size_t M_DEFAULT = 16;
   static const constexpr std::size_t EF_CONSTRUCTION_DEFAULT = 200;
@@ -90,6 +88,14 @@ public:
         appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
             new hnswlib::HierarchicalNSW<dist_t>(space.get(), max_elements, M,
                                                  ef_construction))) {}
+
+  Hnsw(int dim, std::size_t max_elements, std::size_t M,
+       std::size_t ef_construction, std::size_t random_seed)
+      : dim(dim), normalize(false), cur_l(0), numThreads(0), grainSize(1),
+        space(std::unique_ptr<Distance>(new Distance(dim))),
+        appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
+            new hnswlib::HierarchicalNSW<dist_t>(
+                space.get(), max_elements, M, ef_construction, random_seed))) {}
 
   Hnsw(int dim, const std::string &path_to_index)
       : dim(dim), normalize(false), cur_l(0), numThreads(0), grainSize(1),
@@ -521,15 +527,20 @@ private:
 };
 
 using HnswL2 = Hnsw<float, hnswlib::L2Space, false, NoDistanceProcess>;
-using HnswCosine = Hnsw<float, hnswlib::InnerProductSpace, true, NoDistanceProcess>;
-using HnswIp = Hnsw<float, hnswlib::InnerProductSpace, false, NoDistanceProcess>;
-using HnswEuclidean = Hnsw<float, hnswlib::L2Space, false, SquareRootDistanceProcess>;
+using HnswCosine =
+    Hnsw<float, hnswlib::InnerProductSpace, true, NoDistanceProcess>;
+using HnswIp =
+    Hnsw<float, hnswlib::InnerProductSpace, false, NoDistanceProcess>;
+using HnswEuclidean =
+    Hnsw<float, hnswlib::L2Space, false, SquareRootDistanceProcess>;
 
 RCPP_EXPOSED_CLASS_NODECL(HnswL2)
 RCPP_MODULE(HnswL2) {
   Rcpp::class_<HnswL2>("HnswL2")
       .constructor<int32_t, std::size_t, std::size_t, std::size_t>(
           "constructor with dimension, number of items, M, ef")
+      .constructor<int32_t, std::size_t, std::size_t, std::size_t, std::size_t>(
+          "constructor with dimension, number of items, M, ef, random seed")
       .constructor<int32_t, std::string>(
           "constructor with dimension, loading from filename")
       .constructor<int32_t, std::string, std::size_t>(
@@ -580,6 +591,8 @@ RCPP_MODULE(HnswCosine) {
   Rcpp::class_<HnswCosine>("HnswCosine")
       .constructor<int32_t, std::size_t, std::size_t, std::size_t>(
           "constructor with dimension, number of items, M, ef")
+      .constructor<int32_t, std::size_t, std::size_t, std::size_t, std::size_t>(
+          "constructor with dimension, number of items, M, ef, random seed")
       .constructor<int32_t, std::string>(
           "constructor with dimension, loading from filename")
       .constructor<int32_t, std::string, std::size_t>(
@@ -630,6 +643,8 @@ RCPP_MODULE(HnswIp) {
   Rcpp::class_<HnswIp>("HnswIp")
       .constructor<int32_t, std::size_t, std::size_t, std::size_t>(
           "constructor with dimension, number of items, M, ef")
+      .constructor<int32_t, std::size_t, std::size_t, std::size_t, std::size_t>(
+          "constructor with dimension, number of items, M, ef, random seed")
       .constructor<int32_t, std::string>(
           "constructor with dimension, loading from filename")
       .constructor<int32_t, std::string, std::size_t>(
@@ -680,6 +695,8 @@ RCPP_MODULE(HnswEuclidean) {
   Rcpp::class_<HnswEuclidean>("HnswEuclidean")
       .constructor<int32_t, std::size_t, std::size_t, std::size_t>(
           "constructor with dimension, number of items, M, ef")
+      .constructor<int32_t, std::size_t, std::size_t, std::size_t, std::size_t>(
+          "constructor with dimension, number of items, M, ef, random seed")
       .constructor<int32_t, std::string>(
           "constructor with dimension, loading from filename")
       .constructor<int32_t, std::string, std::size_t>(
@@ -714,7 +731,8 @@ RCPP_MODULE(HnswEuclidean) {
               "retrieve Nearest Neigbours given matrix where items are stored "
               "column-wise. Nearest Neighbors data is also returned "
               "column-wise")
-      .method("size", &HnswEuclidean::size, "number of items added to the index")
+      .method("size", &HnswEuclidean::size,
+              "number of items added to the index")
       .method("setNumThreads", &HnswEuclidean::setNumThreads,
               "set the number of threads to use")
       .method("setGrainSize", &HnswEuclidean::setGrainSize,

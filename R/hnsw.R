@@ -218,7 +218,8 @@ hnsw_build <- function(X,
   )
   # Create the indexing object. You must say up front the number of items that
   # will be stored (nitems).
-  ann <- methods::new(clazz, ndim, nitems, M, ef)
+  seed <- floor(stats::runif(1, min = 0, max = 2147483647L + 1))
+  ann <- methods::new(clazz, ndim, nitems, M, ef, seed)
 
   tsmessage(
     "Building HNSW index with metric '",
