@@ -4,7 +4,7 @@
 [![R-CMD-check](https://github.com/jlmelville/rcpphnsw/workflows/R-CMD-check/badge.svg)](https://github.com/jlmelville/rcpphnsw/actions)
 [![Coverage Status](https://img.shields.io/codecov/c/github/jlmelville/rcpphnsw/master.svg)](https://codecov.io/github/jlmelville/rcpphnsw?branch=master)
 [![CRAN Status Badge](http://www.r-pkg.org/badges/version/RcppHNSW)](https://cran.r-project.org/package=RcppHNSW)
-[![Dependencies](https://tinyverse.netlify.com/badge/RcppHNSW)](https://cran.r-project.org/package=RcppHNSW)
+[![Dependencies](https://tinyverse.netlify.app/badge/RcppHNSW)](https://cran.r-project.org/package=RcppHNSW)
 [![CRAN Monthly Downloads](https://cranlogs.r-pkg.org/badges/RcppHNSW)](https://cran.r-project.org/package=RcppHNSW)
 ![CRAN Downloads](http://cranlogs.r-pkg.org/badges/grand-total/RcppHNSW)
 [![Last Commit](https://img.shields.io/github/last-commit/jlmelville/rcpphnsw)](https://github.com/jlmelville/rcpphnsw)
