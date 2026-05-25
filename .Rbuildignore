@@ -11,3 +11,5 @@ DONTCHECKMEIN.R
 ^\.github$
 ^CRAN-SUBMISSION$
 ^\.vscode$
+^\.positai$
+^\.claude$
