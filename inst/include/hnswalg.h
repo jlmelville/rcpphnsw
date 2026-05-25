@@ -1200,7 +1200,7 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         memset(data_level0_memory_ + cur_c * size_data_per_element_ + offsetLevel0_, 0, size_data_per_element_);
 
         // Initialisation of the data and label
-        memcpy(getExternalLabeLp(cur_c), &label, sizeof(labeltype));
+        setExternalLabel(cur_c, label);
         memcpy(getDataByInternalId(cur_c), data_point, data_size_);
 
         if (curlevel) {
