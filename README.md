@@ -1,6 +1,5 @@
 # RcppHNSW
 
-[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/jlmelville/rcpphnsw?branch=master&svg=true)](https://ci.appveyor.com/project/jlmelville/rcpphnsw)
 [![R-CMD-check](https://github.com/jlmelville/rcpphnsw/workflows/R-CMD-check/badge.svg)](https://github.com/jlmelville/rcpphnsw/actions)
 [![Coverage Status](https://img.shields.io/codecov/c/github/jlmelville/rcpphnsw/master.svg)](https://codecov.io/github/jlmelville/rcpphnsw?branch=master)
 [![CRAN Status Badge](https://www.r-pkg.org/badges/version/RcppHNSW)](https://cran.r-project.org/package=RcppHNSW)
