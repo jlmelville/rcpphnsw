@@ -1,8 +1,8 @@
 # R-hub's generic GitHub Actions workflow file. It's canonical location is at
-# https://github.com/r-hub/rhub2/blob/v1/inst/workflow/rhub.yaml
+# https://github.com/r-hub/actions/blob/v1/workflows/rhub.yaml
 # You can update this file to a newer version using the rhub2 package:
 #
-# rhub2::rhub_setup()
+# rhub::rhub_setup()
 #
 # It is unlikely that you need to modify this file manually.
 
@@ -23,9 +23,16 @@ on:
         description: 'Unique ID. You can leave this empty now.'
         type: string
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.inputs.id || github.run_id }}
+
 jobs:
 
   setup:
+    name: Resolve R-hub platforms
     runs-on: ubuntu-latest
     outputs:
       containers: ${{ steps.rhub-setup.outputs.containers }}
@@ -33,7 +40,8 @@ jobs:
 
     steps:
     # NO NEED TO CHECKOUT HERE
-    - uses: r-hub/rhub2/actions/rhub-setup@v1
+    # Pinned from r-hub/actions/setup@v1 on 2026-05-24.
+    - uses: r-hub/actions/setup@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
       with:
         config: ${{ github.event.inputs.config }}
       id: rhub-setup
@@ -42,6 +50,7 @@ jobs:
     needs: setup
     if: ${{ needs.setup.outputs.containers != '[]' }}
     runs-on: ubuntu-latest
+    environment: rhub
     name: ${{ matrix.config.label }}
     strategy:
       fail-fast: false
@@ -51,16 +60,20 @@ jobs:
       image: ${{ matrix.config.container }}
 
     steps:
-      - uses: r-hub/rhub2/actions/rhub-checkout@v1
-      - uses: r-hub/rhub2/actions/rhub-platform-info@v1
+      # Pinned from r-hub/actions/checkout@v1 on 2026-05-24.
+      - uses: r-hub/actions/checkout@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
+      # Pinned from r-hub/actions/platform-info@v1 on 2026-05-24.
+      - uses: r-hub/actions/platform-info@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
-      - uses: r-hub/rhub2/actions/rhub-setup-deps@v1
+      # Pinned from r-hub/actions/setup-deps@v1 on 2026-05-24.
+      - uses: r-hub/actions/setup-deps@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
-      - uses: r-hub/rhub2/actions/rhub-run-check@v1
+      # Pinned from r-hub/actions/run-check@v1 on 2026-05-24.
+      - uses: r-hub/actions/run-check@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
@@ -69,6 +82,7 @@ jobs:
     needs: setup
     if: ${{ needs.setup.outputs.platforms != '[]' }}
     runs-on: ${{ matrix.config.os }}
+    environment: rhub
     name: ${{ matrix.config.label }}
     strategy:
       fail-fast: false
@@ -76,20 +90,25 @@ jobs:
         config: ${{ fromJson(needs.setup.outputs.platforms) }}
 
     steps:
-      - uses: r-hub/rhub2/actions/rhub-checkout@v1
-      - uses: r-hub/rhub2/actions/rhub-setup-r@v1
+      # Pinned from r-hub/actions/checkout@v1 on 2026-05-24.
+      - uses: r-hub/actions/checkout@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
+      # Pinned from r-hub/actions/setup-r@v1 on 2026-05-24.
+      - uses: r-hub/actions/setup-r@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
-      - uses: r-hub/rhub2/actions/rhub-platform-info@v1
+      # Pinned from r-hub/actions/platform-info@v1 on 2026-05-24.
+      - uses: r-hub/actions/platform-info@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
-      - uses: r-hub/rhub2/actions/rhub-setup-deps@v1
+      # Pinned from r-hub/actions/setup-deps@v1 on 2026-05-24.
+      - uses: r-hub/actions/setup-deps@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
-      - uses: r-hub/rhub2/actions/rhub-run-check@v1
+      # Pinned from r-hub/actions/run-check@v1 on 2026-05-24.
+      - uses: r-hub/actions/run-check@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
