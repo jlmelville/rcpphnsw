@@ -12,58 +12,9 @@ Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 
 ## Status
 
-*February 4 2024* RcppHNSW 0.6.0 is released to CRAN, supporting
-[hnswlib version 0.8.0](https://github.com/nmslib/hnswlib/releases/tag/v0.8.0).
-
-*September 19 2023* RcppHNSW 0.5.0 is released to CRAN, supporting
-[hnswlib version 0.7.0](https://github.com/nmslib/hnswlib/releases/tag/v0.7.0),
-a `getItems` method for returning the items used to build the index and some
-performance improvements if your data is already column-stored. Also, a small
-roxygen problem with the package documentation was fixed.
-
-*July 18 2022* RcppHNSW 0.4.1 is released. Unfortunately, there are valgrind
-problems with the version of hnswlib used in RcppHNSW 0.4.0, so that has been
-rolled back.
-
-*July 16 2022* RcppHNSW 0.4.0 is released. This release matches [hnswlib version
-0.6.2](https://github.com/nmslib/hnswlib/releases/tag/v0.6.2), but otherwise
-adds no new features. Some minor CRAN check NOTEs are fixed and there is also a
-minor license change: previously the license was GPLv3. From this version, it
-now supports GPLv3 or later.
-
-*September 6 2020* RcppHNSW 0.3.0 is now available on CRAN, with multi-threading
-support.
-
-*August 30 2020*. Although not yet on CRAN, support for building and searching
-an index in parallel (via the `n_threads` function argument and `setNumThreads`
-object method) has been added to the current development version (available via
-`devtools::install_github`). Thanks to 
-[Dmitriy Selivanov](https://github.com/dselivanov) for a lot of the work on
-this.
-
-*September 20 2019*. RcppHNSW 0.2.0 is now available on CRAN, up to date with
-hnswlib at <https://github.com/nmslib/hnswlib/commit/c5c38f0>, with new methods:
-`size`, `resizeIndex` and `markDeleted`. Also, a bug that prevented searching
-with datasets smaller than `k` has been fixed. Thanks to
-[Yuxing Liao](https://github.com/yxngl) for spotting that.
-
-*January 21 2019*. RcppHNSW is now available on CRAN.
-
-*October 20 2018*. By inserting some preprocessor symbols into hnswlib, these
-bindings no longer require a non-portable compiler flag and hence will pass `R
-CMD CHECK` without any warnings: previously you would be warned about
-`-march=native`. The price paid is not using specialized functions for the
-distance calculations that are architecture-specific. I have not checked how bad
-the performance hit is. The old settings remain in `src/Makevars` and
-`src/Makevars.win` (commented out), if you want to build the project from
-source directly. Otherwise, [Release
-0.0.0.9000](https://github.com/jlmelville/rcpphnsw/releases/tag/v0.0.0.9000) is
-the last version with the old behavior, which can be installed with something
-like:
-
-```R
-devtools::install_github("jlmelville/rcpphnsw@v0.0.0.9000")
-```
+*May 26 2026* RcppHNSW 0.7.0 is released to CRAN to fix an undefined behavior
+issues in the underlying `hnswlib` library. Also, the `random_seed` parameter
+is now exposed in the API.
 
 ## hnswlib
 
