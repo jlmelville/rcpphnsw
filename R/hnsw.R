@@ -64,6 +64,9 @@
 #'   overhead of copying data to a form that can be used by the `hnsw`
 #'   library. Note that if `byrow = FALSE`, any matrices returned from this
 #'   function will also store the items by column.
+#' @param random_seed Seed passed to hnswlib for index construction. The
+#'   default, `100`, is the underlying hnswlib default. Note that calling
+#'   `set.seed` does *not* have any effect on the results.
 #' @return a list containing:
 #'   * `idx` a matrix containing the nearest neighbor indices.
 #'   * `dist` a matrix containing the nearest neighbor distances.
@@ -96,7 +99,8 @@ hnsw_knn <- function(X,
                      progress = "bar",
                      n_threads = 0,
                      grain_size = 1,
-                     byrow = TRUE) {
+                     byrow = TRUE,
+                     random_seed = 100) {
   stopifnot(is.numeric(n_threads) &&
     length(n_threads) == 1 && n_threads >= 0)
   stopifnot(is.numeric(grain_size) &&
@@ -126,7 +130,8 @@ hnsw_knn <- function(X,
     progress = progress,
     n_threads = n_threads,
     grain_size = grain_size,
-    byrow = byrow
+    byrow = byrow,
+    random_seed = random_seed
   )
   hnsw_search(
     X = X,
@@ -174,6 +179,9 @@ hnsw_knn <- function(X,
 #'   to be indexed are stored in each row. Otherwise, the items are stored in
 #'   the columns of `X`. Storing items in each column reduces the overhead of
 #'   copying data to a form that can be indexed by the `hnsw` library.
+#' @param random_seed Seed passed to hnswlib for index construction. The
+#'   default, `100`, is the underlying hnswlib default. Note that calling
+#'   `set.seed` does *not* have any effect on the results.
 #' @return an instance of an `HnswEuclidean`, `HnswL2`, `HnswCosine` or
 #'   `HnswIp` class.
 #' @examples
@@ -188,7 +196,8 @@ hnsw_build <- function(X,
                        progress = "bar",
                        n_threads = 0,
                        grain_size = 1,
-                       byrow = TRUE) {
+                       byrow = TRUE,
+                       random_seed = 100) {
   stopifnot(is.numeric(n_threads) &&
     length(n_threads) == 1 && n_threads >= 0)
   stopifnot(is.numeric(grain_size) &&
@@ -216,9 +225,9 @@ hnsw_build <- function(X,
     "cosine" = RcppHNSW::HnswCosine,
     "ip" = RcppHNSW::HnswIp
   )
+  seed <- check_random_seed(random_seed)
   # Create the indexing object. You must say up front the number of items that
   # will be stored (nitems).
-  seed <- floor(stats::runif(1, min = 0, max = 2147483647L + 1))
   ann <- methods::new(clazz, ndim, nitems, M, ef, seed)
 
   tsmessage(

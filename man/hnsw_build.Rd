@@ -13,7 +13,8 @@ hnsw_build(
   progress = "bar",
   n_threads = 0,
   grain_size = 1,
-  byrow = TRUE
+  byrow = TRUE,
+  random_seed = 100
 )
 }
 \arguments{
@@ -58,6 +59,10 @@ parallelism.}
 to be indexed are stored in each row. Otherwise, the items are stored in
 the columns of \code{X}. Storing items in each column reduces the overhead of
 copying data to a form that can be indexed by the \code{hnsw} library.}
+
+\item{random_seed}{Seed passed to hnswlib for index construction. The
+default, \code{100}, is the underlying hnswlib default. Note that calling
+\code{set.seed} does \emph{not} have any effect on the results.}
 }
 \value{
 an instance of an \code{HnswEuclidean}, \code{HnswL2}, \code{HnswCosine} or

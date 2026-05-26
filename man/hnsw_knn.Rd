@@ -15,7 +15,8 @@ hnsw_knn(
   progress = "bar",
   n_threads = 0,
   grain_size = 1,
-  byrow = TRUE
+  byrow = TRUE,
+  random_seed = 100
 )
 }
 \arguments{
@@ -69,6 +70,10 @@ stored in the columns of \code{X}. Storing items in each column reduces the
 overhead of copying data to a form that can be used by the \code{hnsw}
 library. Note that if \code{byrow = FALSE}, any matrices returned from this
 function will also store the items by column.}
+
+\item{random_seed}{Seed passed to hnswlib for index construction. The
+default, \code{100}, is the underlying hnswlib default. Note that calling
+\code{set.seed} does \emph{not} have any effect on the results.}
 }
 \value{
 a list containing:

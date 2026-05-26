@@ -18,3 +18,22 @@ tsmessage <- function(..., domain = NULL, appendLF = TRUE, force = FALSE,
     utils::flush.console()
   }
 }
+
+check_random_seed <- function(random_seed) {
+  seed_max <- .Machine$integer.max
+
+  if (!is.numeric(random_seed) ||
+    length(random_seed) != 1 ||
+    is.na(random_seed) ||
+    random_seed < 0 ||
+    random_seed > seed_max ||
+    random_seed != floor(random_seed)) {
+    stop(
+      "random_seed must be an integer between 0 and ",
+      seed_max,
+      call. = FALSE
+    )
+  }
+
+  as.integer(random_seed)
+}
