@@ -1,3 +1,5 @@
+# RcppHNSW (development version)
+
 # RcppHNSW 0.7.0
 
 ## New features
