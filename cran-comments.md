@@ -1,46 +1,43 @@
 ## Release Summary
 
-This is a patch release for a new version of the underlying hnswlib library.
+This is a minor release to fix a SAN error reported by the CRAN Team, plus some
+small feature additions.
 
 ## Test environments
 
-* ubuntu 22.04 (on github actions), R 4.2.3, R 4.3.2, devel
-* local ubuntu 23.10 R 4.3.1
-* Debian Linux, R-devel, GCC ASAN/UBSAN (via rhub)
-* Debian Linux, R-release, GCC (via rhub)
-* Debian Linux, R-release, GCC valgrind (via rhub)
-* Ubuntu Linux 20.04.1 LTS, R-release, GCC (via rhub)
-* Fedora Linux, R-devel, clang, gfortran (via rhub)
-* Windows Server 2022 (on github actions), R 4.2.3, R 4.3.2
-* Windows Server 2022, R-devel, 64 bit (via rhub)
-* local Windows 11 build, R 4.3.2
+* ubuntu 22.04 (on rhub) devel clang-ASAN
+* Fedora 42 (on rhub) devel valgrind
+* local ubuntu 26.04 R 4.5.2
+* ubuntu 24.04 (on github actions), R 4.5.3, R 4.6.0, devel
+* Windows Server 2022 (on github actions), R 4.5.3, R 4.6.0
+* local Windows 11 build, R 4.6.0
 * win-builder (devel)
-* local mac OS X Sonoma R 4.3.2
-* mac OS X Monterey (on github actions) R 4.3.2
+* mac OS X Sequoia (on github actions) R 4.6.0
+* local mac OS X Tahoe R 4.6.0
+* mac-builder (devel)
 
 ## R CMD check results
 
-There were no ERRORs or WARNINGs.
+There were no ERRORs, WARNINGs or NOTEs.
 
-There was one NOTE:
-
-* checking installed package size ... NOTE
-  installed size is  6.7Mb
-  sub-directories of 1Mb or more:
-    libs   6.4Mb
-
-This is expected due to the use of C++ templates in hnswlib.
- 
 ## CRAN checks
 
-There are no ERRORs or WARNINGs.
+There are no ERRORs, WARNINGs or NOTES as of today, but there is a badge
+indicating an issue needs fixing. I was emailed by the CRAN team about a
+failure in the examples under M1 SAN
+<https://www.stats.ox.ac.uk/pub/bdr/M1-SAN/RcppHNSW. The error is:
 
-There are three flavors with NOTEs about installed package size (r-release-macos-arm64,
-r-release-macos-x86_64, r-oldrel-macos-arm64). This is expected and won't be fixed.
+```
+../inst/include/hnswalg.h:1203:16: runtime error: store to misaligned address 
+0x62a000078294 for type 'labeltype *' (aka 'unsigned long *'), which requires 8 
+byte alignment
+```
+
+This submission is intended to fix this error.
 
 ## Downstream dependencies
 
-We checked 3 reverse dependencies (1 from CRAN + 2 from Bioconductor), comparing R CMD check
+We checked 9 reverse dependencies (7 from CRAN + 2 from Bioconductor), comparing R CMD check
 results across CRAN and dev versions of this package.
 
 * We saw 0 new problems
