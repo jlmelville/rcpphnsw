@@ -153,7 +153,7 @@ public:
         addItemImpl(item_copy, index_start + i);
       }
     };
-    pforr::parallel_for(0, nitems, worker, numThreads);
+    pforr::parallel_for(0, nitems, worker, numThreads, grainSize);
     cur_l = size();
   }
 
@@ -181,7 +181,7 @@ public:
       }
     };
 
-    pforr::parallel_for(0, nitems, worker, numThreads);
+    pforr::parallel_for(0, nitems, worker, numThreads, grainSize);
     cur_l = size();
   }
 
@@ -319,7 +319,7 @@ public:
       }
     };
 
-    pforr::parallel_for(0, nitems, worker, numThreads);
+    pforr::parallel_for(0, nitems, worker, numThreads, grainSize);
 
     return found_all;
   }
@@ -454,7 +454,7 @@ public:
       }
     };
 
-    pforr::parallel_for(0, nitems, worker, numThreads);
+    pforr::parallel_for(0, nitems, worker, numThreads, grainSize);
 
     return found_all;
   }
@@ -472,7 +472,7 @@ public:
       }
     };
 
-    pforr::parallel_for(0, nitems, worker, numThreads);
+    pforr::parallel_for(0, nitems, worker, numThreads, grainSize);
 
     return data;
   }
