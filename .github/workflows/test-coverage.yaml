@@ -15,28 +15,27 @@ concurrency:
 
 jobs:
   test-coverage:
-    name: test-coverage
+    name: Test coverage
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      # Pinned from actions/checkout@v4 on 2026-05-26.
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      # Pinned to a full-length commit SHA for immutability.
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           persist-credentials: false
 
-      # Pinned from r-lib/actions/setup-r@v2 on 2026-05-26.
+      # Pinned to a full-length commit SHA for immutability.
       - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e
         with:
           use-public-rspm: true
 
-      # Pinned from r-lib/actions/setup-r-dependencies@v2 on 2026-05-26.
+      # Pinned to a full-length commit SHA for immutability.
       - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e
         with:
           extra-packages: any::covr
           needs: coverage
 
       - name: Test coverage
-        run: covr::codecov(quiet = FALSE)
-        shell: Rscript {0}
+        run: Rscript -e 'covr::codecov(quiet = FALSE)'

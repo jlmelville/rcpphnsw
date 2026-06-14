@@ -40,8 +40,8 @@ jobs:
 
     steps:
     # NO NEED TO CHECKOUT HERE
-    # Pinned from r-hub/actions/setup@v1 on 2026-05-24.
-    - uses: r-hub/actions/setup@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
+    # Pinned to a full-length commit SHA for immutability.
+    - uses: r-hub/actions/setup@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
       with:
         config: ${{ github.event.inputs.config }}
       id: rhub-setup
@@ -60,20 +60,20 @@ jobs:
       image: ${{ matrix.config.container }}
 
     steps:
-      # Pinned from r-hub/actions/checkout@v1 on 2026-05-24.
-      - uses: r-hub/actions/checkout@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
-      # Pinned from r-hub/actions/platform-info@v1 on 2026-05-24.
-      - uses: r-hub/actions/platform-info@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
+      # Pinned to a full-length commit SHA for immutability.
+      - uses: r-hub/actions/checkout@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
+      # Pinned to a full-length commit SHA for immutability.
+      - uses: r-hub/actions/platform-info@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
-      # Pinned from r-hub/actions/setup-deps@v1 on 2026-05-24.
-      - uses: r-hub/actions/setup-deps@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
+      # Pinned to a full-length commit SHA for immutability.
+      - uses: r-hub/actions/setup-deps@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
-      # Pinned from r-hub/actions/run-check@v1 on 2026-05-24.
-      - uses: r-hub/actions/run-check@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
+      # Pinned to a full-length commit SHA for immutability.
+      - uses: r-hub/actions/run-check@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
@@ -90,25 +90,25 @@ jobs:
         config: ${{ fromJson(needs.setup.outputs.platforms) }}
 
     steps:
-      # Pinned from r-hub/actions/checkout@v1 on 2026-05-24.
-      - uses: r-hub/actions/checkout@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
-      # Pinned from r-hub/actions/setup-r@v1 on 2026-05-24.
-      - uses: r-hub/actions/setup-r@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
+      # Pinned to a full-length commit SHA for immutability.
+      - uses: r-hub/actions/checkout@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
+      # Pinned to a full-length commit SHA for immutability.
+      - uses: r-hub/actions/setup-r@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
-      # Pinned from r-hub/actions/platform-info@v1 on 2026-05-24.
-      - uses: r-hub/actions/platform-info@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
+      # Pinned to a full-length commit SHA for immutability.
+      - uses: r-hub/actions/platform-info@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
-      # Pinned from r-hub/actions/setup-deps@v1 on 2026-05-24.
-      - uses: r-hub/actions/setup-deps@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
+      # Pinned to a full-length commit SHA for immutability.
+      - uses: r-hub/actions/setup-deps@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
-      # Pinned from r-hub/actions/run-check@v1 on 2026-05-24.
-      - uses: r-hub/actions/run-check@41d32aff3f6bd4ded6b81dcc9b4da3d0bc2a6aec
+      # Pinned to a full-length commit SHA for immutability.
+      - uses: r-hub/actions/run-check@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
