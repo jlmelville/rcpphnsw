@@ -1,5 +1,11 @@
 # RcppHNSW (development version)
 
+## Bug fixes and minor improvements
+
+* Updated hnswlib to [version 0.9.0](https://github.com/nmslib/hnswlib/releases/tag/v0.9.0). This
+was a minor bug fix release and there are no behavioral changes to the C++ implementation of the
+HNSW method so this change should have no effect on the behavior of the R package.
+
 # RcppHNSW 0.7.0
 
 ## New features

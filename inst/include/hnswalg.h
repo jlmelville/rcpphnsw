@@ -684,7 +684,6 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
 
     void saveIndex(const std::string &location) {
         std::ofstream output(location, std::ios::binary);
-        std::streampos position;
 
         writeBinaryPOD(output, offsetLevel0_);
         writeBinaryPOD(output, max_elements_);
@@ -1404,9 +1403,9 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
                 min1 = std::min(inbound_connections_num[i], min1);
                 max1 = std::max(inbound_connections_num[i], max1);
             }
-            std::cout << "Min inbound: " << min1 << ", Max inbound:" << max1 << "\n";
+            HNSWERR << "Min inbound: " << min1 << ", Max inbound:" << max1 << "\n";
         }
-        std::cout << "integrity ok, checked " << connections_checked << " connections\n";
+        HNSWERR << "integrity ok, checked " << connections_checked << " connections\n";
     }
 };
 }  // namespace hnswlib
