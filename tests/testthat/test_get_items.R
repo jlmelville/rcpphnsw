@@ -7,7 +7,7 @@ expect_error(ann$getItems(c(1, 10)), "(?i)invalid index")
 
 ann$addItems(ui10)
 
-expect_equivalent(ann$getItems(c(1, 10)), ui10[c(1, 10), ], tol = 1.e-7)
+expect_equivalent(ann$getItems(c(1, 10)), ui10[c(1, 10), ], tolerance =  1.e-7)
 
 # error thrown if too many items are requested
 expect_error(ann$getItems(c(1, 100)), "(?i)invalid index")
@@ -25,7 +25,7 @@ ui10_rl2 <-
   sweep(ui10, 1, sqrt(rowSums(apply(ui10, 2, function(x) {
     x * x
   }))), `/`)
-expect_equivalent(ann$getItems(c(1, 10)), ui10_rl2[c(1, 10), ], tol = 1.e-7)
+expect_equivalent(ann$getItems(c(1, 10)), ui10_rl2[c(1, 10), ], tolerance =  1.e-7)
 
 # error thrown if too many items are requested
 expect_error(ann$getItems(c(1, 100)), "(?i)invalid index")

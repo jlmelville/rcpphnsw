@@ -16,9 +16,9 @@ expect_error(ann$getAllNNsList(ui10, k = 15, FALSE), "(?i)unable to find")
 
 res <- ann$getAllNNsList(ui10, k = 4, include_distances = TRUE)
 expect_equal(res$item, self_nn_index4, check.attributes = FALSE)
-expect_equal(sqrt(res$dist), self_nn_dist4,
+expect_equal(sqrt(res$distance), self_nn_dist4,
   check.attributes = FALSE,
-  tol = 1e-6
+  tolerance =  1e-6
 )
 
 res <- ann$getAllNNsList(ui10, k = 4, include_distances = FALSE)
@@ -38,9 +38,9 @@ expect_error(ann2$addItemsCol(ui10t), "(?i)index is too small")
 expect_error(ann2$getAllNNsListCol(ui10t, k = 15, FALSE), "(?i)unable to find")
 res <- ann2$getAllNNsListCol(ui10t, k = 4, include_distances = TRUE)
 expect_equal(t(res$item), self_nn_index4, check.attributes = FALSE)
-expect_equal(sqrt(t(res$dist)), self_nn_dist4,
+expect_equal(sqrt(t(res$distance)), self_nn_dist4,
   check.attributes = FALSE,
-  tol = 1e-6
+  tolerance =  1e-6
 )
 expect_error(ann2$getAllNNsListCol(ui10, k = 4, include_distances = TRUE),
              "incorrect dimensions")

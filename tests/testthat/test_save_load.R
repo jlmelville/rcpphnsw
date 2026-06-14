@@ -50,7 +50,7 @@ expect_equal(nn4dist, nn4dist_afterload)
 test_that("euclidean search is more consistent with save/load", {
   ann <- hnsw_build(ui10, distance = "euclidean")
   iris_nn <- hnsw_search(ui10, ann, k = 4)
-  expect_equal(iris_nn$dist, self_nn_dist4, tol = 1e-6)
+  expect_equal(iris_nn$dist, self_nn_dist4, tolerance =  1e-6)
   expect_equal(iris_nn$idx, self_nn_index4)
 
   temp_file <- tempfile()
@@ -59,6 +59,6 @@ test_that("euclidean search is more consistent with save/load", {
 
   ann2 <- methods::new(RcppHNSW::HnswEuclidean, 4, temp_file)
   iris_nn2 <- hnsw_search(ui10, ann, k = 4)
-  expect_equal(iris_nn2$dist, self_nn_dist4, tol = 1e-6)
+  expect_equal(iris_nn2$dist, self_nn_dist4, tolerance =  1e-6)
   expect_equal(iris_nn2$idx, self_nn_index4)
 })

@@ -40,4 +40,4 @@ cosine_dist <- matrix(
 )
 
 res <- hnsw_knn(ui10, k = 10, distance = "cosine")
-expect_equal(res$dist, cosine_dist, check.attributes = FALSE, tol = 1e-6)
+expect_equal(res$dist, cosine_dist, check.attributes = FALSE, tolerance =  1e-6)
