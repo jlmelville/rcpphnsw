@@ -9,6 +9,7 @@
 ^cran-comments\.md$
 DONTCHECKMEIN.R
 ^\.github$
+^\.clang-format$
 ^CRAN-SUBMISSION$
 ^\.vscode$
 ^\.positai$
