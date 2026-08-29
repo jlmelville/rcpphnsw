@@ -25,22 +25,64 @@ tsmessage <- function(
 }
 
 check_random_seed <- function(random_seed) {
-  seed_max <- .Machine$integer.max
+  check_whole_number(random_seed, "random_seed", lower = 0)
+}
 
+check_whole_number <- function(
+  value,
+  name,
+  lower,
+  upper = .Machine$integer.max
+) {
   if (
-    !is.numeric(random_seed) ||
-      length(random_seed) != 1 ||
-      is.na(random_seed) ||
-      random_seed < 0 ||
-      random_seed > seed_max ||
-      random_seed != floor(random_seed)
+    !is.numeric(value) ||
+      length(value) != 1 ||
+      is.na(value) ||
+      !is.finite(value) ||
+      value != floor(value) ||
+      value < lower ||
+      value > upper
   ) {
     stop(
-      "random_seed must be an integer between 0 and ",
-      seed_max,
+      name,
+      " cannot be outside the whole-number range ",
+      lower,
+      " to ",
+      upper,
       call. = FALSE
     )
   }
 
-  as.integer(random_seed)
+  as.integer(value)
+}
+
+check_logical <- function(value, name) {
+  if (!is.logical(value) || length(value) != 1 || is.na(value)) {
+    stop(name, " must be TRUE or FALSE", call. = FALSE)
+  }
+
+  value
+}
+
+check_input_matrix <- function(X, byrow, allow_empty = FALSE) {
+  if (!is.matrix(X) || !is.numeric(X)) {
+    stop("X must be a numeric matrix", call. = FALSE)
+  }
+
+  if (byrow) {
+    nitems <- nrow(X)
+    ndim <- ncol(X)
+  } else {
+    nitems <- ncol(X)
+    ndim <- nrow(X)
+  }
+
+  if (ndim == 0) {
+    stop("X must have at least one dimension", call. = FALSE)
+  }
+  if (!allow_empty && nitems == 0) {
+    stop("X must contain at least one item", call. = FALSE)
+  }
+
+  list(nitems = nitems, ndim = ndim)
 }

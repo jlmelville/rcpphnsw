@@ -103,28 +103,26 @@ hnsw_knn <- function(
   byrow = TRUE,
   random_seed = 100
 ) {
-  stopifnot(
-    is.numeric(n_threads) &&
-      length(n_threads) == 1 &&
-      n_threads >= 0
+  byrow <- check_logical(byrow, "byrow")
+  verbose <- check_logical(verbose, "verbose")
+  shape <- check_input_matrix(X, byrow)
+  k <- check_whole_number(k, "k", lower = 1)
+  M <- check_whole_number(M, "M", lower = 2, upper = 10000)
+  ef_construction <- check_whole_number(
+    ef_construction,
+    "ef_construction",
+    lower = 1
   )
-  stopifnot(
-    is.numeric(grain_size) &&
-      length(grain_size) == 1 &&
-      grain_size >= 0
-  )
+  ef <- check_whole_number(ef, "ef", lower = 1)
+  n_threads <- check_whole_number(n_threads, "n_threads", lower = 0)
+  grain_size <- check_whole_number(grain_size, "grain_size", lower = 0)
+  random_seed <- check_random_seed(random_seed)
 
-  if (!is.matrix(X)) {
-    stop("X must be matrix")
-  }
-  if (M < 2) {
-    stop("M cannot be < 2")
-  }
   ef_construction <- max(ef_construction, k)
 
-  max_k <- nrow(X)
+  max_k <- shape$nitems
   if (k > max_k) {
-    stop("k cannot be larger than ", max_k)
+    stop("k cannot be larger than ", max_k, call. = FALSE)
   }
   distance <-
     match.arg(distance, c("l2", "euclidean", "cosine", "ip"))
@@ -208,33 +206,20 @@ hnsw_build <- function(
   byrow = TRUE,
   random_seed = 100
 ) {
-  stopifnot(
-    is.numeric(n_threads) &&
-      length(n_threads) == 1 &&
-      n_threads >= 0
-  )
-  stopifnot(
-    is.numeric(grain_size) &&
-      length(grain_size) == 1 &&
-      grain_size >= 0
-  )
+  byrow <- check_logical(byrow, "byrow")
+  verbose <- check_logical(verbose, "verbose")
+  shape <- check_input_matrix(X, byrow)
+  M <- check_whole_number(M, "M", lower = 2, upper = 10000)
+  ef <- check_whole_number(ef, "ef", lower = 1)
+  n_threads <- check_whole_number(n_threads, "n_threads", lower = 0)
+  grain_size <- check_whole_number(grain_size, "grain_size", lower = 0)
+  seed <- check_random_seed(random_seed) # nolint: object_usage_linter.
 
-  if (!is.matrix(X)) {
-    stop("X must be matrix")
-  }
-  if (M < 2) {
-    stop("M cannot be < 2")
-  }
   distance <-
     match.arg(distance, c("l2", "euclidean", "cosine", "ip"))
 
-  if (byrow) {
-    nitems <- nrow(X)
-    ndim <- ncol(X)
-  } else {
-    nitems <- ncol(X)
-    ndim <- nrow(X)
-  }
+  nitems <- shape$nitems
+  ndim <- shape$ndim
   clazz <- switch(
     distance,
     "l2" = RcppHNSW::HnswL2,
@@ -242,7 +227,6 @@ hnsw_build <- function(
     "cosine" = RcppHNSW::HnswCosine,
     "ip" = RcppHNSW::HnswIp
   )
-  seed <- check_random_seed(random_seed) # nolint: object_usage_linter.
   # Create the indexing object. You must say up front the number of items that
   # will be stored (nitems).
   ann <- methods::new(clazz, ndim, nitems, M, ef, seed)
@@ -333,19 +317,17 @@ hnsw_search <-
     grain_size = 1,
     byrow = TRUE
   ) {
-    stopifnot(
-      is.numeric(n_threads) &&
-        length(n_threads) == 1 &&
-        n_threads >= 0
-    )
-    stopifnot(
-      is.numeric(grain_size) &&
-        length(grain_size) == 1 &&
-        grain_size >= 0
-    )
+    byrow <- check_logical(byrow, "byrow")
+    verbose <- check_logical(verbose, "verbose")
+    check_input_matrix(X, byrow, allow_empty = TRUE)
+    k <- check_whole_number(k, "k", lower = 1)
+    ef <- check_whole_number(ef, "ef", lower = 1)
+    n_threads <- check_whole_number(n_threads, "n_threads", lower = 0)
+    grain_size <- check_whole_number(grain_size, "grain_size", lower = 0)
 
-    if (!is.matrix(X)) {
-      stop("X must be matrix")
+    max_k <- ann$size()
+    if (k > max_k) {
+      stop("k cannot be larger than ", max_k, call. = FALSE)
     }
 
     ef <- max(ef, k)
