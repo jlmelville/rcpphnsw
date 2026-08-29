@@ -13,3 +13,4 @@ DONTCHECKMEIN.R
 ^\.vscode$
 ^\.positai$
 ^\.claude$
+^plans/
