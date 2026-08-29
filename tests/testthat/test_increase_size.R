@@ -21,7 +21,7 @@ test_that("increased index size", {
 
   num_elements <- nrow(uirism)
   dim <- ncol(uirism)
-  p <- new(HnswL2, dim, num_elements / 2, 16, 10)
+  p <- new(HnswL2, dim, floor(num_elements / 2), 16, 10)
 
   for (i in 1:(floor(num_elements / 2))) {
     p$addItem(uirism[i, ])
