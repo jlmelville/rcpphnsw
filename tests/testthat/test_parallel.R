@@ -53,3 +53,34 @@ test_that("serial and parallel searches agree", {
   expect_gte(mean_overlap(knn_0$idx, knn_2$idx), 0.99)
   expect_gte(mean_overlap(knn_1$idx, knn_2$idx), 0.99)
 })
+
+test_that("thread counts above the item count preserve result contracts", {
+  x <- rbind(
+    c(1, 0, 0),
+    c(0, 1, 0),
+    c(0, 0, 1),
+    c(1, 1, 1)
+  )
+
+  for (n_threads in c(0, 1, 2, 8)) {
+    ann <- hnsw_build(
+      x,
+      distance = "l2",
+      M = 16,
+      ef = 10,
+      n_threads = n_threads,
+      grain_size = 1
+    )
+    result <- hnsw_search(
+      x,
+      ann,
+      k = 2,
+      ef = 10,
+      n_threads = n_threads,
+      grain_size = 1
+    )
+
+    expect_nn_result(result, x, x, k = 2, metric = "l2")
+    expect_identical(result$idx[, 1], seq_len(nrow(x)))
+  }
+})

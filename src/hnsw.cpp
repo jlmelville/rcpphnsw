@@ -19,6 +19,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -220,17 +221,22 @@ public:
   Hnsw(SEXP dim, SEXP path_to_index, SEXP max_elements)
       : Hnsw(validateLoadIndex(dim, path_to_index, max_elements, true)) {}
 
-  void setEf(SEXP ef) { appr_alg->ef_ = check_whole_number(ef, "ef", 1); }
-
-  void addItem(SEXP item) {
-    std::vector<dist_t> item_copy = checkedItem(item, "Item to add");
-    ensureCapacityFor(1);
-    addItemImpl(item_copy, cur_l);
+  void setEf(SEXP ef) {
+    ensureUsable();
+    appr_alg->ef_ = check_whole_number(ef, "ef", 1);
   }
 
-  void addItemImpl(std::vector<dist_t> &item, std::size_t label) {
-    appr_alg->addPoint(item.data(), label);
-    ++cur_l;
+  void addItem(SEXP item) {
+    ensureUsable();
+    std::vector<dist_t> item_copy = checkedItem(item, "Item to add");
+    ensureCapacityFor(1);
+    const std::size_t label = currentSize();
+    try {
+      addItemImpl(item_copy, label);
+    } catch (...) {
+      usable = false;
+      throw;
+    }
   }
 
   void addItemsCol(SEXP items) { addItemsAdapter(items, false); }
@@ -238,6 +244,7 @@ public:
   void addItems(SEXP items) { addItemsAdapter(items, true); }
 
   auto getNNs(SEXP item, SEXP nnbrs) -> std::vector<hnswlib::labeltype> {
+    ensureUsable();
     std::vector<dist_t> item_copy = checkedItem(item, "Query item");
     const std::size_t checked_nnbrs = checkK(nnbrs);
 
@@ -252,6 +259,7 @@ public:
   }
 
   auto getNNsList(SEXP item, SEXP nnbrs, SEXP include_distances) -> Rcpp::List {
+    ensureUsable();
     std::vector<dist_t> item_copy = checkedItem(item, "Query item");
     const std::size_t checked_nnbrs = checkK(nnbrs);
     const bool checked_include_distances =
@@ -352,6 +360,7 @@ public:
   }
 
   auto getItems(SEXP ids) -> Rcpp::NumericMatrix {
+    ensureUsable();
     if (!is_numeric_value(ids) ||
         Rf_getAttrib(ids, R_DimSymbol) != R_NilValue) {
       Rcpp::stop("ids must be a numeric vector of item identifiers");
@@ -364,7 +373,7 @@ public:
     checked_product(static_cast<std::size_t>(dim), nitems,
                     "Requested item result");
 
-    const std::size_t total_count = size();
+    const std::size_t total_count = currentSize();
     if (total_count == 0 && nitems != 0) {
       Rcpp::stop("Invalid index requested: index has no items");
     }
@@ -383,22 +392,29 @@ public:
   }
 
   void callSave(SEXP path_to_index) {
+    ensureUsable();
     appr_alg->saveIndex(check_path(path_to_index, "path_to_index"));
   }
 
-  auto size() const -> std::size_t { return appr_alg->cur_element_count; }
+  auto size() const -> std::size_t {
+    ensureUsable();
+    return currentSize();
+  }
 
   void setNumThreads(SEXP value) {
+    ensureUsable();
     numThreads = check_whole_number(value, "n_threads", 0);
   }
 
   void setGrainSize(SEXP value) {
+    ensureUsable();
     const std::size_t checked = check_whole_number(value, "grain_size", 0);
     grainSize = (std::max)(checked, static_cast<std::size_t>(1));
   }
 
   void markDeleted(SEXP value) {
-    const std::size_t total_count = size();
+    ensureUsable();
+    const std::size_t total_count = currentSize();
     if (total_count == 0) {
       Rcpp::stop("Bad label: index has no items");
     }
@@ -408,7 +424,8 @@ public:
   }
 
   void resizeIndex(SEXP value) {
-    const std::size_t total_count = size();
+    ensureUsable();
+    const std::size_t total_count = currentSize();
     const std::size_t new_size =
         check_whole_number(value, "new_size", static_cast<int>(total_count));
     appr_alg->resizeIndex(new_size);
@@ -416,7 +433,7 @@ public:
 
 private:
   explicit Hnsw(const NewIndexConfig &config)
-      : dim(config.dim), normalize(false), cur_l(0), numThreads(0),
+      : dim(config.dim), normalize(false), usable(true), numThreads(0),
         grainSize(1),
         space(std::unique_ptr<Distance>(new Distance(config.dim))),
         appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
@@ -425,17 +442,31 @@ private:
                 config.ef_construction, config.random_seed))) {}
 
   explicit Hnsw(const LoadIndexConfig &config)
-      : dim(config.dim), normalize(false), cur_l(0), numThreads(0),
+      : dim(config.dim), normalize(false), usable(true), numThreads(0),
         grainSize(1),
         space(std::unique_ptr<Distance>(new Distance(config.dim))),
         appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
             new hnswlib::HierarchicalNSW<dist_t>(space.get(), config.path,
                                                  false, config.max_elements))) {
-    if (size() > static_cast<std::size_t>(R_INTEGER_MAX) ||
+    if (currentSize() > static_cast<std::size_t>(R_INTEGER_MAX) ||
         appr_alg->getMaxElements() > static_cast<std::size_t>(R_INTEGER_MAX)) {
       Rcpp::stop("Loaded index capacity cannot be larger than INT_MAX");
     }
-    cur_l = size();
+  }
+
+  void ensureUsable() const {
+    if (!usable) {
+      Rcpp::stop("Index is unusable after a failed insertion; discard it and "
+                 "rebuild or reload the index");
+    }
+  }
+
+  auto currentSize() const -> std::size_t {
+    return appr_alg->cur_element_count;
+  }
+
+  void addItemImpl(std::vector<dist_t> &item, std::size_t label) {
+    appr_alg->addPoint(item.data(), label);
   }
 
   static auto validateNewIndex(SEXP dim, SEXP max_elements, SEXP M,
@@ -517,7 +548,7 @@ private:
   }
 
   void ensureCapacityFor(std::size_t nitems) const {
-    const std::size_t index_start = cur_l;
+    const std::size_t index_start = currentSize();
     const std::size_t capacity = appr_alg->max_elements_;
     if (index_start > capacity || nitems > capacity - index_start) {
       Rcpp::stop("Index is too small to contain all items");
@@ -525,25 +556,34 @@ private:
   }
 
   void addItemsAdapter(SEXP items, bool by_row) {
+    ensureUsable();
     CheckedItems checked = checkedItems(items, by_row, "Items to add");
     const std::size_t nitems = static_cast<std::size_t>(checked.nitems);
     ensureCapacityFor(nitems);
-    const std::size_t index_start = cur_l;
+    const std::size_t index_start = currentSize();
     auto data_begin = checked.data.cbegin();
+    std::atomic<bool> insertion_started{false};
     auto worker = [&](std::size_t begin, std::size_t end) {
       for (auto i = begin; i < end; i++) {
         auto first = data_begin + static_cast<std::size_t>(dim) * i;
         std::vector<dist_t> item_copy(first, first + dim);
+        insertion_started.store(true, std::memory_order_relaxed);
         addItemImpl(item_copy, index_start + i);
       }
     };
-    pforr::parallel_for(0, nitems, worker, numThreads, grainSize);
-    cur_l = size();
+    try {
+      pforr::parallel_for(0, nitems, worker, numThreads, grainSize);
+    } catch (...) {
+      if (insertion_started.load(std::memory_order_relaxed)) {
+        usable = false;
+      }
+      throw;
+    }
   }
 
   auto checkK(SEXP value) const -> std::size_t {
     const std::size_t nnbrs = check_whole_number(value, "k", 1);
-    const std::size_t total_count = size();
+    const std::size_t total_count = currentSize();
     const std::size_t deleted_count = appr_alg->getDeletedCount();
     if (deleted_count > total_count) {
       Rcpp::stop("Index has an invalid deleted-item count");
@@ -561,11 +601,10 @@ private:
                      std::size_t nnbrs, bool by_row, bool include_distances,
                      std::vector<hnswlib::labeltype> &idx_vec,
                      std::vector<dist_t> &dist_vec) -> bool {
-    // race condition for writing found_all false, but it is never read from
-    // until after the threaded section, so it doesn't matter
-    bool found_all = true;
+    std::vector<unsigned char> chunk_status(nitems, 1);
     auto data_begin = data.cbegin();
-    auto worker = [&](std::size_t begin, std::size_t end) {
+    auto worker = [&](std::size_t begin, std::size_t end,
+                      std::size_t chunk_id) {
       std::vector<dist_t> distances;
       for (auto i = begin; i < end; i++) {
         auto first = data_begin + static_cast<std::size_t>(dim) * i;
@@ -574,7 +613,7 @@ private:
         std::vector<hnswlib::labeltype> nbr_labels =
             getNNsImpl(item_copy, nnbrs, include_distances, distances, ok_row);
         if (!ok_row) {
-          found_all = false;
+          chunk_status[chunk_id] = 0;
           break;
         }
         for (std::size_t k = 0; k < nnbrs; ++k) {
@@ -587,12 +626,14 @@ private:
         }
       }
     };
-    pforr::parallel_for(0, nitems, worker, numThreads, grainSize);
-    return found_all;
+    pforr::parallel_for_indexed(0, nitems, worker, numThreads, grainSize);
+    return std::all_of(chunk_status.cbegin(), chunk_status.cend(),
+                       [](unsigned char status) { return status != 0; });
   }
 
   auto getAllNNsListAdapter(SEXP items, SEXP nnbrs, SEXP include_distances,
                             bool by_row) -> Rcpp::List {
+    ensureUsable();
     CheckedItems checked = checkedItems(items, by_row, "Query items");
     const std::size_t checked_nnbrs = checkK(nnbrs);
     const bool checked_include_distances =
@@ -623,6 +664,7 @@ private:
 
   auto getAllNNsAdapter(SEXP items, SEXP nnbrs, bool by_row)
       -> Rcpp::IntegerMatrix {
+    ensureUsable();
     CheckedItems checked = checkedItems(items, by_row, "Query items");
     const std::size_t checked_nnbrs = checkK(nnbrs);
     const std::size_t nitems = static_cast<std::size_t>(checked.nitems);
@@ -679,7 +721,7 @@ private:
   }
   int dim;
   bool normalize;
-  hnswlib::labeltype cur_l;
+  bool usable;
   std::size_t numThreads;
   std::size_t grainSize;
   std::unique_ptr<Distance> space;
