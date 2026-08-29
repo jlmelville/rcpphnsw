@@ -17,3 +17,4 @@ DONTCHECKMEIN.R
 ^\.lintr$
 ^\.clang-format$
 ^plans/
+^tools/diagnostics$

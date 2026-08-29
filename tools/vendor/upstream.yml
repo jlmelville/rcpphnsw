@@ -1,0 +1,9 @@
+schema: 1
+project: hnswlib
+repository: https://github.com/nmslib/hnswlib
+version: v0.9.0
+tag_commit: d9b3608c83d83b46c96e25088cb1d729b29dcfe9
+archive_url: https://github.com/nmslib/hnswlib/archive/refs/tags/v0.9.0.tar.gz
+archive_root: hnswlib-0.9.0
+archive_sha256: 65dfb6639cb7d1acbdaeec1429b978fb657a9bf368ebb8353109167394537823
+source_subdirectory: hnswlib

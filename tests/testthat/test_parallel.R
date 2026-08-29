@@ -84,3 +84,45 @@ test_that("thread counts above the item count preserve result contracts", {
     expect_identical(result$idx[, 1], seq_len(nrow(x)))
   }
 })
+
+test_that("parallel construction preserves orientation and metric contracts", {
+  x <- rbind(
+    c(1, 0, 0),
+    c(0, 1, 0),
+    c(0, 0, 1),
+    c(1, 1, 0),
+    c(1, 0, 1),
+    c(0, 1, 1)
+  )
+
+  for (metric in c("l2", "cosine")) {
+    for (byrow in c(TRUE, FALSE)) {
+      input <- if (byrow) x else t(x)
+      ann <- hnsw_build(
+        input,
+        distance = metric,
+        M = 4,
+        ef = 10,
+        n_threads = 4,
+        grain_size = 1,
+        random_seed = 42,
+        byrow = byrow
+      )
+      result <- hnsw_search(
+        input,
+        ann,
+        k = 2,
+        ef = 10,
+        n_threads = 2,
+        grain_size = 1,
+        byrow = byrow
+      )
+      if (!byrow) {
+        result <- list(idx = t(result$idx), dist = t(result$dist))
+      }
+
+      expect_nn_result(result, x, x, k = 2, metric = metric)
+      expect_identical(result$idx[, 1], seq_len(nrow(x)))
+    }
+  }
+})

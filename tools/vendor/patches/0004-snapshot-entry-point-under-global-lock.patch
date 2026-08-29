@@ -1,0 +1,15 @@
+diff --git a/hnswalg.h b/hnswalg.h
+--- a/hnswalg.h
++++ b/hnswalg.h
+@@ -1193,9 +1193,9 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
+
+         std::unique_lock <std::mutex> templock(global);
+         int maxlevelcopy = maxlevel_;
+-        if (curlevel <= maxlevelcopy)
+-            templock.unlock();
+         tableint currObj = enterpoint_node_;
+         tableint enterpoint_copy = enterpoint_node_;
++        if (curlevel <= maxlevelcopy)
++            templock.unlock();
+
+         memset(data_level0_memory_ + cur_c * size_data_per_element_ + offsetLevel0_, 0, size_data_per_element_);

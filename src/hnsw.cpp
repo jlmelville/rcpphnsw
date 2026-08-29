@@ -571,8 +571,14 @@ private:
         addItemImpl(item_copy, index_start + i);
       }
     };
+    std::size_t parallel_begin = 0;
     try {
-      pforr::parallel_for(0, nitems, worker, numThreads, grainSize);
+      if (index_start == 0 && nitems != 0) {
+        worker(0, 1);
+        parallel_begin = 1;
+      }
+      pforr::parallel_for(parallel_begin, nitems, worker, numThreads,
+                          grainSize);
     } catch (...) {
       if (insertion_started.load(std::memory_order_relaxed)) {
         usable = false;
