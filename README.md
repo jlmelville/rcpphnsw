@@ -13,7 +13,7 @@ Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib).
 ## Status
 
 *May 26 2026* RcppHNSW 0.7.0 is released to CRAN to fix an undefined behavior
-issues in the underlying `hnswlib` library. Also, the `random_seed` parameter
+issue in the underlying `hnswlib` library. Also, the `random_seed` parameter
 is now exposed in the API.
 
 ## hnswlib
