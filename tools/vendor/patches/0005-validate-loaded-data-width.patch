@@ -1,0 +1,15 @@
+diff --git a/hnswalg.h b/hnswalg.h
+--- a/hnswalg.h
++++ b/hnswalg.h
+@@ -747,5 +747,11 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
+         readBinaryPOD(input, ef_construction_);
+
+         data_size_ = s->get_data_size();
++        if (offsetLevel0_ > offsetData_ || offsetData_ > label_offset_ ||
++            label_offset_ > size_data_per_element_)
++            throw std::runtime_error("Index has invalid serialized offsets");
++        if (label_offset_ - offsetData_ != data_size_ ||
++            size_data_per_element_ - label_offset_ != sizeof(labeltype))
++            throw std::runtime_error("Index data size is incompatible with the requested space");
+         fstdistfunc_ = s->get_dist_func();
+         dist_func_param_ = s->get_dist_func_param();

@@ -2,3 +2,5 @@
 0002-route-integrity-output-through-hnswerr.patch
 0003-synchronize-random-level-generation.patch
 0004-snapshot-entry-point-under-global-lock.patch
+0005-validate-loaded-data-width.patch
+0006-report-index-save-failures.patch

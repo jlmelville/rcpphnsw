@@ -43,9 +43,13 @@ The queue accounts for every difference from the pinned upstream header set:
    reproducer is `../diagnostics/run-hnswlib-rng-tsan.sh`.
 4. `0004` snapshots the entry point while hnswlib's existing global lock is held,
    removing the second data race exposed by the same reproducer.
+5. `0005` validates serialized record offsets before subtraction and rejects a
+   coordinate payload width that does not exactly match the requested space.
+6. `0006` makes raw index saves report stream open, write, flush, and close
+   failures instead of returning after an incomplete or absent write.
 
-The last two patches are deliberately independent and suitable for an upstream
-report. They do not change the public API, index format, graph heuristics, or
-distance calculations. If the supported distinct-new-label insertion workload
-reveals another independent data race, do not extend this queue one field at a
-time; serialize package construction and reassess the concurrency contract.
+The concurrency patches are deliberately independent and suitable for an
+upstream report. None of the patches changes the public API or index format.
+If the supported distinct-new-label insertion workload reveals another
+independent data race, do not extend this queue one field at a time; serialize
+package construction and reassess the concurrency contract.

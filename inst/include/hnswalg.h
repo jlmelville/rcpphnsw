@@ -687,30 +687,42 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
     void saveIndex(const std::string &location) {
         std::ofstream output(location, std::ios::binary);
 
-        writeBinaryPOD(output, offsetLevel0_);
-        writeBinaryPOD(output, max_elements_);
-        writeBinaryPOD(output, cur_element_count);
-        writeBinaryPOD(output, size_data_per_element_);
-        writeBinaryPOD(output, label_offset_);
-        writeBinaryPOD(output, offsetData_);
-        writeBinaryPOD(output, maxlevel_);
-        writeBinaryPOD(output, enterpoint_node_);
-        writeBinaryPOD(output, maxM_);
+        if (!output.is_open())
+            throw std::runtime_error("Cannot open file for writing");
 
-        writeBinaryPOD(output, maxM0_);
-        writeBinaryPOD(output, M_);
-        writeBinaryPOD(output, mult_);
-        writeBinaryPOD(output, ef_construction_);
+        try {
+            output.exceptions(std::ios::failbit | std::ios::badbit);
 
-        output.write(data_level0_memory_, cur_element_count * size_data_per_element_);
+            writeBinaryPOD(output, offsetLevel0_);
+            writeBinaryPOD(output, max_elements_);
+            writeBinaryPOD(output, cur_element_count);
+            writeBinaryPOD(output, size_data_per_element_);
+            writeBinaryPOD(output, label_offset_);
+            writeBinaryPOD(output, offsetData_);
+            writeBinaryPOD(output, maxlevel_);
+            writeBinaryPOD(output, enterpoint_node_);
+            writeBinaryPOD(output, maxM_);
 
-        for (size_t i = 0; i < cur_element_count; i++) {
-            unsigned int linkListSize = element_levels_[i] > 0 ? size_links_per_element_ * element_levels_[i] : 0;
-            writeBinaryPOD(output, linkListSize);
-            if (linkListSize)
-                output.write(linkLists_[i], linkListSize);
+            writeBinaryPOD(output, maxM0_);
+            writeBinaryPOD(output, M_);
+            writeBinaryPOD(output, mult_);
+            writeBinaryPOD(output, ef_construction_);
+
+            output.write(data_level0_memory_, cur_element_count * size_data_per_element_);
+
+            for (size_t i = 0; i < cur_element_count; i++) {
+                unsigned int linkListSize = element_levels_[i] > 0 ? size_links_per_element_ * element_levels_[i] : 0;
+                writeBinaryPOD(output, linkListSize);
+                if (linkListSize)
+                    output.write(linkLists_[i], linkListSize);
+            }
+            output.flush();
+            output.close();
+        } catch (const std::ios_base::failure &) {
+            throw std::runtime_error("Failed to write index to file");
         }
-        output.close();
+        if (output.fail())
+            throw std::runtime_error("Failed to write index to file");
     }
 
 
@@ -747,6 +759,12 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         readBinaryPOD(input, ef_construction_);
 
         data_size_ = s->get_data_size();
+        if (offsetLevel0_ > offsetData_ || offsetData_ > label_offset_ ||
+            label_offset_ > size_data_per_element_)
+            throw std::runtime_error("Index has invalid serialized offsets");
+        if (label_offset_ - offsetData_ != data_size_ ||
+            size_data_per_element_ - label_offset_ != sizeof(labeltype))
+            throw std::runtime_error("Index data size is incompatible with the requested space");
         fstdistfunc_ = s->get_dist_func();
         dist_func_param_ = s->get_dist_func_param();
 
