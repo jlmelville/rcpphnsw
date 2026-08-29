@@ -1,10 +1,9 @@
 library(RcppHNSW)
-context("cosine")
-
-# numbers from:
-# sklearn.metrics.pairwise.pairwise_distances(iris.data[5:15, 0:4], metric='cosine')
-# fmt: skip
-cosine_dist <- matrix(
+test_that("cosine", {
+  # numbers from:
+  # sklearn.metrics.pairwise.pairwise_distances(iris.data[5:15, 0:4], metric='cosine')
+  # fmt: skip
+  cosine_dist <- matrix(
   c(
     0.00000000e+00, 1.31438082e-04, 4.82989889e-04, 7.37108399e-04,
     9.93327490e-04, 1.13137420e-03, 1.83037974e-03, 2.62771618e-03,
@@ -40,5 +39,7 @@ cosine_dist <- matrix(
   nrow = 10, byrow = 10
 )
 
-res <- hnsw_knn(ui10, k = 10, distance = "cosine")
-expect_equal(res$dist, cosine_dist, check.attributes = FALSE, tolerance = 1e-6)
+  res <- hnsw_knn(ui10, k = 10, distance = "cosine")
+  expect_equal_abs(res$dist, cosine_dist, tolerance = 1e-6)
+  expect_nn_result(res, ui10, ui10, k = 10, metric = "cosine")
+})
