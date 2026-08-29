@@ -1,4 +1,4 @@
-# R-hub's generic GitHub Actions workflow file. It's canonical location is at
+# R-hub's generic GitHub Actions workflow file. Its canonical location is at
 # https://github.com/r-hub/actions/blob/v1/workflows/rhub.yaml
 # You can update this file to a newer version using the rhub2 package:
 #
@@ -7,27 +7,34 @@
 # It is unlikely that you need to modify this file manually.
 
 name: R-hub
-run-name: "${{ github.event.inputs.id }}: ${{ github.event.inputs.name || format('Manually run by {0}', github.triggering_actor) }}"
+run-name: >-
+  ${{ github.event_name == 'schedule' && 'Scheduled compiler drift' ||
+  format('{0}: {1}', github.event.inputs.id ||
+  format('Manual run by @{0}', github.triggering_actor),
+  github.event.inputs.name || github.event.inputs.config) }}
 
 on:
+  schedule:
+    - cron: '17 7 * * 1'
   workflow_dispatch:
     inputs:
       config:
-        description: 'A comma separated list of R-hub platforms to use.'
+        description: >-
+          Comma-separated R-hub platforms. gcc-asan covers GCC ASan and UBSan.
         type: string
-        default: 'linux,windows,macos'
+        default: 'ubuntu-clang,gcc16,clang-asan,clang-ubsan,gcc-asan,valgrind,lto,rchk'
       name:
-        description: 'Run name. You can leave this empty now.'
+        description: 'Run name. You can leave this empty.'
         type: string
       id:
-        description: 'Unique ID. You can leave this empty now.'
+        description: 'Unique ID. You can leave this empty.'
         type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.inputs.id || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'schedule' && 'scheduled' || github.event.inputs.id || github.run_id }}
 
 jobs:
 
@@ -39,11 +46,10 @@ jobs:
       platforms: ${{ steps.rhub-setup.outputs.platforms }}
 
     steps:
-    # NO NEED TO CHECKOUT HERE
-    # Pinned to a full-length commit SHA for immutability.
-    - uses: r-hub/actions/setup@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
+    # No checkout is needed to resolve the matrix.
+    - uses: r-hub/actions/setup@cf6c8eff3145ef225104294e6b0c023de4bba9c6 # v1.7.7
       with:
-        config: ${{ github.event.inputs.config }}
+        config: ${{ github.event_name == 'schedule' && 'ubuntu-clang,gcc16' || github.event.inputs.config }}
       id: rhub-setup
 
   linux-containers:
@@ -60,20 +66,18 @@ jobs:
       image: ${{ matrix.config.container }}
 
     steps:
-      # Pinned to a full-length commit SHA for immutability.
-      - uses: r-hub/actions/checkout@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
-      # Pinned to a full-length commit SHA for immutability.
-      - uses: r-hub/actions/platform-info@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: r-hub/actions/platform-info@cf6c8eff3145ef225104294e6b0c023de4bba9c6 # v1.7.7
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
-      # Pinned to a full-length commit SHA for immutability.
-      - uses: r-hub/actions/setup-deps@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
+      - uses: r-hub/actions/setup-deps@cf6c8eff3145ef225104294e6b0c023de4bba9c6 # v1.7.7
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
-      # Pinned to a full-length commit SHA for immutability.
-      - uses: r-hub/actions/run-check@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
+      - uses: r-hub/actions/run-check@cf6c8eff3145ef225104294e6b0c023de4bba9c6 # v1.7.7
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
@@ -90,25 +94,22 @@ jobs:
         config: ${{ fromJson(needs.setup.outputs.platforms) }}
 
     steps:
-      # Pinned to a full-length commit SHA for immutability.
-      - uses: r-hub/actions/checkout@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
-      # Pinned to a full-length commit SHA for immutability.
-      - uses: r-hub/actions/setup-r@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: r-hub/actions/setup-r@cf6c8eff3145ef225104294e6b0c023de4bba9c6 # v1.7.7
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
-      # Pinned to a full-length commit SHA for immutability.
-      - uses: r-hub/actions/platform-info@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
+      - uses: r-hub/actions/platform-info@cf6c8eff3145ef225104294e6b0c023de4bba9c6 # v1.7.7
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
-      # Pinned to a full-length commit SHA for immutability.
-      - uses: r-hub/actions/setup-deps@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
+      - uses: r-hub/actions/setup-deps@cf6c8eff3145ef225104294e6b0c023de4bba9c6 # v1.7.7
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
-      # Pinned to a full-length commit SHA for immutability.
-      - uses: r-hub/actions/run-check@4b161272a59fcd8192e5bd5e6ce183c025cb80fa
+      - uses: r-hub/actions/run-check@cf6c8eff3145ef225104294e6b0c023de4bba9c6 # v1.7.7
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}

@@ -21,21 +21,34 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      # Pinned to a full-length commit SHA for immutability.
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
-      # Pinned to a full-length commit SHA for immutability.
-      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
         with:
           use-public-rspm: true
 
-      # Pinned to a full-length commit SHA for immutability.
-      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e
+      - uses: r-lib/actions/setup-r-dependencies@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
         with:
-          extra-packages: any::covr
+          extra-packages: |
+            any::covr
+            any::xml2
+            local::.
           needs: coverage
 
-      - name: Test coverage
-        run: Rscript -e 'covr::codecov(quiet = FALSE)'
+      - name: Generate coverage report
+        run: Rscript -e 'cov <- covr::package_coverage(type = "tests"); print(cov); covr::to_cobertura(cov, filename = "cobertura.xml")'
+
+      - name: Upload coverage report
+        if: >-
+          github.actor != 'dependabot[bot]' &&
+          (github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository)
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./cobertura.xml
+          plugins: noop
+          disable_search: true
+          fail_ci_if_error: true
