@@ -13,4 +13,7 @@ DONTCHECKMEIN.R
 ^\.vscode$
 ^\.positai$
 ^\.claude$
+^\.air\.toml$
+^\.lintr$
+^\.clang-format$
 ^plans/
