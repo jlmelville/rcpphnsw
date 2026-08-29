@@ -89,22 +89,30 @@
 #' Efficient and robust approximate nearest neighbor search using Hierarchical
 #' Navigable Small World graphs.
 #' *arXiv preprint* *arXiv:1603.09320*.
-hnsw_knn <- function(X,
-                     k = 10,
-                     distance = "euclidean",
-                     M = 16,
-                     ef_construction = 200,
-                     ef = 10,
-                     verbose = FALSE,
-                     progress = "bar",
-                     n_threads = 0,
-                     grain_size = 1,
-                     byrow = TRUE,
-                     random_seed = 100) {
-  stopifnot(is.numeric(n_threads) &&
-    length(n_threads) == 1 && n_threads >= 0)
-  stopifnot(is.numeric(grain_size) &&
-    length(grain_size) == 1 && grain_size >= 0)
+hnsw_knn <- function(
+  X,
+  k = 10,
+  distance = "euclidean",
+  M = 16,
+  ef_construction = 200,
+  ef = 10,
+  verbose = FALSE,
+  progress = "bar",
+  n_threads = 0,
+  grain_size = 1,
+  byrow = TRUE,
+  random_seed = 100
+) {
+  stopifnot(
+    is.numeric(n_threads) &&
+      length(n_threads) == 1 &&
+      n_threads >= 0
+  )
+  stopifnot(
+    is.numeric(grain_size) &&
+      length(grain_size) == 1 &&
+      grain_size >= 0
+  )
 
   if (!is.matrix(X)) {
     stop("X must be matrix")
@@ -188,20 +196,28 @@ hnsw_knn <- function(X,
 #' irism <- as.matrix(iris[, -5])
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
-hnsw_build <- function(X,
-                       distance = "euclidean",
-                       M = 16,
-                       ef = 200,
-                       verbose = FALSE,
-                       progress = "bar",
-                       n_threads = 0,
-                       grain_size = 1,
-                       byrow = TRUE,
-                       random_seed = 100) {
-  stopifnot(is.numeric(n_threads) &&
-    length(n_threads) == 1 && n_threads >= 0)
-  stopifnot(is.numeric(grain_size) &&
-    length(grain_size) == 1 && grain_size >= 0)
+hnsw_build <- function(
+  X,
+  distance = "euclidean",
+  M = 16,
+  ef = 200,
+  verbose = FALSE,
+  progress = "bar",
+  n_threads = 0,
+  grain_size = 1,
+  byrow = TRUE,
+  random_seed = 100
+) {
+  stopifnot(
+    is.numeric(n_threads) &&
+      length(n_threads) == 1 &&
+      n_threads >= 0
+  )
+  stopifnot(
+    is.numeric(grain_size) &&
+      length(grain_size) == 1 &&
+      grain_size >= 0
+  )
 
   if (!is.matrix(X)) {
     stop("X must be matrix")
@@ -219,13 +235,14 @@ hnsw_build <- function(X,
     nitems <- ncol(X)
     ndim <- nrow(X)
   }
-  clazz <- switch(distance,
+  clazz <- switch(
+    distance,
     "l2" = RcppHNSW::HnswL2,
     "euclidean" = RcppHNSW::HnswEuclidean,
     "cosine" = RcppHNSW::HnswCosine,
     "ip" = RcppHNSW::HnswIp
   )
-  seed <- check_random_seed(random_seed)
+  seed <- check_random_seed(random_seed) # nolint: object_usage_linter.
   # Create the indexing object. You must say up front the number of items that
   # will be stored (nitems).
   ann <- methods::new(clazz, ndim, nitems, M, ef, seed)
@@ -305,19 +322,27 @@ hnsw_build <- function(X,
 #' ann <- hnsw_build(irism)
 #' iris_nn <- hnsw_search(irism, ann, k = 5)
 hnsw_search <-
-  function(X,
-           ann,
-           k,
-           ef = 10,
-           verbose = FALSE,
-           progress = "bar",
-           n_threads = 0,
-           grain_size = 1,
-           byrow = TRUE) {
-    stopifnot(is.numeric(n_threads) &&
-      length(n_threads) == 1 && n_threads >= 0)
-    stopifnot(is.numeric(grain_size) &&
-      length(grain_size) == 1 && grain_size >= 0)
+  function(
+    X,
+    ann,
+    k,
+    ef = 10,
+    verbose = FALSE,
+    progress = "bar",
+    n_threads = 0,
+    grain_size = 1,
+    byrow = TRUE
+  ) {
+    stopifnot(
+      is.numeric(n_threads) &&
+        length(n_threads) == 1 &&
+        n_threads >= 0
+    )
+    stopifnot(
+      is.numeric(grain_size) &&
+        length(grain_size) == 1 &&
+        grain_size >= 0
+    )
 
     if (!is.matrix(X)) {
       stop("X must be matrix")

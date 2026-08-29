@@ -2,9 +2,4 @@ linters: linters_with_tags(
   tags = "correctness",
   namespace_linter = NULL
   )
-exclusions: list(
-  "R/hnsw.R" = list(
-    object_usage_linter = 228L
-    )
-  )
 encoding: "UTF-8"

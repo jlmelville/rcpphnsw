@@ -4,6 +4,7 @@ uirism <- as.matrix(uiris[, -5])
 # ten iris entries where the 4 nearest neighbors are distinct
 ui10 <- uirism[6:15, ]
 
+# fmt: skip
 nn_index4 <- matrix(c(
   6,   10,    3,    7,
   7,    3,    5,    8,
@@ -17,6 +18,7 @@ nn_index4 <- matrix(c(
   6,    1,    3,    7
 ), nrow = 10, byrow = TRUE)
 
+# fmt: skip
 nn_dist4 <- matrix(c(
   0.3464102, 0.6782330, 0.7000000, 0.8124038,
   0.3000000, 0.4242641, 0.4795832, 0.4898979,
@@ -30,6 +32,7 @@ nn_dist4 <- matrix(c(
   0.5830952, 0.6782330, 1.0440307, 1.2328828
 ), nrow = 10, byrow = TRUE)
 
+# fmt: skip
 self_nn_index4 <- matrix(c(
   1, 6, 10, 3,
   2, 7, 3, 5,
@@ -43,6 +46,7 @@ self_nn_index4 <- matrix(c(
   10, 6, 1, 3
 ), nrow = 10, byrow = TRUE)
 
+# fmt: skip
 self_nn_dist4 <- matrix(c(
   0, 0.3464102, 0.6782330, 0.7000000,
   0, 0.3000000, 0.4242641, 0.4795832,
