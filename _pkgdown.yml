@@ -17,3 +17,4 @@ articles:
 - title: Guides
   contents:
   - articles/parameters-metrics-data-layout
+  - articles/module-api-index-lifecycle
