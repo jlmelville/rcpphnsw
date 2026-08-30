@@ -433,8 +433,7 @@ public:
 
 private:
   explicit Hnsw(const NewIndexConfig &config)
-      : dim(config.dim), normalize(false), usable(true), numThreads(0),
-        grainSize(1),
+      : dim(config.dim), usable(true), numThreads(0), grainSize(1),
         space(std::unique_ptr<Distance>(new Distance(config.dim))),
         appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
             new hnswlib::HierarchicalNSW<dist_t>(
@@ -442,8 +441,7 @@ private:
                 config.ef_construction, config.random_seed))) {}
 
   explicit Hnsw(const LoadIndexConfig &config)
-      : dim(config.dim), normalize(false), usable(true), numThreads(0),
-        grainSize(1),
+      : dim(config.dim), usable(true), numThreads(0), grainSize(1),
         space(std::unique_ptr<Distance>(new Distance(config.dim))),
         appr_alg(std::unique_ptr<hnswlib::HierarchicalNSW<dist_t>>(
             new hnswlib::HierarchicalNSW<dist_t>(space.get(), config.path,
@@ -726,7 +724,6 @@ private:
     return data;
   }
   int dim;
-  bool normalize;
   bool usable;
   std::size_t numThreads;
   std::size_t grainSize;
