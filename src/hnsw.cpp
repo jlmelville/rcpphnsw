@@ -125,14 +125,7 @@ auto checked_float_at(SEXP values, R_xlen_t index, const char *name) -> float {
         "floats",
         name);
   }
-  const float converted = static_cast<float>(value);
-  if (!std::isfinite(converted)) {
-    Rcpp::stop(
-        "%s must contain only finite values representable as single-precision "
-        "floats",
-        name);
-  }
-  return converted;
+  return static_cast<float>(value);
 }
 
 } // namespace
