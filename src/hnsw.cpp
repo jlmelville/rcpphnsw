@@ -162,7 +162,7 @@ template <typename dist_t> struct Normalizer<dist_t, true> {
 
 struct NoDistanceProcess {
   template <typename dist_t>
-  static void process_distances(std::vector<dist_t> &vec) {}
+  static void process_distances(std::vector<dist_t> &) {}
 };
 
 struct SquareRootDistanceProcess {
