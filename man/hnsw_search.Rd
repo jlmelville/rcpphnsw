@@ -24,29 +24,31 @@ each item should be stored in the columns of \code{X}.}
 \item{ann}{an instance of an \code{HnswEuclidean}, \code{HnswL2}, \code{HnswCosine} or
 \code{HnswIp} class.}
 
-\item{k}{Number of neighbors to return. This can't be larger than the number
-of items that were added to the index \code{ann}. To check the size of the
-index, call \code{ann$size()}.}
+\item{k}{Positive whole number of neighbors to return. It cannot exceed the
+active (not deleted) item count. \code{ann$size()} reports the total number added
+and therefore may be larger than the active count after deletion.}
 
 \item{ef}{Size of the dynamic list used during search. Higher values lead
-to improved recall at the expense of longer search time. Can take values
-between \code{k} and the size of the dataset. Typical values are
-\code{100 - 2000}.}
+to improved recall at the expense of longer search time. Must be positive;
+the effective value is at least \code{k} and is not bounded by index size.
+Typical values are \code{100 - 2000}.}
 
 \item{verbose}{If \code{TRUE}, log messages to the console.}
 
 \item{progress}{defunct and has no effect.}
 
-\item{n_threads}{Maximum number of threads to use. The exact number is
-determined by \code{grain_size}.}
+\item{n_threads}{Maximum number of threads to use. Zero and one both select
+serial execution. For larger values, the exact number is determined by
+\code{grain_size} and the amount of work.}
 
 \item{grain_size}{Minimum amount of work to do (items in \code{X} to search)
-per thread. If the number of items in \code{X} isn't sufficient, then fewer
-than \code{n_threads} will be used. This is useful in cases where the
+per thread. Zero is treated as one. If the number of items in \code{X} isn't
+sufficient, then fewer than \code{n_threads} will be used. This is useful in
+cases where the
 overhead of context switching with too many threads outweighs the gains due
 to parallelism.}
 
-\item{byrow}{if \code{TRUE} (the default), this indicates that the items to be
+\item{byrow}{If \code{TRUE} (the default), this indicates that the items to be
 searched in \code{X} are stored in each row of \code{X}. Otherwise, the items are
 stored in the columns of \code{X}. Storing items in each column reduces the
 overhead of copying data to a form that can be searched by the \code{hnsw}
@@ -65,16 +67,24 @@ The dimensions of the matrices respect the storage (row or column-based) of
 each row of \code{idx} and \code{dist} contain the neighbor information for the item
 passed in the equivalent row of \code{X}, i.e. the dimensions are \verb{n x k} where
 \code{n} is the number of items in \code{X}. If \code{byrow = FALSE}, then each column of
-\code{idx} and \code{dist} contain the neighbor  information for the item passed in
+\code{idx} and \code{dist} contain the neighbor information for the item passed in
 the equivalent column of \code{X}, i.e. the dimensions are \verb{k x n}.
-
-Every item in the dataset is considered to be a neighbor of itself, so the
-first neighbor of item \code{i} should always be \code{i} itself. If that isn't the
-case, then any of \code{M} or \code{ef} may need increasing.
 }
 \description{
 Search an hnswlib nearest neighbor index
 }
+\section{Numeric data and index mutation}{
+
+
+Query coordinates must be finite and representable as single-precision
+floating-point values. Cosine queries must have a positive finite norm after
+conversion. Search is approximate, and under inner-product distance an item
+need not be its own nearest neighbor.
+
+This function updates \code{ann} in place: the effective \code{ef}, \code{n_threads}, and
+\code{grain_size} settings remain on the external index after the call.
+}
+
 \examples{
 irism <- as.matrix(iris[, -5])
 ann <- hnsw_build(irism)

@@ -1,12 +1,25 @@
-# RcppHNSW (development version)
+# RcppHNSW 0.7.0.9001
 
 ## Bug fixes and minor improvements
 
+* Numeric controls, logical options, matrix shapes, item identifiers, paths,
+and coordinates are now validated before conversion to native types. Search
+`k` must be positive and cannot exceed the active (not deleted) item count.
+Coordinates must be finite and representable as single-precision floats, and
+cosine inputs must have a positive finite norm after conversion.
+* Parallel construction and search no longer write unsynchronized shared
+state. Two construction races in the bundled hnswlib code are repaired, and
+an index now fails closed if an exception escapes after insertion has begun.
+* Raw index loading now rejects incompatible dimensions and malformed offset
+layouts. Raw save open, write, flush, and close failures are reported to R.
+The raw format remains an operational hnswlib checkpoint rather than a stable
+cross-version or cross-platform archive.
 * The existing `grain_size` setting is now passed to all threaded index
 add and search operations, matching the documented behavior.
-* Updated hnswlib to [version 0.9.0](https://github.com/nmslib/hnswlib/releases/tag/v0.9.0). This
-was a minor bug fix release and there are no behavioral changes to the C++ implementation of the
-HNSW method so this change should have no effect on the behavior of the R package.
+* Updated hnswlib to
+[version 0.9.0](https://github.com/nmslib/hnswlib/releases/tag/v0.9.0). This
+was a minor upstream bug-fix release; RcppHNSW also carries a documented patch
+series for package integration and the safety fixes above.
 
 # RcppHNSW 0.7.0
 

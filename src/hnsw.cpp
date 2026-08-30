@@ -746,207 +746,186 @@ RCPP_EXPOSED_CLASS_NODECL(HnswL2)
 RCPP_MODULE(HnswL2) {
   Rcpp::class_<HnswL2>("HnswL2")
       .constructor<SEXP, SEXP, SEXP, SEXP>(
-          "constructor with dimension, number of items, M, ef")
+          "create index: dimension, capacity, M, construction ef")
       .constructor<SEXP, SEXP, SEXP, SEXP, SEXP>(
-          "constructor with dimension, number of items, M, ef, random seed")
-      .constructor<SEXP, SEXP>(
-          "constructor with dimension, loading from filename")
+          "create index: dimension, capacity, M, construction ef, random seed")
+      .constructor<SEXP, SEXP>("load raw index: dimension, filename")
       .constructor<SEXP, SEXP, SEXP>(
-          "constructor with dimension, loading from filename, number of items")
-      .method("setEf", &HnswL2::setEf, "set ef value")
+          "load raw index: dimension, filename, capacity")
+      .method("setEf", &HnswL2::setEf, "set search ef")
       .method("addItem", &HnswL2::addItem, "add item")
       .method("addItems", &HnswL2::addItems,
               "add items where each item is stored row-wise")
       .method("addItemsCol", &HnswL2::addItemsCol,
               "add items where each item is stored column-wise")
       .method("getItems", &HnswL2::getItems,
-              "returns a matrix of vectors with the integer identifiers "
-              "specified in ids vector. "
-              "Note that for cosine similarity, "
-              "normalized vectors are returned")
-      .method("save", &HnswL2::callSave, "save index to file")
+              "retrieve vectors for one-based item identifiers")
+      .method("save", &HnswL2::callSave, "save raw index to file")
       .method("getNNs", &HnswL2::getNNs,
-              "retrieve Nearest Neigbours given vector")
+              "retrieve nearest neighbors for one vector")
       .method("getNNsList", &HnswL2::getNNsList,
-              "retrieve Nearest Neigbours given vector")
+              "retrieve nearest neighbors and optional distances for one "
+              "vector")
       .method("getAllNNs", &HnswL2::getAllNNs,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "row-wise")
+              "retrieve nearest neighbors for row-wise matrix items")
       .method("getAllNNsList", &HnswL2::getAllNNsList,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "row-wise")
+              "retrieve nearest neighbors and optional distances for row-wise "
+              "matrix items")
       .method("getAllNNsCol", &HnswL2::getAllNNsCol,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbors data is also returned "
-              "column-wise")
+              "retrieve nearest neighbors for column-wise matrix items; "
+              "results are column-wise")
       .method("getAllNNsListCol", &HnswL2::getAllNNsListCol,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbors data is also returned "
-              "column-wise")
-      .method("size", &HnswL2::size, "number of items added to the index")
+              "retrieve nearest neighbors and optional distances for "
+              "column-wise matrix items; results are column-wise")
+      .method("size", &HnswL2::size,
+              "total items added, including deleted items")
       .method("setNumThreads", &HnswL2::setNumThreads,
-              "set the number of threads to use")
+              "set maximum threads; zero or one is serial")
       .method("setGrainSize", &HnswL2::setGrainSize,
-              "set minimum grain size for using multiple threads")
+              "set minimum items per thread; zero is treated as one")
       .method("markDeleted", &HnswL2::markDeleted,
-              "remove the item with the specified label from the index")
+              "mark a label deleted without reclaiming capacity")
       .method("resizeIndex", &HnswL2::resizeIndex,
-              "resize the index to use this number of items");
+              "change maximum index capacity");
 }
 
 RCPP_EXPOSED_CLASS_NODECL(HnswCosine)
 RCPP_MODULE(HnswCosine) {
   Rcpp::class_<HnswCosine>("HnswCosine")
       .constructor<SEXP, SEXP, SEXP, SEXP>(
-          "constructor with dimension, number of items, M, ef")
+          "create index: dimension, capacity, M, construction ef")
       .constructor<SEXP, SEXP, SEXP, SEXP, SEXP>(
-          "constructor with dimension, number of items, M, ef, random seed")
-      .constructor<SEXP, SEXP>(
-          "constructor with dimension, loading from filename")
+          "create index: dimension, capacity, M, construction ef, random seed")
+      .constructor<SEXP, SEXP>("load raw index: dimension, filename")
       .constructor<SEXP, SEXP, SEXP>(
-          "constructor with dimension, loading from filename, number of items")
-      .method("setEf", &HnswCosine::setEf, "set ef value")
+          "load raw index: dimension, filename, capacity")
+      .method("setEf", &HnswCosine::setEf, "set search ef")
       .method("addItem", &HnswCosine::addItem, "add item")
       .method("addItems", &HnswCosine::addItems,
               "add items where each item is stored row-wise")
       .method("addItemsCol", &HnswCosine::addItemsCol,
               "add items where each item is stored column-wise")
       .method("getItems", &HnswCosine::getItems,
-              "returns a matrix of vectors with the integer identifiers "
-              "specified in ids vector. "
-              "Note that for cosine similarity, "
-              "normalized vectors are returned")
-      .method("save", &HnswCosine::callSave, "save index to file")
+              "retrieve normalized vectors for one-based item identifiers")
+      .method("save", &HnswCosine::callSave, "save raw index to file")
       .method("getNNs", &HnswCosine::getNNs,
-              "retrieve Nearest Neigbours given vector")
+              "retrieve nearest neighbors for one vector")
       .method("getNNsList", &HnswCosine::getNNsList,
-              "retrieve Nearest Neigbours given vector")
+              "retrieve nearest neighbors and optional distances for one "
+              "vector")
       .method("getAllNNs", &HnswCosine::getAllNNs,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "row-wise")
+              "retrieve nearest neighbors for row-wise matrix items")
       .method("getAllNNsList", &HnswCosine::getAllNNsList,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "row-wise")
+              "retrieve nearest neighbors and optional distances for row-wise "
+              "matrix items")
       .method("getAllNNsCol", &HnswCosine::getAllNNsCol,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbors data is also returned "
-              "column-wise")
+              "retrieve nearest neighbors for column-wise matrix items; "
+              "results are column-wise")
       .method("getAllNNsListCol", &HnswCosine::getAllNNsListCol,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbors data is also returned "
-              "column-wise")
-      .method("size", &HnswCosine::size, "number of items added to the index")
+              "retrieve nearest neighbors and optional distances for "
+              "column-wise matrix items; results are column-wise")
+      .method("size", &HnswCosine::size,
+              "total items added, including deleted items")
       .method("setNumThreads", &HnswCosine::setNumThreads,
-              "set the number of threads to use")
+              "set maximum threads; zero or one is serial")
       .method("setGrainSize", &HnswCosine::setGrainSize,
-              "set minimum grain size for using multiple threads")
+              "set minimum items per thread; zero is treated as one")
       .method("markDeleted", &HnswCosine::markDeleted,
-              "remove the item with the specified label from the index")
+              "mark a label deleted without reclaiming capacity")
       .method("resizeIndex", &HnswCosine::resizeIndex,
-              "resize the index to use this number of items");
+              "change maximum index capacity");
 }
 
 RCPP_EXPOSED_CLASS_NODECL(HnswIp)
 RCPP_MODULE(HnswIp) {
   Rcpp::class_<HnswIp>("HnswIp")
       .constructor<SEXP, SEXP, SEXP, SEXP>(
-          "constructor with dimension, number of items, M, ef")
+          "create index: dimension, capacity, M, construction ef")
       .constructor<SEXP, SEXP, SEXP, SEXP, SEXP>(
-          "constructor with dimension, number of items, M, ef, random seed")
-      .constructor<SEXP, SEXP>(
-          "constructor with dimension, loading from filename")
+          "create index: dimension, capacity, M, construction ef, random seed")
+      .constructor<SEXP, SEXP>("load raw index: dimension, filename")
       .constructor<SEXP, SEXP, SEXP>(
-          "constructor with dimension, loading from filename, number of items")
-      .method("setEf", &HnswIp::setEf, "set ef value")
+          "load raw index: dimension, filename, capacity")
+      .method("setEf", &HnswIp::setEf, "set search ef")
       .method("addItem", &HnswIp::addItem, "add item")
       .method("addItems", &HnswIp::addItems,
               "add items where each item is stored row-wise")
       .method("addItemsCol", &HnswIp::addItemsCol,
               "add items where each item is stored column-wise")
       .method("getItems", &HnswIp::getItems,
-              "returns a matrix of vectors with the integer identifiers "
-              "specified in ids vector. "
-              "Note that for cosine similarity, "
-              "normalized vectors are returned")
-      .method("save", &HnswIp::callSave, "save index to file")
+              "retrieve vectors for one-based item identifiers")
+      .method("save", &HnswIp::callSave, "save raw index to file")
       .method("getNNs", &HnswIp::getNNs,
-              "retrieve Nearest Neigbours given vector")
+              "retrieve nearest neighbors for one vector")
       .method("getNNsList", &HnswIp::getNNsList,
-              "retrieve Nearest Neigbours given vector")
+              "retrieve nearest neighbors and optional distances for one "
+              "vector")
       .method("getAllNNs", &HnswIp::getAllNNs,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "row-wise")
+              "retrieve nearest neighbors for row-wise matrix items")
       .method("getAllNNsList", &HnswIp::getAllNNsList,
-              "retrieve Nearest Neigbours given matrix where items are stored"
-              "row-wise")
+              "retrieve nearest neighbors and optional distances for row-wise "
+              "matrix items")
       .method("getAllNNsCol", &HnswIp::getAllNNsCol,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbors data is also returned "
-              "column-wise")
+              "retrieve nearest neighbors for column-wise matrix items; "
+              "results are column-wise")
       .method("getAllNNsListCol", &HnswIp::getAllNNsListCol,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbors data is also returned "
-              "column-wise")
-      .method("size", &HnswIp::size, "number of items added to the index")
+              "retrieve nearest neighbors and optional distances for "
+              "column-wise matrix items; results are column-wise")
+      .method("size", &HnswIp::size,
+              "total items added, including deleted items")
       .method("setNumThreads", &HnswIp::setNumThreads,
-              "set the number of threads to use")
+              "set maximum threads; zero or one is serial")
       .method("setGrainSize", &HnswIp::setGrainSize,
-              "set minimum grain size for using multiple threads")
+              "set minimum items per thread; zero is treated as one")
       .method("markDeleted", &HnswIp::markDeleted,
-              "remove the item with the specified label from the index")
+              "mark a label deleted without reclaiming capacity")
       .method("resizeIndex", &HnswIp::resizeIndex,
-              "resize the index to use this number of items");
+              "change maximum index capacity");
 }
 
 RCPP_EXPOSED_CLASS_NODECL(HnswEuclidean)
 RCPP_MODULE(HnswEuclidean) {
   Rcpp::class_<HnswEuclidean>("HnswEuclidean")
       .constructor<SEXP, SEXP, SEXP, SEXP>(
-          "constructor with dimension, number of items, M, ef")
+          "create index: dimension, capacity, M, construction ef")
       .constructor<SEXP, SEXP, SEXP, SEXP, SEXP>(
-          "constructor with dimension, number of items, M, ef, random seed")
-      .constructor<SEXP, SEXP>(
-          "constructor with dimension, loading from filename")
+          "create index: dimension, capacity, M, construction ef, random seed")
+      .constructor<SEXP, SEXP>("load raw index: dimension, filename")
       .constructor<SEXP, SEXP, SEXP>(
-          "constructor with dimension, loading from filename, number of items")
-      .method("setEf", &HnswEuclidean::setEf, "set ef value")
+          "load raw index: dimension, filename, capacity")
+      .method("setEf", &HnswEuclidean::setEf, "set search ef")
       .method("addItem", &HnswEuclidean::addItem, "add item")
       .method("addItems", &HnswEuclidean::addItems,
               "add items where each item is stored row-wise")
       .method("addItemsCol", &HnswEuclidean::addItemsCol,
               "add items where each item is stored column-wise")
       .method("getItems", &HnswEuclidean::getItems,
-              "returns a matrix of vectors with the integer identifiers "
-              "specified in ids vector. "
-              "Note that for cosine similarity, "
-              "normalized vectors are returned")
-      .method("save", &HnswEuclidean::callSave, "save index to file")
+              "retrieve vectors for one-based item identifiers")
+      .method("save", &HnswEuclidean::callSave, "save raw index to file")
       .method("getNNs", &HnswEuclidean::getNNs,
-              "retrieve Nearest Neigbours given vector")
+              "retrieve nearest neighbors for one vector")
       .method("getNNsList", &HnswEuclidean::getNNsList,
-              "retrieve Nearest Neigbours given vector")
+              "retrieve nearest neighbors and optional distances for one "
+              "vector")
       .method("getAllNNs", &HnswEuclidean::getAllNNs,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "row-wise")
+              "retrieve nearest neighbors for row-wise matrix items")
       .method("getAllNNsList", &HnswEuclidean::getAllNNsList,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "row-wise")
+              "retrieve nearest neighbors and optional distances for row-wise "
+              "matrix items")
       .method("getAllNNsCol", &HnswEuclidean::getAllNNsCol,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbors data is also returned "
-              "column-wise")
+              "retrieve nearest neighbors for column-wise matrix items; "
+              "results are column-wise")
       .method("getAllNNsListCol", &HnswEuclidean::getAllNNsListCol,
-              "retrieve Nearest Neigbours given matrix where items are stored "
-              "column-wise. Nearest Neighbors data is also returned "
-              "column-wise")
+              "retrieve nearest neighbors and optional distances for "
+              "column-wise matrix items; results are column-wise")
       .method("size", &HnswEuclidean::size,
-              "number of items added to the index")
+              "total items added, including deleted items")
       .method("setNumThreads", &HnswEuclidean::setNumThreads,
-              "set the number of threads to use")
+              "set maximum threads; zero or one is serial")
       .method("setGrainSize", &HnswEuclidean::setGrainSize,
-              "set minimum grain size for using multiple threads")
+              "set minimum items per thread; zero is treated as one")
       .method("markDeleted", &HnswEuclidean::markDeleted,
-              "remove the item with the specified label from the index")
+              "mark a label deleted without reclaiming capacity")
       .method("resizeIndex", &HnswEuclidean::resizeIndex,
-              "resize the index to use this number of items");
+              "change maximum index capacity");
 }

@@ -40,29 +40,31 @@ than 2.}
 
 \item{ef}{Size of the dynamic list used during construction.
 A larger value means a better quality index, but increases build time.
-Should be an integer value between 1 and the size of the dataset.}
+Must be a positive whole number and is not bounded by the size of the
+dataset.}
 
 \item{verbose}{If \code{TRUE}, log messages to the console.}
 
 \item{progress}{defunct and has no effect.}
 
-\item{n_threads}{Maximum number of threads to use. The exact number is
-determined by \code{grain_size}.}
+\item{n_threads}{Maximum number of threads to use. Zero and one both select
+serial execution. For larger values, the exact number is determined by
+\code{grain_size} and the amount of work.}
 
-\item{grain_size}{Minimum amount of work to do (rows in \code{X} to add) per
-thread. If the number of rows in \code{X} isn't sufficient, then fewer than
-\code{n_threads} will be used. This is useful in cases where the overhead
+\item{grain_size}{Minimum number of items in \code{X} to add per thread. Zero is
+treated as one. If the number of items in \code{X} isn't sufficient, then fewer
+than \code{n_threads} will be used. This is useful in cases where the overhead
 of context switching with too many threads outweighs the gains due to
 parallelism.}
 
-\item{byrow}{if \code{TRUE} (the default), this indicates that the items in \code{X}
+\item{byrow}{If \code{TRUE} (the default), this indicates that the items in \code{X}
 to be indexed are stored in each row. Otherwise, the items are stored in
 the columns of \code{X}. Storing items in each column reduces the overhead of
 copying data to a form that can be indexed by the \code{hnsw} library.}
 
 \item{random_seed}{Seed passed to hnswlib for index construction. The
-default, \code{100}, is the underlying hnswlib default. Note that calling
-\code{set.seed} does \emph{not} have any effect on the results.}
+default, \code{100}, is the underlying hnswlib default. This seed belongs to
+hnswlib: calling \code{set.seed()} does not affect index construction.}
 }
 \value{
 an instance of an \code{HnswEuclidean}, \code{HnswL2}, \code{HnswCosine} or
@@ -71,6 +73,17 @@ an instance of an \code{HnswEuclidean}, \code{HnswL2}, \code{HnswCosine} or
 \description{
 Build an hnswlib nearest neighbor index
 }
+\section{Numeric data and reproducibility}{
+
+
+Coordinates are converted to and stored as single-precision floating-point
+values. Inputs must be finite and representable in that format. For cosine
+distance, every item must also have a positive finite norm after conversion.
+Parallel construction may be nondeterministic even for a fixed
+\code{random_seed}. Zero or one thread uses serial construction. R's random seed
+is not used by hnswlib.
+}
+
 \examples{
 irism <- as.matrix(iris[, -5])
 ann <- hnsw_build(irism)
