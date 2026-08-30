@@ -8,12 +8,12 @@ title: "Parameters, metrics, and data layout"
 | --- | --- |
 | `"l2"` | Squared L2, i.e. squared Euclidean. |
 | `"euclidean"` | Euclidean. |
-| `"cosine"` | Cosine. |
-| `"ip"` | Inner product: `1 - sum(ai * bi)`, i.e. the cosine distance where the vectors are not normalized. This can lead to negative distances and other non-metric behavior. |
+| `"cosine"` | One minus cosine similarity. |
+| `"ip"` | One minus inner product: `1 - sum(a * b)`. Values can be negative and need not satisfy metric properties. |
 
-All input coordinates are converted to and stored as single-precision floats.
-They must be finite and representable in that format. Cosine items and queries
-must have a positive finite norm after conversion.
+Coordinates are stored as single-precision floats. The package rejects
+non-finite or out-of-range coordinates and cosine vectors with zero norm after
+conversion.
 
 # Data layout and result shape
 
@@ -76,8 +76,8 @@ parallelism.
 `set.seed()` does not affect index construction.
 
 Parallel index construction may be nondeterministic even for a fixed
-`random_seed`; use serial construction and save the resulting index when a
-persistent, reusable graph is required.
+`random_seed`. Use serial construction for repeatable reconstruction. Save the
+constructed index to reuse the exact graph.
 
 HNSW search is approximate. For L2, Euclidean, and cosine distance, an item
 queried against its source data has distance zero from itself, but it can be

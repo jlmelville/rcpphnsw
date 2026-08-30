@@ -7,10 +7,9 @@
 #'
 #' @section Data and index contract:
 #'
-#' RcppHNSW converts coordinates to single-precision floating-point values for
-#' storage and computation. Coordinates must be finite and representable in
-#' that format. Cosine items and queries must have a positive finite norm after
-#' conversion.
+#' RcppHNSW stores coordinates as single-precision floating-point values. The
+#' package rejects non-finite or out-of-range coordinates and cosine vectors
+#' with zero norm after conversion.
 #'
 #' Module indexes assign one-based labels in insertion order. `size()` reports
 #' the total number of items added, including items marked deleted. Deleted
@@ -26,12 +25,11 @@
 #'
 #' @section Raw index checkpoints:
 #'
-#' The Module `save()` method and filename constructors expose hnswlib's raw
-#' index format. These files are operational checkpoints, not a stable
-#' cross-version or cross-platform archive. Load with the exact original
-#' dimension and normally the same distance class. L2 and Euclidean classes
-#' may reinterpret each other's same-width checkpoints; no corresponding
-#' semantic guarantee is made for cosine or inner-product reinterpretation.
+#' The Module `save()` method and filename constructors use hnswlib's raw index
+#' format. Compatibility depends on the hnswlib version and platform. Load with
+#' the exact original dimension and normally the same distance class.
+#' Same-width L2 and Euclidean checkpoints support cross-loading. Use matching
+#' classes for cosine and inner-product checkpoints.
 #'
 #' Raw checkpoints assume the contiguous labels created by RcppHNSW. Loading
 #' restores deletion state but resets search `ef` to hnswlib's default of 10;

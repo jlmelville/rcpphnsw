@@ -33,10 +33,9 @@
 #' @param distance Type of distance to calculate. One of:
 #' * `"l2"` Squared L2, i.e. squared Euclidean.
 #' * `"euclidean"` Euclidean.
-#' * `"cosine"` Cosine.
-#' * `"ip"` Inner product: 1 - sum(ai * bi), i.e. the cosine distance
-#'   where the vectors are not normalized. This can lead to negative distances
-#'   and other non-metric behavior.
+#' * `"cosine"` One minus cosine similarity.
+#' * `"ip"` One minus inner product: `1 - sum(a * b)`. Values can be negative
+#'   and need not satisfy metric properties.
 #' @param M Controls the number of bi-directional links created for each element
 #'   during index construction. Higher values lead to better results at the
 #'   expense of memory consumption. Typical values are `2 - 100`, but
@@ -83,12 +82,12 @@
 #'
 #' @section Numeric data and reproducibility:
 #'
-#' Coordinates are converted to and stored as single-precision floating-point
-#' values. Inputs must be finite and representable in that format. For cosine
-#' distance, every item and query must also have a positive finite norm after
-#' conversion. Parallel index construction may be nondeterministic even for a
-#' fixed `random_seed`; use serial construction and save the resulting index
-#' when a persistent, reusable graph is required.
+#' Coordinates are stored as single-precision floating-point values. The
+#' package rejects non-finite or out-of-range coordinates and, for cosine
+#' distance, vectors with zero norm after conversion. Parallel index
+#' construction may be nondeterministic even for a fixed `random_seed`. Use
+#' serial construction for repeatable reconstruction. Save the constructed
+#' index to reuse the exact graph.
 #'
 #' HNSW search is approximate. For L2, Euclidean, and cosine distance, an item
 #' queried against its source data has distance zero from itself, but it can be
@@ -172,10 +171,9 @@ hnsw_knn <- function(
 #' @param distance Type of distance to calculate. One of:
 #'   * `"l2"` Squared L2, i.e. squared Euclidean.
 #'   * `"euclidean"` Euclidean.
-#'   * `"cosine"` Cosine.
-#'   * `"ip"` Inner product: 1 - sum(ai * bi), i.e. the cosine distance
-#'   where the vectors are not normalized. This can lead to negative distances
-#'   and other non-metric behavior.
+#'   * `"cosine"` One minus cosine similarity.
+#'   * `"ip"` One minus inner product: `1 - sum(a * b)`. Values can be negative
+#'     and need not satisfy metric properties.
 #' @param M Controls the number of bi-directional links created for each element
 #'   during index construction. Higher values lead to better results at the
 #'   expense of memory consumption. Typical values are `2 - 100`, but
@@ -206,9 +204,9 @@ hnsw_knn <- function(
 #'   `HnswIp` class.
 #' @section Numeric data and reproducibility:
 #'
-#' Coordinates are converted to and stored as single-precision floating-point
-#' values. Inputs must be finite and representable in that format. For cosine
-#' distance, every item must also have a positive finite norm after conversion.
+#' Coordinates are stored as single-precision floating-point values. The
+#' package rejects non-finite or out-of-range coordinates and, for cosine
+#' distance, vectors with zero norm after conversion.
 #' Parallel construction may be nondeterministic even for a fixed
 #' `random_seed`. Zero or one thread uses serial construction. R's random seed
 #' is not used by hnswlib.
@@ -323,10 +321,10 @@ hnsw_build <- function(
 #'
 #' @section Numeric data and index mutation:
 #'
-#' Query coordinates must be finite and representable as single-precision
-#' floating-point values. Cosine queries must have a positive finite norm after
-#' conversion. Search is approximate, and under inner-product distance an item
-#' need not be its own nearest neighbor.
+#' The package rejects non-finite or out-of-range query coordinates and cosine
+#' queries with zero norm after conversion to single precision. Search is
+#' approximate, and under inner-product distance an item need not be its own
+#' nearest neighbor.
 #'
 #' This function updates `ann` in place: the effective `ef`, `n_threads`, and
 #' `grain_size` settings remain on the external index after the call.

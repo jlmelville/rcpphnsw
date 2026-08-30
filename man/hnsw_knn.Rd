@@ -31,10 +31,9 @@ number of items in \code{X}.}
 \itemize{
 \item \code{"l2"} Squared L2, i.e. squared Euclidean.
 \item \code{"euclidean"} Euclidean.
-\item \code{"cosine"} Cosine.
-\item \code{"ip"} Inner product: 1 - sum(ai * bi), i.e. the cosine distance
-where the vectors are not normalized. This can lead to negative distances
-and other non-metric behavior.
+\item \code{"cosine"} One minus cosine similarity.
+\item \code{"ip"} One minus inner product: \code{1 - sum(a * b)}. Values can be negative
+and need not satisfy metric properties.
 }}
 
 \item{M}{Controls the number of bi-directional links created for each element
@@ -124,12 +123,12 @@ is not bounded by the number of elements in the index.
 \section{Numeric data and reproducibility}{
 
 
-Coordinates are converted to and stored as single-precision floating-point
-values. Inputs must be finite and representable in that format. For cosine
-distance, every item and query must also have a positive finite norm after
-conversion. Parallel index construction may be nondeterministic even for a
-fixed \code{random_seed}; use serial construction and save the resulting index
-when a persistent, reusable graph is required.
+Coordinates are stored as single-precision floating-point values. The
+package rejects non-finite or out-of-range coordinates and, for cosine
+distance, vectors with zero norm after conversion. Parallel index
+construction may be nondeterministic even for a fixed \code{random_seed}. Use
+serial construction for repeatable reconstruction. Save the constructed
+index to reuse the exact graph.
 
 HNSW search is approximate. For L2, Euclidean, and cosine distance, an item
 queried against its source data has distance zero from itself, but it can be

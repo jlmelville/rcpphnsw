@@ -26,10 +26,9 @@ each item should be stored in the columns of \code{X}.}
 \itemize{
 \item \code{"l2"} Squared L2, i.e. squared Euclidean.
 \item \code{"euclidean"} Euclidean.
-\item \code{"cosine"} Cosine.
-\item \code{"ip"} Inner product: 1 - sum(ai * bi), i.e. the cosine distance
-where the vectors are not normalized. This can lead to negative distances
-and other non-metric behavior.
+\item \code{"cosine"} One minus cosine similarity.
+\item \code{"ip"} One minus inner product: \code{1 - sum(a * b)}. Values can be negative
+and need not satisfy metric properties.
 }}
 
 \item{M}{Controls the number of bi-directional links created for each element
@@ -76,9 +75,9 @@ Build an hnswlib nearest neighbor index
 \section{Numeric data and reproducibility}{
 
 
-Coordinates are converted to and stored as single-precision floating-point
-values. Inputs must be finite and representable in that format. For cosine
-distance, every item must also have a positive finite norm after conversion.
+Coordinates are stored as single-precision floating-point values. The
+package rejects non-finite or out-of-range coordinates and, for cosine
+distance, vectors with zero norm after conversion.
 Parallel construction may be nondeterministic even for a fixed
 \code{random_seed}. Zero or one thread uses serial construction. R's random seed
 is not used by hnswlib.

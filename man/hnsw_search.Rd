@@ -76,10 +76,10 @@ Search an hnswlib nearest neighbor index
 \section{Numeric data and index mutation}{
 
 
-Query coordinates must be finite and representable as single-precision
-floating-point values. Cosine queries must have a positive finite norm after
-conversion. Search is approximate, and under inner-product distance an item
-need not be its own nearest neighbor.
+The package rejects non-finite or out-of-range query coordinates and cosine
+queries with zero norm after conversion to single precision. Search is
+approximate, and under inner-product distance an item need not be its own
+nearest neighbor.
 
 This function updates \code{ann} in place: the effective \code{ef}, \code{n_threads}, and
 \code{grain_size} settings remain on the external index after the call.

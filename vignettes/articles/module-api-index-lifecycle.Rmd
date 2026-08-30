@@ -8,8 +8,8 @@ title: "Module API and index lifecycle"
 | --- | --- |
 | `HnswL2` | Squared L2, i.e. squared Euclidean. |
 | `HnswEuclidean` | Euclidean. |
-| `HnswCosine` | Cosine. |
-| `HnswIp` | Inner product: `1 - sum(ai * bi)`. |
+| `HnswCosine` | One minus cosine similarity. |
+| `HnswIp` | One minus inner product: `1 - sum(a * b)`. |
 
 All four classes have the same constructors and methods.
 
@@ -124,19 +124,18 @@ R's `set.seed()` does not control hnswlib.
 * `resizeIndex(max_elements)` changes the maximum capacity of the index.
 * `ann$save(filename)` saves a raw index checkpoint to `filename`.
 
-All input coordinates are converted to and stored as single-precision floats.
-They must be finite and representable in that format. Cosine items and queries
-must have a positive finite norm after conversion. If an exception escapes
-after insertion has begun, the index becomes unusable and must be discarded
-and rebuilt or reloaded.
+Coordinates are stored as single-precision floats. The package rejects
+non-finite or out-of-range coordinates and cosine vectors with zero norm after
+conversion. If an exception escapes after insertion has begun, the index
+becomes unusable and must be discarded and rebuilt or reloaded.
 
 # Raw index checkpoints
 
-Raw files created by `ann$save()` are operational hnswlib checkpoints, not a
-stable cross-version or cross-platform archive. Load with the exact original
-dimension and normally the same class. `HnswL2` and `HnswEuclidean` can load
-each other's same-width checkpoints; no equivalent semantic guarantee is made
-for cosine or inner-product reinterpretation.
+`ann$save()` uses hnswlib's raw checkpoint format. Compatibility depends on the
+hnswlib version and platform. Load with the exact original dimension and
+normally the same class. Same-width `HnswL2` and `HnswEuclidean` checkpoints
+support cross-loading. Use matching classes for cosine and inner-product
+checkpoints.
 
 Checkpoints assume RcppHNSW's contiguous insertion-order labels. Loading
 restores deletion state but resets search `ef` to 10, so call `setEf()` before
