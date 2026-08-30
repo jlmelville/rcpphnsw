@@ -12,3 +12,8 @@ reference:
 - title: Package and Module classes
   contents:
   - RcppHnsw-package
+
+articles:
+- title: Guides
+  contents:
+  - articles/parameters-metrics-data-layout
