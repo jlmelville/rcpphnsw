@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   articles/module-api-index-lifecycle: module-api-index-lifecycle.html
   articles/parameters-metrics-data-layout: parameters-metrics-data-layout.html
-last_built: 2026-08-30T22:55Z
+last_built: 2026-08-30T23:53Z
 urls:
   reference: https://jlmelville.github.io/rcpphnsw/reference
   article: https://jlmelville.github.io/rcpphnsw/articles
