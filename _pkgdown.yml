@@ -1,0 +1,14 @@
+url: ~
+
+template:
+  bootstrap: 5
+
+reference:
+- title: High-level interface
+  contents:
+  - hnsw_knn
+  - hnsw_build
+  - hnsw_search
+- title: Package and Module classes
+  contents:
+  - RcppHnsw-package

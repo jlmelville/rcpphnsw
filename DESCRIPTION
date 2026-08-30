@@ -24,6 +24,7 @@ Imports:
     Rcpp (>= 0.11.3)
 Suggests: 
     covr,
+    pkgdown,
     testthat (>= 3.0.0)
 LinkingTo: 
     Rcpp
