@@ -1,0 +1,114 @@
+# RcppHNSW
+
+[![R-CMD-check](https://github.com/jlmelville/rcpphnsw/workflows/R-CMD-check/badge.svg)](https://github.com/jlmelville/rcpphnsw/actions)
+[![Coverage
+Status](https://img.shields.io/codecov/c/github/jlmelville/rcpphnsw/master.svg)](https://codecov.io/github/jlmelville/rcpphnsw?branch=master)
+[![CRAN Status
+Badge](https://www.r-pkg.org/badges/version/RcppHNSW)](https://cran.r-project.org/package=RcppHNSW)
+
+Rcpp bindings for [hnswlib](https://github.com/nmslib/hnswlib), a
+header-only C++ library for finding approximate nearest neighbors using
+hierarchical navigable small-world graphs [(Malkov and Yashunin,
+2020)](https://doi.org/10.1109/TPAMI.2018.2889473).
+
+## Installing
+
+From CRAN:
+
+``` r
+
+install.packages("RcppHNSW")
+```
+
+Development versions from GitHub:
+
+``` r
+
+pak::pak("jlmelville/RcppHNSW")
+```
+
+## Choose an interface
+
+| Task | Interface | Reference |
+|----|----|----|
+| Find neighbors within one matrix | [`hnsw_knn()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_knn.md) | [`hnsw_knn` help](https://jlmelville.github.io/rcpphnsw/reference/hnsw_knn.html) |
+| Build an index for later searches | [`hnsw_build()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.md) | [`hnsw_build` help](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.html) |
+| Search an existing index | [`hnsw_search()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.md) | [`hnsw_search` help](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.html) |
+| Control index construction and lifecycle directly | `HnswL2`, `HnswEuclidean`, `HnswCosine`, or `HnswIp` | [Module API and index lifecycle](https://jlmelville.github.io/rcpphnsw/articles/module-api-index-lifecycle.html) |
+
+## Quick start
+
+``` r
+
+irism <- as.matrix(iris[, -5])
+
+# returns neighbor indices and distances in two n x k matrices
+iris_knn <- RcppHNSW::hnsw_knn(irism, k = 4, distance = "euclidean")
+dim(iris_knn$idx)
+```
+
+The process can also be split into two steps, so you can build with one
+set of data and search with another. See
+[`hnsw_build()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.html)
+and
+[`hnsw_search()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.html).
+
+## Distance metrics
+
+| `distance` | Distance calculated |
+|----|----|
+| `"l2"` | Squared L2, i.e. squared Euclidean. |
+| `"euclidean"` | Euclidean. |
+| `"cosine"` | One minus cosine similarity. |
+| `"ip"` | One minus inner product: `1 - sum(a * b)`. Values can be negative and need not satisfy metric properties. |
+
+## Behavior and limits
+
+- HNSW search is approximate, so even a zero-distance self-match may be
+  absent. Inner-product distance does not guarantee self-matches.
+- Coordinates are stored as single-precision floats. The package rejects
+  non-finite or out-of-range coordinates and zero-norm cosine vectors.
+- Items are stored by row by default. Column-oriented data and the
+  corresponding result shapes are described in the [parameters, metrics,
+  and data-layout
+  guide](https://jlmelville.github.io/rcpphnsw/articles/parameters-metrics-data-layout.html).
+- Index construction uses hnswlib’s `random_seed`;
+  [`set.seed()`](https://rdrr.io/r/base/Random.html) has no effect.
+  Parallel construction may be nondeterministic even with a fixed seed.
+- Module labels are one-based and follow insertion order. `k` must be
+  positive and cannot exceed the active (not deleted) item count. If an
+  exception escapes after insertion has begun, the index becomes
+  unusable and must be discarded and rebuilt or reloaded.
+- The Module `ann$save()` method writes hnswlib’s raw checkpoint format.
+  Compatibility depends on the hnswlib version and platform. See the
+  [Module API and index-lifecycle
+  guide](https://jlmelville.github.io/rcpphnsw/articles/module-api-index-lifecycle.html).
+
+## Documentation
+
+Function reference:
+
+- [`hnsw_knn()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_knn.html)
+- [`hnsw_build()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.html)
+- [`hnsw_search()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.html)
+
+Guides:
+
+- [Parameters, metrics, and data
+  layout](https://jlmelville.github.io/rcpphnsw/articles/parameters-metrics-data-layout.html)
+- [Module API and index
+  lifecycle](https://jlmelville.github.io/rcpphnsw/articles/module-api-index-lifecycle.html)
+
+## Project
+
+RcppHNSW was inspired by
+[RcppAnnoy](https://github.com/eddelbuettel/rcppannoy), which provides
+an R interface to the [Annoy](https://github.com/spotify/annoy) library.
+
+See [NEWS](https://jlmelville.github.io/rcpphnsw/news/index.html) for
+release and development changes. Source and issue tracking are on
+[GitHub](https://github.com/jlmelville/rcpphnsw).
+
+## License
+
+[GPL-3 or later](https://www.gnu.org/licenses/gpl-3.0.en.html).

@@ -1,0 +1,10 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  articles/module-api-index-lifecycle: module-api-index-lifecycle.html
+  articles/parameters-metrics-data-layout: parameters-metrics-data-layout.html
+last_built: 2026-08-30T20:48Z
+urls:
+  reference: https://jlmelville.github.io/rcpphnsw/reference
+  article: https://jlmelville.github.io/rcpphnsw/articles
