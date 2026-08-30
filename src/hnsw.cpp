@@ -308,13 +308,6 @@ public:
         result_items.push_back(result_tuple.second + 1);
         result.pop();
       }
-      if (!found_all) {
-        for (std::size_t i = 0; i != nnbrs - nresults; i++) {
-          distances.push_back((std::numeric_limits<dist_t>::max)());
-          result_items.push_back(static_cast<hnswlib::labeltype>(-1));
-        }
-      }
-
       std::reverse(distances.begin(), distances.end());
       std::reverse(result_items.begin(), result_items.end());
     } else {
@@ -323,12 +316,6 @@ public:
         result_items.push_back(result_tuple.second + 1);
         result.pop();
       }
-      if (!found_all) {
-        for (std::size_t i = 0; i != nnbrs - nresults; i++) {
-          result_items.push_back(static_cast<hnswlib::labeltype>(-1));
-        }
-      }
-
       std::reverse(result_items.begin(), result_items.end());
     }
 
