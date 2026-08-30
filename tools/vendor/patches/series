@@ -4,3 +4,4 @@
 0004-snapshot-entry-point-under-global-lock.patch
 0005-validate-loaded-data-width.patch
 0006-report-index-save-failures.patch
+0007-add-rcpphnsw-modification-notice.patch

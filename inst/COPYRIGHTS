@@ -1,0 +1,38 @@
+Third-party software included in RcppHNSW
+
+hnswlib
+-------
+
+RcppHNSW redistributes the header-only hnswlib library:
+
+Project: hnswlib
+Upstream source: https://github.com/nmslib/hnswlib
+Version: v0.9.0
+Tag commit: d9b3608c83d83b46c96e25088cb1d729b29dcfe9
+Upstream authorship: Yury Malkov and other hnswlib contributors
+Copyright: remains with the hnswlib authors and contributors
+License: Apache License, Version 2.0
+License text: LICENSES/hnswlib-LICENSE-2.0.txt
+
+The pinned v0.9.0 source archive contains no NOTICE file.
+
+Locally modified file
+---------------------
+
+Installed path: include/hnswalg.h
+Source path: inst/include/hnswalg.h
+Modification date: 2026-08-29
+
+RcppHNSW changes to that file:
+
+* use hnswlib's checked external-label setter;
+* route integrity-check output through RcppHNSW's configured error stream;
+* synchronize the shared random-level generator used during construction;
+* snapshot the entry point while hnswlib's global lock is held;
+* validate serialized offsets and coordinate payload width when loading;
+* report index-save open, write, flush, and close failures; and
+* carry a prominent notice identifying these downstream modifications.
+
+The exact changes are the ordered patches under tools/vendor/patches in the
+RcppHNSW source package. Package installation compiles the already-materialized
+headers and does not download or patch hnswlib.

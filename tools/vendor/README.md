@@ -47,6 +47,9 @@ The queue accounts for every difference from the pinned upstream header set:
    coordinate payload width that does not exactly match the requested space.
 6. `0006` makes raw index saves report stream open, write, flush, and close
    failures instead of returning after an incomplete or absent write.
+7. `0007` adds the prominent dated notice required for the modified vendored
+   header and points recipients to the installed provenance record and exact
+   source patch series.
 
 The concurrency patches are deliberately independent and suitable for an
 upstream report. None of the patches changes the public API or index format.

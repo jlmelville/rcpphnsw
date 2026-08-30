@@ -1,3 +1,9 @@
+/*
+ * Modified by the RcppHNSW project on 2026-08-29.
+ * Changes integrate RcppHNSW label/error handling and repair construction
+ * races plus raw-index load/save safety. See the RcppHNSW COPYRIGHTS file and
+ * the source package's tools/vendor/patches directory for exact changes.
+ */
 #pragma once
 
 #include "visited_list_pool.h"
