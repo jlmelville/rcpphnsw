@@ -222,6 +222,24 @@ test_that("Module path adapters reject invalid R strings", {
   )
 })
 
+test_that("Module deletion rejects labels on an empty index", {
+  ann <- methods::new(RcppHNSW::HnswL2, 3, 2, 16, 10)
+
+  expect_error(
+    ann$markDeleted(1),
+    "Bad label: index has no items",
+    fixed = TRUE
+  )
+})
+
+test_that("row-wise Module batch methods require numeric matrices", {
+  ann <- methods::new(RcppHNSW::HnswL2, 3, 2, 16, 10)
+  item <- c(1, 0, 0)
+
+  expect_error(ann$addItems(item), "must be a numeric matrix", fixed = TRUE)
+  expect_error(ann$getAllNNs(item, 1), "must be a numeric matrix", fixed = TRUE)
+})
+
 test_that("all Module data paths enforce exact vector and matrix shapes", {
   ann <- methods::new(RcppHNSW::HnswL2, 3, 4, 16, 10)
   items <- diag(2, 3)
