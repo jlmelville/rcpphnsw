@@ -1,41 +1,45 @@
-#' Rcpp bindings for the hnswlib C++ library for approximate nearest neighbors.
+#' Approximate nearest neighbor search with hnswlib
 #'
-#' hnswlib is a library implementing the Hierarchical Navigable Small World
-#' method for approximate nearest neighbor search.
+#' RcppHNSW provides an R interface to hierarchical navigable small-world
+#' graphs. Use [hnsw_knn()] for neighbors within one dataset, or [hnsw_build()]
+#' and [hnsw_search()] to query new data against an existing index.
 #'
-#' Details about hnswlib are available at the reference listed below.
+#' @section Module classes:
 #'
-#' @section Data and index contract:
+#' `HnswEuclidean`, `HnswL2`, `HnswCosine`, and `HnswIp` provide direct access
+#' to insertion, search, deletion, resizing, and saved indexes. They use
+#' Euclidean distance, squared Euclidean distance, one minus cosine similarity,
+#' and one minus inner product, respectively. An index returned by [hnsw_build()]
+#' is one of these objects, so you can use its methods directly too. See the
+#' [Module guide](https://jlmelville.github.io/rcpphnsw/articles/module-api-index-lifecycle.html)
+#' for constructors and methods.
 #'
-#' RcppHNSW stores coordinates as single-precision floating-point values. The
-#' package rejects non-finite or out-of-range coordinates and cosine vectors
-#' with zero norm after conversion.
+#' Labels start at one and follow insertion order. Deleted items are excluded
+#' from search and retrieval but still count towards `size()` and capacity.
+#' If insertion fails after modifying the index, or a native resize fails,
+#' discard the index and rebuild or reload it.
 #'
-#' Module indexes assign one-based labels in insertion order. `size()` reports
-#' the total number of items added, including items marked deleted. Deleted
-#' items remain allocated, are excluded from search, and cannot be returned by
-#' `getItems()`. Consequently, `k` must be positive and no larger than the
-#' active count: total items minus deleted items. If an exception escapes after
-#' insertion has begun, the index fails closed and must be discarded and
-#' rebuilt or reloaded.
+#' @section Numeric limits:
 #'
-#' A thread setting of zero or one uses serial execution; zero grain size is an
-#' alias for one. Parallel construction may be nondeterministic even with a
-#' fixed hnswlib seed. R's `set.seed()` does not control hnswlib.
+#' Coordinates are stored as single-precision floats and must be finite and
+#' representable in that format. Cosine vectors are normalized to unit length
+#' and must have a nonzero norm after conversion.
 #'
-#' @section Raw index checkpoints:
+#' To prevent distance overflow, each vector's sum of absolute coordinates is
+#' limited to approximately `4.6e18`, after conversion and cosine normalization.
+#' Loaded checkpoints must meet the same limit, including deleted items.
 #'
-#' The Module `save()` method and filename constructors use hnswlib's raw index
-#' format. Compatibility depends on the hnswlib version and platform. Load with
-#' the exact original dimension and normally the same distance class.
-#' Same-width L2 and Euclidean checkpoints support cross-loading. Use matching
-#' classes for cosine and inner-product checkpoints.
+#' @section Saved indexes:
 #'
-#' Raw checkpoints assume the contiguous labels created by RcppHNSW. Loading
-#' restores deletion state but resets search `ef` to hnswlib's default of 10;
-#' call `setEf()` or `hnsw_search()` to select another value. An optional load
-#' capacity may enlarge the index, but cannot be smaller than the stored item
-#' count.
+#' `ann$save()` writes hnswlib's raw checkpoint format, whose compatibility
+#' depends on the hnswlib version and platform. Load with the original
+#' dimension and distance class. You can also load an `HnswL2` checkpoint into
+#' `HnswEuclidean`, or vice versa.
+#'
+#' Loading restores items, deletion state, and capacity, but resets search
+#' `ef` to 10. Set `ef` again with `setEf()` or [hnsw_search()]. An optional
+#' positive load capacity overrides the saved value when it is at least the
+#' stored item count; smaller values retain the saved capacity.
 #'
 #' @docType package
 #' @name RcppHnsw-package

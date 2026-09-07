@@ -2,7 +2,7 @@
 % Please edit documentation in R/hnsw.R
 \name{hnsw_knn}
 \alias{hnsw_knn}
-\title{Find Nearest Neighbors and Distances}
+\title{Find approximate nearest neighbors}
 \usage{
 hnsw_knn(
   X,
@@ -20,128 +20,80 @@ hnsw_knn(
 )
 }
 \arguments{
-\item{X}{A numeric matrix of \code{n} items to search for neighbors. If
-\code{byrow = TRUE} (the default) then each row of \code{X} stores an item to be
-searched. Otherwise, each item should be stored in the columns of \code{X}.}
+\item{X}{Numeric matrix with one item per row, or per column when
+\code{byrow = FALSE}.}
 
-\item{k}{Positive whole number of neighbors to return. It cannot exceed the
-number of items in \code{X}.}
+\item{k}{Number of neighbors per item. A positive whole number no larger
+than the number of items in \code{X}.}
 
-\item{distance}{Type of distance to calculate. One of:
+\item{distance}{Distance to use:
 \itemize{
-\item \code{"l2"} Squared L2, i.e. squared Euclidean.
-\item \code{"euclidean"} Euclidean.
-\item \code{"cosine"} One minus cosine similarity.
-\item \code{"ip"} One minus inner product: \code{1 - sum(a * b)}. Values can be negative
-and need not satisfy metric properties.
+\item \code{"euclidean"}: Euclidean distance.
+\item \code{"l2"}: squared Euclidean distance.
+\item \code{"cosine"}: one minus cosine similarity.
+\item \code{"ip"}: one minus inner product, \code{1 - sum(a * b)}; can be negative.
 }}
 
-\item{M}{Controls the number of bi-directional links created for each element
-during index construction. Higher values lead to better results at the
-expense of memory consumption. Typical values are \code{2 - 100}, but
-for most datasets a range of \code{12 - 48} is suitable. Can't be smaller
-than 2.}
+\item{M}{Number of graph links per item during construction. Larger values
+improve connectivity and use more memory. Must be between 2 and 10000.}
 
-\item{ef_construction}{Size of the dynamic list used during construction.
-A larger value means a better quality index, but increases build time.
-Must be a positive whole number. It is raised to at least \code{k} and is not
-bounded by the size of the dataset.}
+\item{ef_construction}{Candidate-list size during construction.
+Larger values improve index quality and increase build time. Must be a
+positive whole number; raised to at least \code{k}.}
 
-\item{ef}{Size of the dynamic list used during search. Higher values lead
-to improved recall at the expense of longer search time. Must be positive;
-the effective value is at least \code{k} and may be greater or smaller than
-\code{ef_construction}. Typical values are \code{100 - 2000}.}
+\item{ef}{Candidate-list size during search. Increase it to
+improve recall at the cost of search time. Must be a positive whole number;
+the effective value is at least \code{k} and is not capped at the index size.}
 
 \item{verbose}{If \code{TRUE}, log messages to the console.}
 
-\item{progress}{defunct and has no effect.}
+\item{progress}{Unused; retained for compatibility.}
 
-\item{n_threads}{Maximum number of threads to use. Zero and one both select
-serial execution. For larger values, the exact number is determined by
-\code{grain_size} and the amount of work.}
+\item{n_threads}{Maximum number of threads for batch insertion or search.
+Zero (the default) and one run serially.}
 
-\item{grain_size}{Minimum number of items in \code{X} to add or search per thread.
-Zero is treated as one. If the number of items in \code{X} isn't sufficient,
-then fewer than \code{n_threads} will be used. This is useful in cases
-where the overhead of context switching with too many threads outweighs
-the gains due to parallelism.}
+\item{grain_size}{Minimum number of items per thread. Larger values limit
+threading overhead for small batches. Zero is treated as one.}
 
-\item{byrow}{If \code{TRUE} (the default), this indicates that the items to be
-processed in \code{X} are stored in each row of \code{X}. Otherwise, the items are
-stored in the columns of \code{X}. Storing items in each column reduces the
-overhead of copying data to a form that can be used by the \code{hnsw}
-library. Note that if \code{byrow = FALSE}, any matrices returned from this
-function will also store the items by column.}
+\item{byrow}{If \code{TRUE}, items are rows of \code{X}; otherwise, they are columns.
+Results follow the same orientation.}
 
-\item{random_seed}{Seed passed to hnswlib for index construction. The
-default, \code{100}, is the underlying hnswlib default. This seed belongs to
-hnswlib: calling \code{set.seed()} does not affect index construction.}
+\item{random_seed}{Seed for hnswlib's index construction. R's \code{set.seed()}
+has no effect. Use serial construction for repeatable builds; parallel
+insertion order can vary with a fixed seed.}
 }
 \value{
-a list containing:
-\itemize{
-\item \code{idx} a matrix containing the nearest neighbor indices.
-\item \code{dist} a matrix containing the nearest neighbor distances.
-}
-
-The dimensions of the matrices respect the storage (row or column-based) of
-\code{X} as indicated by the \code{byrow} parameter. If \code{byrow = TRUE} (the default)
-each row of \code{idx} and \code{dist} contain the neighbor information for the item
-passed in the equivalent row of \code{X}, i.e. the dimensions are \verb{n x k} where
-\code{n} is the number of items in \code{X}. If \code{byrow = FALSE}, then each column of
-\code{idx} and \code{dist} contain the neighbor information for the item passed in
-the equivalent column of \code{X}, i.e. the dimensions are \verb{k x n}.
+A list with matrices \code{idx} (one-based neighbor indices) and \code{dist}
+(distances), ordered by increasing distance for each query. Both are
+\verb{n × k} when \code{byrow = TRUE}, or \verb{k × n} otherwise, where \code{n} is the number
+of items in \code{X}.
 }
 \description{
-A k-nearest neighbor algorithm using the hnswlib library
-(\url{https://github.com/nmslib/hnswlib}).
+Build an HNSW index and find \code{k} neighbors for every item in \code{X}.
 }
-\section{Hnswlib Parameters}{
+\details{
+If you are searching for neighbors within \code{X}, don't assume that the first
+neighbor is always the item itself: approximate search can miss self-matches.
+With inner-product distance, an item need not be its own nearest neighbor
+even in an exact search.
 
-
-Some details on the parameters used for index construction and search, based
-on \url{https://github.com/nmslib/hnswlib/blob/master/ALGO_PARAMS.md}:
-\itemize{
-\item \code{M} Controls the number of bi-directional links created for each
-element during index construction. Higher values lead to better results at
-the expense of memory consumption, which is around \code{M * 8-10} bytes
-per stored element. High intrinsic dimensionalities will require
-higher values of \code{M}. A range of \code{2 - 100} is typical, but
-\code{12 - 48} is ok for most use cases.
-\item \code{ef_construction} Size of the dynamic list used during
-construction. A larger value means a better quality index, but increases
-build time. It must be a positive whole number, but is not bounded by the
-size of the dataset. A typical range is \code{100 - 2000}. Beyond a certain point,
-increasing \code{ef_construction} has no effect. A sufficient value of
-\code{ef_construction} can be determined by searching with \code{ef = ef_construction}, and ensuring that the recall is at least 0.9.
-\item \code{ef} Size of the dynamic list used during index search. Can
-differ from \code{ef_construction}. The effective value is at least \code{k}, and it
-is not bounded by the number of elements in the index.
+Coordinates are stored in single precision. See \link{RcppHnsw-package} for
+numeric limits. For help choosing the parameters, see the
+\href{https://jlmelville.github.io/rcpphnsw/articles/parameters-metrics-data-layout.html}{parameter guide}
+which also covers data layout.
 }
-}
-
-\section{Numeric data and reproducibility}{
-
-
-Coordinates are stored as single-precision floating-point values. The
-package rejects non-finite or out-of-range coordinates and, for cosine
-distance, vectors with zero norm after conversion. Parallel index
-construction may be nondeterministic even for a fixed \code{random_seed}. Use
-serial construction for repeatable reconstruction. Save the constructed
-index to reuse the exact graph.
-
-HNSW search is approximate. For L2, Euclidean, and cosine distance, an item
-queried against its source data has distance zero from itself, but it can be
-omitted when recall is insufficient. Under inner-product distance, an item
-need not be its own nearest neighbor.
-}
-
 \examples{
-iris_nn_data <- hnsw_knn(as.matrix(iris[, -5]), k = 10)
+irism <- as.matrix(iris[, -5])
+neighbors <- hnsw_knn(irism, k = 4)
+neighbors$idx[1:5, ]
+neighbors$dist[1:5, ]
 }
 \references{
 Malkov, Y. A., & Yashunin, D. A. (2020). Efficient and robust approximate
 nearest neighbor search using Hierarchical Navigable Small World graphs.
 \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 42(4),
 824-836. \doi{10.1109/TPAMI.2018.2889473}.
+}
+\seealso{
+\code{\link[=hnsw_build]{hnsw_build()}} and \code{\link[=hnsw_search]{hnsw_search()}} to build once and search new data.
 }

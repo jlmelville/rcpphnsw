@@ -2,7 +2,7 @@
 % Please edit documentation in R/hnsw.R
 \name{hnsw_build}
 \alias{hnsw_build}
-\title{Build an hnswlib nearest neighbor index}
+\title{Build a nearest neighbor index}
 \usage{
 hnsw_build(
   X,
@@ -18,73 +18,60 @@ hnsw_build(
 )
 }
 \arguments{
-\item{X}{A numeric matrix of data to search for neighbors. If \code{byrow = TRUE}
-(the default) then each row of \code{X} is an item to be searched. Otherwise,
-each item should be stored in the columns of \code{X}.}
+\item{X}{Numeric matrix to index, with one item per row, or per column when
+\code{byrow = FALSE}.}
 
-\item{distance}{Type of distance to calculate. One of:
+\item{distance}{Distance to use:
 \itemize{
-\item \code{"l2"} Squared L2, i.e. squared Euclidean.
-\item \code{"euclidean"} Euclidean.
-\item \code{"cosine"} One minus cosine similarity.
-\item \code{"ip"} One minus inner product: \code{1 - sum(a * b)}. Values can be negative
-and need not satisfy metric properties.
+\item \code{"euclidean"}: Euclidean distance.
+\item \code{"l2"}: squared Euclidean distance.
+\item \code{"cosine"}: one minus cosine similarity.
+\item \code{"ip"}: one minus inner product, \code{1 - sum(a * b)}; can be negative.
 }}
 
-\item{M}{Controls the number of bi-directional links created for each element
-during index construction. Higher values lead to better results at the
-expense of memory consumption. Typical values are \code{2 - 100}, but
-for most datasets a range of \code{12 - 48} is suitable. Can't be smaller
-than 2.}
+\item{M}{Number of graph links per item during construction. Larger values
+improve connectivity and use more memory. Must be between 2 and 10000.}
 
-\item{ef}{Size of the dynamic list used during construction.
-A larger value means a better quality index, but increases build time.
-Must be a positive whole number and is not bounded by the size of the
-dataset.}
+\item{ef}{Candidate-list size during construction. Larger
+values improve index quality and increase build time. Must be a positive
+whole number and is not capped at the dataset size. This is the
+\code{ef_construction} parameter of \code{\link[=hnsw_knn]{hnsw_knn()}}.}
 
 \item{verbose}{If \code{TRUE}, log messages to the console.}
 
-\item{progress}{defunct and has no effect.}
+\item{progress}{Unused; retained for compatibility.}
 
-\item{n_threads}{Maximum number of threads to use. Zero and one both select
-serial execution. For larger values, the exact number is determined by
-\code{grain_size} and the amount of work.}
+\item{n_threads}{Maximum number of threads for batch insertion or search.
+Zero (the default) and one run serially.}
 
-\item{grain_size}{Minimum number of items in \code{X} to add per thread. Zero is
-treated as one. If the number of items in \code{X} isn't sufficient, then fewer
-than \code{n_threads} will be used. This is useful in cases where the overhead
-of context switching with too many threads outweighs the gains due to
-parallelism.}
+\item{grain_size}{Minimum number of items per thread. Larger values limit
+threading overhead for small batches. Zero is treated as one.}
 
-\item{byrow}{If \code{TRUE} (the default), this indicates that the items in \code{X}
-to be indexed are stored in each row. Otherwise, the items are stored in
-the columns of \code{X}. Storing items in each column reduces the overhead of
-copying data to a form that can be indexed by the \code{hnsw} library.}
+\item{byrow}{If \code{TRUE}, items are rows of \code{X}; otherwise, they are columns.}
 
-\item{random_seed}{Seed passed to hnswlib for index construction. The
-default, \code{100}, is the underlying hnswlib default. This seed belongs to
-hnswlib: calling \code{set.seed()} does not affect index construction.}
+\item{random_seed}{Seed for hnswlib's index construction. R's \code{set.seed()}
+has no effect. Use serial construction for repeatable builds; parallel
+insertion order can vary with a fixed seed.}
 }
 \value{
-an instance of an \code{HnswEuclidean}, \code{HnswL2}, \code{HnswCosine} or
-\code{HnswIp} class.
+An \code{HnswEuclidean}, \code{HnswL2}, \code{HnswCosine}, or \code{HnswIp} index,
+according to \code{distance}. Labels are one-based and follow the order in \code{X}.
 }
 \description{
-Build an hnswlib nearest neighbor index
+Build an HNSW index that you can keep and query with \code{\link[=hnsw_search]{hnsw_search()}}.
 }
-\section{Numeric data and reproducibility}{
-
-
-Coordinates are stored as single-precision floating-point values. The
-package rejects non-finite or out-of-range coordinates and, for cosine
-distance, vectors with zero norm after conversion.
-Parallel construction may be nondeterministic even for a fixed
-\code{random_seed}. Zero or one thread uses serial construction. R's random seed
-is not used by hnswlib.
+\details{
+Coordinates are stored in single precision; see \link{RcppHnsw-package} for
+numeric limits. If you want to add more items, resize, or save the index,
+see the
+\href{https://jlmelville.github.io/rcpphnsw/articles/module-api-index-lifecycle.html}{Module guide}
+for the available methods.
 }
-
 \examples{
 irism <- as.matrix(iris[, -5])
-ann <- hnsw_build(irism)
-iris_nn <- hnsw_search(irism, ann, k = 5)
+ann <- hnsw_build(irism[1:100, ])
+neighbors <- hnsw_search(irism[101:150, ], ann, k = 5)
+}
+\seealso{
+\code{\link[=hnsw_knn]{hnsw_knn()}} to build and search in one call.
 }

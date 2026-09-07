@@ -13,48 +13,53 @@
 \alias{HnswEuclidean}
 \alias{Rcpp_HnswEuclidean-class}
 \alias{RcppHNSW-package}
-\title{Rcpp bindings for the hnswlib C++ library for approximate nearest neighbors.}
+\title{Approximate nearest neighbor search with hnswlib}
 \description{
-hnswlib is a library implementing the Hierarchical Navigable Small World
-method for approximate nearest neighbor search.
+RcppHNSW provides an R interface to hierarchical navigable small-world
+graphs. Use \code{\link[=hnsw_knn]{hnsw_knn()}} for neighbors within one dataset, or \code{\link[=hnsw_build]{hnsw_build()}}
+and \code{\link[=hnsw_search]{hnsw_search()}} to query new data against an existing index.
 }
-\details{
-Details about hnswlib are available at the reference listed below.
-}
-\section{Data and index contract}{
+\section{Module classes}{
 
 
-RcppHNSW stores coordinates as single-precision floating-point values. The
-package rejects non-finite or out-of-range coordinates and cosine vectors
-with zero norm after conversion.
+\code{HnswEuclidean}, \code{HnswL2}, \code{HnswCosine}, and \code{HnswIp} provide direct access
+to insertion, search, deletion, resizing, and saved indexes. They use
+Euclidean distance, squared Euclidean distance, one minus cosine similarity,
+and one minus inner product, respectively. An index returned by \code{\link[=hnsw_build]{hnsw_build()}}
+is one of these objects, so you can use its methods directly too. See the
+\href{https://jlmelville.github.io/rcpphnsw/articles/module-api-index-lifecycle.html}{Module guide}
+for constructors and methods.
 
-Module indexes assign one-based labels in insertion order. \code{size()} reports
-the total number of items added, including items marked deleted. Deleted
-items remain allocated, are excluded from search, and cannot be returned by
-\code{getItems()}. Consequently, \code{k} must be positive and no larger than the
-active count: total items minus deleted items. If an exception escapes after
-insertion has begun, the index fails closed and must be discarded and
-rebuilt or reloaded.
-
-A thread setting of zero or one uses serial execution; zero grain size is an
-alias for one. Parallel construction may be nondeterministic even with a
-fixed hnswlib seed. R's \code{set.seed()} does not control hnswlib.
+Labels start at one and follow insertion order. Deleted items are excluded
+from search and retrieval but still count towards \code{size()} and capacity.
+If insertion fails after modifying the index, or a native resize fails,
+discard the index and rebuild or reload it.
 }
 
-\section{Raw index checkpoints}{
+\section{Numeric limits}{
 
 
-The Module \code{save()} method and filename constructors use hnswlib's raw index
-format. Compatibility depends on the hnswlib version and platform. Load with
-the exact original dimension and normally the same distance class.
-Same-width L2 and Euclidean checkpoints support cross-loading. Use matching
-classes for cosine and inner-product checkpoints.
+Coordinates are stored as single-precision floats and must be finite and
+representable in that format. Cosine vectors are normalized to unit length
+and must have a nonzero norm after conversion.
 
-Raw checkpoints assume the contiguous labels created by RcppHNSW. Loading
-restores deletion state but resets search \code{ef} to hnswlib's default of 10;
-call \code{setEf()} or \code{hnsw_search()} to select another value. An optional load
-capacity may enlarge the index, but cannot be smaller than the stored item
-count.
+To prevent distance overflow, each vector's sum of absolute coordinates is
+limited to approximately \code{4.6e18}, after conversion and cosine normalization.
+Loaded checkpoints must meet the same limit, including deleted items.
+}
+
+\section{Saved indexes}{
+
+
+\code{ann$save()} writes hnswlib's raw checkpoint format, whose compatibility
+depends on the hnswlib version and platform. Load with the original
+dimension and distance class. You can also load an \code{HnswL2} checkpoint into
+\code{HnswEuclidean}, or vice versa.
+
+Loading restores items, deletion state, and capacity, but resets search
+\code{ef} to 10. Set \code{ef} again with \code{setEf()} or \code{\link[=hnsw_search]{hnsw_search()}}. An optional
+positive load capacity overrides the saved value when it is at least the
+stored item count; smaller values retain the saved capacity.
 }
 
 \references{

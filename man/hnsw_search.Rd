@@ -2,7 +2,7 @@
 % Please edit documentation in R/hnsw.R
 \name{hnsw_search}
 \alias{hnsw_search}
-\title{Search an hnswlib nearest neighbor index}
+\title{Search a nearest neighbor index}
 \usage{
 hnsw_search(
   X,
@@ -17,76 +17,55 @@ hnsw_search(
 )
 }
 \arguments{
-\item{X}{A numeric matrix of data to search for neighbors. If \code{byrow = TRUE}
-(the default) then each row of \code{X} is an item to be searched. Otherwise,
-each item should be stored in the columns of \code{X}.}
+\item{X}{Numeric query matrix with the same number of dimensions as the
+indexed data. Each row is a query, or each column when \code{byrow = FALSE}.}
 
-\item{ann}{an instance of an \code{HnswEuclidean}, \code{HnswL2}, \code{HnswCosine} or
-\code{HnswIp} class.}
+\item{ann}{An index from \code{\link[=hnsw_build]{hnsw_build()}} or a Module constructor.}
 
-\item{k}{Positive whole number of neighbors to return. It cannot exceed the
-active (not deleted) item count. \code{ann$size()} reports the total number added
-and therefore may be larger than the active count after deletion.}
+\item{k}{Number of neighbors per query. A positive whole number no larger
+than the number of undeleted items. \code{ann$size()} includes deleted items.}
 
-\item{ef}{Size of the dynamic list used during search. Higher values lead
-to improved recall at the expense of longer search time. Must be positive;
-the effective value is at least \code{k} and is not bounded by index size.
-Typical values are \code{100 - 2000}.}
+\item{ef}{Candidate-list size during search. Increase it to
+improve recall at the cost of search time. Must be a positive whole number;
+the effective value is at least \code{k} and is not capped at the index size.}
 
 \item{verbose}{If \code{TRUE}, log messages to the console.}
 
-\item{progress}{defunct and has no effect.}
+\item{progress}{Unused; retained for compatibility.}
 
-\item{n_threads}{Maximum number of threads to use. Zero and one both select
-serial execution. For larger values, the exact number is determined by
-\code{grain_size} and the amount of work.}
+\item{n_threads}{Maximum number of threads for batch insertion or search.
+Zero (the default) and one run serially.}
 
-\item{grain_size}{Minimum amount of work to do (items in \code{X} to search)
-per thread. Zero is treated as one. If the number of items in \code{X} isn't
-sufficient, then fewer than \code{n_threads} will be used. This is useful in
-cases where the
-overhead of context switching with too many threads outweighs the gains due
-to parallelism.}
+\item{grain_size}{Minimum number of items per thread. Larger values limit
+threading overhead for small batches. Zero is treated as one.}
 
-\item{byrow}{If \code{TRUE} (the default), this indicates that the items to be
-searched in \code{X} are stored in each row of \code{X}. Otherwise, the items are
-stored in the columns of \code{X}. Storing items in each column reduces the
-overhead of copying data to a form that can be searched by the \code{hnsw}
-library. Note that if \code{byrow = FALSE}, any matrices returned from this
-function will also store the items by column.}
+\item{byrow}{If \code{TRUE}, items are rows of \code{X}; otherwise, they are columns.
+Results follow the same orientation.}
 }
 \value{
-a list containing:
-\itemize{
-\item \code{idx} a matrix containing the nearest neighbor indices.
-\item \code{dist} a matrix containing the nearest neighbor distances.
-}
-
-The dimensions of the matrices respect the storage (row or column-based) of
-\code{X} as indicated by the \code{byrow} parameter. If \code{byrow = TRUE} (the default)
-each row of \code{idx} and \code{dist} contain the neighbor information for the item
-passed in the equivalent row of \code{X}, i.e. the dimensions are \verb{n x k} where
-\code{n} is the number of items in \code{X}. If \code{byrow = FALSE}, then each column of
-\code{idx} and \code{dist} contain the neighbor information for the item passed in
-the equivalent column of \code{X}, i.e. the dimensions are \verb{k x n}.
+A list with matrices \code{idx} (one-based labels in \code{ann}) and \code{dist}
+(distances), ordered by increasing distance for each query. Both are
+\verb{n × k} when \code{byrow = TRUE}, or \verb{k × n} otherwise, where \code{n} is the number
+of queries in \code{X}.
 }
 \description{
-Search an hnswlib nearest neighbor index
+Find neighbors in an existing index for each query in \code{X}.
 }
-\section{Numeric data and index mutation}{
+\details{
+The index's distance measure is used for all queries. Search is approximate;
+with inner-product distance, an item need not be its own nearest neighbor.
+Coordinates are stored in single precision; see \link{RcppHnsw-package} for numeric
+limits.
 
-
-The package rejects non-finite or out-of-range query coordinates and cosine
-queries with zero norm after conversion to single precision. Search is
-approximate, and under inner-product distance an item need not be its own
-nearest neighbor.
-
-This function updates \code{ann} in place: the effective \code{ef}, \code{n_threads}, and
-\code{grain_size} settings remain on the external index after the call.
+This call also updates \code{ann}'s \code{ef}, \code{n_threads}, and \code{grain_size} settings.
+If you then use the Module methods directly, they will use these settings.
 }
-
 \examples{
 irism <- as.matrix(iris[, -5])
-ann <- hnsw_build(irism)
-iris_nn <- hnsw_search(irism, ann, k = 5)
+ann <- hnsw_build(irism[1:100, ])
+neighbors <- hnsw_search(irism[101:150, ], ann, k = 5)
+}
+\seealso{
+\code{\link[=hnsw_build]{hnsw_build()}} to create an index, \code{\link[=hnsw_knn]{hnsw_knn()}} to build and search
+in one call.
 }
