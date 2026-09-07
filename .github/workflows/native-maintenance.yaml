@@ -1,0 +1,62 @@
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - ".github/workflows/native-maintenance.yaml"
+      - "inst/include/*.h"
+      - "tools/diagnostics/**"
+      - "tools/vendor/**"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - ".github/workflows/native-maintenance.yaml"
+      - "inst/include/*.h"
+      - "tools/diagnostics/**"
+      - "tools/vendor/**"
+  workflow_dispatch:
+
+name: native-maintenance
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vendor-provenance:
+    name: Verify vendored hnswlib
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Reconstruct and verify vendored headers
+        run: tools/vendor/verify-hnswlib.sh
+
+  sanitizer-diagnostics:
+    name: Run native sanitizer diagnostics
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check maintenance scripts
+        run: |
+          for script in tools/diagnostics/*.sh tools/vendor/*.sh; do
+            bash -n "$script"
+          done
+          shellcheck tools/diagnostics/*.sh tools/vendor/*.sh
+
+      - name: Run resize lifecycle AddressSanitizer diagnostic
+        run: tools/diagnostics/run-hnswlib-resize-asan.sh
+
+      - name: Run concurrent insertion ThreadSanitizer diagnostic
+        run: tools/diagnostics/run-hnswlib-rng-tsan.sh

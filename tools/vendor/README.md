@@ -1,37 +1,35 @@
-# hnswlib vendor refresh
+# Maintain the vendored hnswlib headers
 
-`inst/include/` contains the materialized headers compiled by RcppHNSW. The
-hnswlib portion is reconstructed from the exact v0.9.0 archive described by
-`upstream.yml`, checked against `upstream-files.sha256`, and modified only by
-the ordered files in `patches/series`. The separate `pforr/` directory is not
-part of hnswlib and is left untouched.
+`inst/include/` contains the headers compiled by RcppHNSW. The hnswlib headers are reconstructed
+from the archive pinned in `upstream.yml`, checked against `upstream-files.sha256`, and modified
+by the patches listed in `patches/series`. The separate `pforr/` directory is left untouched.
 
-Package installation never downloads or patches source. These scripts are for
-maintainers updating or auditing the committed materialized headers.
-
-Verify the current tree, downloading the pinned archive into a temporary
-directory:
+## Verify
 
 ```sh
 tools/vendor/verify-hnswlib.sh
 ```
 
-An already downloaded archive can be supplied for an offline audit:
+This downloads the pinned archive into temporary storage and checks that reconstruction matches
+all seven committed headers byte for byte. For an offline check, supply a local archive:
 
 ```sh
 tools/vendor/verify-hnswlib.sh --archive hnswlib-v0.9.0.tar.gz
 ```
 
-After intentionally changing the patch series, refresh the materialized
-headers and then inspect the repository diff:
+The `native-maintenance` workflow runs this verifier when the headers or maintenance tools change.
+To test drift detection on a disposable copy, pass `--materialized-dir DIR`.
+
+## Refresh after editing patches
 
 ```sh
 tools/vendor/refresh-hnswlib.sh --archive hnswlib-v0.9.0.tar.gz
 git diff -- inst/include
 ```
 
-The verifier accepts `--materialized-dir DIR` so a disposable copy can be used
-to prove that unexplained drift fails without modifying the repository.
+Refresh overwrites the materialized hnswlib headers. Run it after updating the patch queue, then
+review the diff. Package installation uses the committed headers without downloading or patching.
+The manifest, checksums, patches, and scripts ship in source packages as provenance.
 
 ## Patch policy
 
@@ -50,9 +48,14 @@ The queue accounts for every difference from the pinned upstream header set:
 7. `0007` adds the prominent dated notice required for the modified vendored
    header and points recipients to the installed provenance record and exact
    source patch series.
+8. `0008` preserves the saved capacity when an empty index is loaded without an
+   explicit capacity.
+9. `0009` rejects zero-capacity resize before any storage is reallocated.
+10. `0010` gives initial visited-list pool entries temporary ownership so a
+    failed pool insertion does not leak them during construction or resize.
 
-The concurrency patches are deliberately independent and suitable for an
-upstream report. None of the patches changes the public API or index format.
-If the supported distinct-new-label insertion workload reveals another
-independent data race, do not extend this queue one field at a time; serialize
-package construction and reassess the concurrency contract.
+The queue must account for every difference from upstream. Keep patches focused; avoid unrelated
+formatting changes that make future updates harder to review.
+
+If the distinct-label insertion diagnostic reveals another independent data race, serialize
+package construction and reassess the concurrency contract before extending the queue.
