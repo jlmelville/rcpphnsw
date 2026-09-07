@@ -4,28 +4,28 @@
 
 ### Bug fixes and minor improvements
 
-- Numeric controls, logical options, matrix shapes, item identifiers,
-  paths, and coordinates are now validated before conversion to native
-  types. Search `k` must be positive and cannot exceed the active (not
-  deleted) item count. Coordinates must be finite and representable as
-  single-precision floats, and cosine inputs must have a positive finite
-  norm after conversion.
-- Parallel construction and search no longer write unsynchronized shared
-  state. Two construction races in the bundled hnswlib code are
-  repaired, and an index now fails closed if an exception escapes after
-  insertion has begun.
-- Raw index loading now rejects incompatible dimensions and malformed
-  offset layouts. Raw save open, write, flush, and close failures are
-  reported to R. The raw format remains an operational hnswlib
-  checkpoint rather than a stable cross-version or cross-platform
-  archive.
-- The existing `grain_size` setting is now passed to all threaded index
-  add and search operations, matching the documented behavior.
+- Invalid inputs are now rejected before native conversion. Search `k`
+  cannot exceed the number of undeleted items. Coordinates must fit in
+  single precision, and cosine vectors must have a nonzero norm. Very
+  large vector magnitudes are rejected to prevent distance overflow;
+  this also applies to existing checkpoints, including their deleted
+  items.
+- Fixed data races in parallel construction and search. If insertion
+  fails after modifying an index, the index becomes unusable and must be
+  rebuilt or reloaded.
+- Loading rejects incompatible dimensions and malformed checkpoints.
+  Save failures are reported to R, including failures to flush or close
+  the file.
+- Empty indexes retain their saved capacity when loaded without an
+  explicit capacity. As before, a supplied capacity below the stored
+  item count falls back to the saved value.
+- Resizing an empty index to zero is rejected safely. A failed native
+  resize makes the index unusable; discard it and rebuild or reload.
+  Fixed a memory leak during resize failure.
+- `grain_size` now applies to all threaded insertion and search
+  operations.
 - Updated hnswlib to [version
-  0.9.0](https://github.com/nmslib/hnswlib/releases/tag/v0.9.0). This
-  was a minor upstream bug-fix release; RcppHNSW also carries a
-  documented patch series for package integration and the safety fixes
-  above.
+  0.9.0](https://github.com/nmslib/hnswlib/releases/tag/v0.9.0).
 
 ## RcppHNSW 0.7.0
 

@@ -1,6 +1,7 @@
-# Build an hnswlib nearest neighbor index
+# Build a nearest neighbor index
 
-Build an hnswlib nearest neighbor index
+Build an HNSW index that you can keep and query with
+[`hnsw_search()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.md).
 
 ## Usage
 
@@ -23,36 +24,33 @@ hnsw_build(
 
 - X:
 
-  A numeric matrix of data to search for neighbors. If `byrow = TRUE`
-  (the default) then each row of `X` is an item to be searched.
-  Otherwise, each item should be stored in the columns of `X`.
+  Numeric matrix to index, with one item per row, or per column when
+  `byrow = FALSE`.
 
 - distance:
 
-  Type of distance to calculate. One of:
+  Distance to use:
 
-  - `"l2"` Squared L2, i.e. squared Euclidean.
+  - `"euclidean"`: Euclidean distance.
 
-  - `"euclidean"` Euclidean.
+  - `"l2"`: squared Euclidean distance.
 
-  - `"cosine"` One minus cosine similarity.
+  - `"cosine"`: one minus cosine similarity.
 
-  - `"ip"` One minus inner product: `1 - sum(a * b)`. Values can be
-    negative and need not satisfy metric properties.
+  - `"ip"`: one minus inner product, `1 - sum(a * b)`; can be negative.
 
 - M:
 
-  Controls the number of bi-directional links created for each element
-  during index construction. Higher values lead to better results at the
-  expense of memory consumption. Typical values are `2 - 100`, but for
-  most datasets a range of `12 - 48` is suitable. Can't be smaller than
-  2.
+  Number of graph links per item during construction. Larger values
+  improve connectivity and use more memory. Must be between 2 and 10000.
 
 - ef:
 
-  Size of the dynamic list used during construction. A larger value
-  means a better quality index, but increases build time. Must be a
-  positive whole number and is not bounded by the size of the dataset.
+  Candidate-list size during construction. Larger values improve index
+  quality and increase build time. Must be a positive whole number and
+  is not capped at the dataset size. This is the `ef_construction`
+  parameter of
+  [`hnsw_knn()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_knn.md).
 
 - verbose:
 
@@ -60,53 +58,52 @@ hnsw_build(
 
 - progress:
 
-  defunct and has no effect.
+  Unused; retained for compatibility.
 
 - n_threads:
 
-  Maximum number of threads to use. Zero and one both select serial
-  execution. For larger values, the exact number is determined by
-  `grain_size` and the amount of work.
+  Maximum number of threads for batch insertion or search. Zero (the
+  default) and one run serially.
 
 - grain_size:
 
-  Minimum number of items in `X` to add per thread. Zero is treated as
-  one. If the number of items in `X` isn't sufficient, then fewer than
-  `n_threads` will be used. This is useful in cases where the overhead
-  of context switching with too many threads outweighs the gains due to
-  parallelism.
+  Minimum number of items per thread. Larger values limit threading
+  overhead for small batches. Zero is treated as one.
 
 - byrow:
 
-  If `TRUE` (the default), this indicates that the items in `X` to be
-  indexed are stored in each row. Otherwise, the items are stored in the
-  columns of `X`. Storing items in each column reduces the overhead of
-  copying data to a form that can be indexed by the `hnsw` library.
+  If `TRUE`, items are rows of `X`; otherwise, they are columns.
 
 - random_seed:
 
-  Seed passed to hnswlib for index construction. The default, `100`, is
-  the underlying hnswlib default. This seed belongs to hnswlib: calling
-  [`set.seed()`](https://rdrr.io/r/base/Random.html) does not affect
-  index construction.
+  Seed for hnswlib's index construction. R's
+  [`set.seed()`](https://rdrr.io/r/base/Random.html) has no effect. Use
+  serial construction for repeatable builds; parallel insertion order
+  can vary with a fixed seed.
 
 ## Value
 
-an instance of an `HnswEuclidean`, `HnswL2`, `HnswCosine` or `HnswIp`
-class.
+An `HnswEuclidean`, `HnswL2`, `HnswCosine`, or `HnswIp` index, according
+to `distance`. Labels are one-based and follow the order in `X`.
 
-## Numeric data and reproducibility
+## Details
 
-Coordinates are stored as single-precision floating-point values. The
-package rejects non-finite or out-of-range coordinates and, for cosine
-distance, vectors with zero norm after conversion. Parallel construction
-may be nondeterministic even for a fixed `random_seed`. Zero or one
-thread uses serial construction. R's random seed is not used by hnswlib.
+Coordinates are stored in single precision; see
+[RcppHnsw-package](https://jlmelville.github.io/rcpphnsw/reference/RcppHnsw-package.md)
+for numeric limits. If you want to add more items, resize, or save the
+index, see the [Module
+guide](https://jlmelville.github.io/rcpphnsw/articles/module-api-index-lifecycle.html)
+for the available methods.
+
+## See also
+
+[`hnsw_knn()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_knn.md)
+to build and search in one call.
 
 ## Examples
 
 ``` r
 irism <- as.matrix(iris[, -5])
-ann <- hnsw_build(irism)
-iris_nn <- hnsw_search(irism, ann, k = 5)
+ann <- hnsw_build(irism[1:100, ])
+neighbors <- hnsw_search(irism[101:150, ], ann, k = 5)
 ```

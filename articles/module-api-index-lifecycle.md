@@ -1,191 +1,139 @@
 # Module API and index lifecycle
 
-## Classes
+If you want to add items to an index over time, delete them, or save the
+index for later, you can use the Rcpp Module classes directly. The usual
+[`hnsw_build()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.md)
+and
+[`hnsw_search()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.md)
+functions use these same classes, so an index you’ve already built with
+[`hnsw_build()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.md)
+has the methods described here too.
 
-| Class           | Distance                                   |
-|-----------------|--------------------------------------------|
-| `HnswL2`        | Squared L2, i.e. squared Euclidean.        |
-| `HnswEuclidean` | Euclidean.                                 |
-| `HnswCosine`    | One minus cosine similarity.               |
-| `HnswIp`        | One minus inner product: `1 - sum(a * b)`. |
+## Create an index
 
-All four classes have the same constructors and methods.
+| Class           | Distance                    |
+|-----------------|-----------------------------|
+| `HnswEuclidean` | Euclidean                   |
+| `HnswL2`        | Squared Euclidean           |
+| `HnswCosine`    | One minus cosine similarity |
+| `HnswIp`        | One minus inner product     |
 
-## Constructors
-
-Rcpp Module arguments are matched by position. Supplying names does not
-make reordering safe. Use explanatory variables and pass them in the
-documented order, especially for constructors with several integer
-arguments:
-
-``` r
-
-dim <- 10
-num_elements <- 100
-M <- 16
-ef_construction <- 200
-index <- new(HnswL2, dim, num_elements, M, ef_construction)
-```
-
-Replace `HnswL2` with any of the other classes in these signatures:
-
-``` r
-
-new(HnswL2, dim, max_elements, M, ef_construction)
-new(HnswL2, dim, max_elements, M, ef_construction, random_seed)
-new(HnswL2, dim, filename)
-new(HnswL2, dim, filename, max_elements)
-```
-
-The first constructor creates a new index with `dim` dimensions and a
-maximum size of `max_elements` items. `M` and `ef_construction`
-determine the speed versus accuracy trade-off. The second form specifies
-the random seed; omitting `random_seed` uses hnswlib’s default of `100`.
-
-The filename constructors load a previously saved index with `dim`
-dimensions. The final form supplies a new maximum capacity. This is a
-way to increase the capacity of the index without a complete rebuild.
-
-## Method lookup
-
-| Category | Methods |
-|----|----|
-| Add and retrieve items | `addItem()`, `addItems()`, `addItemsCol()`, `getItems()` |
-| Search | `getNNs()`, `getNNsList()`, `getAllNNs()`, `getAllNNsList()`, `getAllNNsCol()`, `getAllNNsListCol()` |
-| Search and parallel settings | `setEf()`, `setNumThreads()`, `setGrainSize()` |
-| Index lifecycle | `size()`, `markDeleted()`, `resizeIndex()`, `ann$save()` |
-
-### Add and retrieve items
-
-- `addItem(v)` adds vector `v` to the index.
-- `addItems(m)` adds the row vectors of the matrix `m` to the index. The
-  number of threads specified by `setNumThreads()` is used for building
-  the index.
-- `addItemsCol(m)` is like `addItems()` but adds the *column* vectors of
-  `m` to the index. Storing data column-wise makes copying the data for
-  use by hnsw more efficient.
-- `getItems(ids)` returns a matrix where each row is the data vector
-  from the index associated with integer indices in the vector of `ids`.
-  For cosine similarity, the L2 row-normalized vectors are returned.
-
-Internally, each item gets an increasing integer label, with the first
-item added getting the label `1`, the second `2` and so on. These labels
-are returned in search results to identify which vectors in the index
-are neighbors. `getItems()` identifiers are also one-indexed: to get the
-first and tenth vectors added to the index, use `getItems(c(1, 10))`,
-not `getItems(c(0, 9))`.
-
-### Search
-
-- `getNNs(v, k)` returns a vector of the labels of the `k`-nearest
-  neighbors of vector `v`.
-- `getNNsList(v, k, include_distances)` returns a list containing a
-  vector named `item` with the labels of the `k`-nearest neighbors of
-  vector `v`. If `include_distances = TRUE`, it also returns a vector
-  named `distance`.
-- `getAllNNs(m, k)` returns a matrix of the labels of the `k`-nearest
-  neighbors of each row vector in `m`.
-- `getAllNNsList(m, k, include_distances)` returns a list containing a
-  matrix named `item` with the labels of the `k`-nearest neighbors of
-  each row vector in `m`. If `include_distances = TRUE`, it also returns
-  a matrix named `distance`.
-- `getAllNNsCol(m, k)` is like `getAllNNs()` but each item to be
-  searched in `m` is stored by *column*, not row. The returned matrix is
-  also stored column-wise: its dimensions are `k x n`, where `n` is the
-  number of columns in `m`.
-- `getAllNNsListCol(m, k, include_distances)` is like `getAllNNsList()`
-  but each item to be searched in `m` is stored by *column*. The
-  matrices in the returned list are also stored column-wise, with
-  dimensions `k x n`.
-
-The number of threads specified by `setNumThreads()` is used by the
-batch search methods. `k` must be positive and cannot exceed the active
-(not deleted) item count. If `k` neighbors cannot be found, an error is
-thrown. This can also mean that `ef` or `M` have been set too small.
-
-### Search and parallel settings
-
-- `setEf(ef)` sets search parameter `ef`.
-- `setNumThreads(num_threads)` uses at most this number of threads when
-  adding items via `addItems()` or `addItemsCol()` and searching via the
-  batch search methods. Zero and one both select serial execution.
-- `setGrainSize(grain_size)` sets the minimum amount of work to do per
-  thread. Zero is treated as one. If there is not enough work for all
-  the threads to process `grain_size` items per thread, fewer threads
-  will be used.
-
-Parallel construction may be nondeterministic even with a fixed
-`random_seed`. R’s [`set.seed()`](https://rdrr.io/r/base/Random.html)
-does not control hnswlib.
-
-### Index lifecycle
-
-- `size()` returns the total number of items added to the index,
-  including deleted items. It can therefore be larger than the maximum
-  valid `k` after deletion.
-- `markDeleted(i)` marks the item with label `i` as deleted. The item
-  will not be returned in further searches and `getItems()` will no
-  longer return it. Deletion does not reduce memory use or reclaim
-  capacity, and `size()` still includes it.
-- `resizeIndex(max_elements)` changes the maximum capacity of the index.
-- `ann$save(filename)` saves a raw index checkpoint to `filename`.
-
-Coordinates are stored as single-precision floats. The package rejects
-non-finite or out-of-range coordinates and cosine vectors with zero norm
-after conversion. If an exception escapes after insertion has begun, the
-index becomes unusable and must be discarded and rebuilt or reloaded.
-
-## Raw index checkpoints
-
-`ann$save()` uses hnswlib’s raw checkpoint format. Compatibility depends
-on the hnswlib version and platform. Load with the exact original
-dimension and normally the same class. Same-width `HnswL2` and
-`HnswEuclidean` checkpoints support cross-loading. Use matching classes
-for cosine and inner-product checkpoints.
-
-Checkpoints assume RcppHNSW’s contiguous insertion-order labels. Loading
-restores deletion state but resets search `ef` to 10, so call `setEf()`
-before direct Module search if another value is required. An optional
-load capacity may enlarge the index, but cannot be smaller than the
-stored item count.
-
-## Example
+All four classes have the same constructors and methods. We’ll use
+`HnswL2` here and leave room for 100 items to begin with. The
+constructor takes the dimension, capacity, `M`, construction `ef`, and
+an optional random seed (default `100`), in that order. The order
+matters: Module arguments are matched by position, even if you give them
+names.
 
 ``` r
 
 library(RcppHNSW)
 
-data <- as.matrix(iris[, -5])
-item_dim <- ncol(data)
+items <- as.matrix(iris[, -5])
+dimension <- ncol(items)
+capacity <- 100
 M <- 16
 ef_construction <- 200
+ann <- new(HnswL2, dimension, capacity, M, ef_construction, 100)
+ann$addItems(items[1:100, ])
+```
 
-ann <- new(HnswL2, item_dim, 100, M, ef_construction, 100)
-ann$setNumThreads(2)
-ann$setGrainSize(10)
-ann$addItems(data[1:100, ])
+For help choosing `M`, construction `ef`, and the seed, see the
+[parameter
+guide](https://jlmelville.github.io/rcpphnsw/articles/parameters-metrics-data-layout.md).
 
-ann$resizeIndex(nrow(data))
-ann$addItems(data[101:150, ])
+## Add and retrieve items
+
+| Method | Input or result |
+|----|----|
+| `addItem(v)` | Add one vector. |
+| `addItems(m)` | Add each row of a matrix. |
+| `addItemsCol(m)` | Add each column of a matrix. |
+| `getItems(ids)` | Return one row per requested label, in the order supplied. |
+
+Items get labels in the order you add them, starting at one. So
+`ann$getItems(c(1, 10))` retrieves the first and tenth items. If you’re
+using a cosine index, the returned vectors have been normalized to unit
+length.
+
+Coordinates are stored in single precision; see [numeric
+limits](https://jlmelville.github.io/rcpphnsw/reference/RcppHnsw-package.html#numeric-limits)
+for the accepted range.
+
+## Search
+
+Set search `ef` with `ann$setEf(ef)`. As with
+[`hnsw_search()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.md),
+increasing it usually finds more of the true nearest neighbors, but
+takes longer. `k` must be positive and no greater than the number of
+undeleted items. If a search cannot find `k` neighbors, try increasing
+`ef`; a poorly connected index may need rebuilding with a larger `M`.
+
+| Method               | Query layout        | Result                   |
+|----------------------|---------------------|--------------------------|
+| `getNNs(v, k)`       | One vector          | Vector of labels         |
+| `getAllNNs(m, k)`    | One item per row    | `n × k` matrix of labels |
+| `getAllNNsCol(m, k)` | One item per column | `k × n` matrix of labels |
+
+The corresponding `getNNsList()`, `getAllNNsList()`, and
+`getAllNNsListCol()` methods take a third argument, `include_distances`.
+They return labels as `item` and, when that argument is `TRUE`,
+distances as `distance`, with the same shapes as above.
+
+For example, here’s how to get both labels and distances for the first
+five items:
+
+``` r
+
+ann$setEf(50)
+result <- ann$getAllNNsList(items[1:5, ], 4, TRUE)
+result$item
+```
+
+    ##      [,1] [,2] [,3] [,4]
+    ## [1,]    1   18    5   29
+    ## [2,]    2   13   46   35
+    ## [3,]    3   48    4    7
+    ## [4,]    4   48   30   31
+    ## [5,]    5    1   38   18
+
+``` r
+
+result$distance
+```
+
+    ##      [,1]       [,2]       [,3]       [,4]
+    ## [1,]    0 0.01000000 0.01999996 0.01999996
+    ## [2,]    0 0.01999998 0.01999998 0.01999998
+    ## [3,]    0 0.01999998 0.06000003 0.07000001
+    ## [4,]    0 0.02000003 0.03000002 0.05000012
+    ## [5,]    0 0.01999996 0.01999998 0.02999996
+
+Batch insertion and search use the settings from
+`setNumThreads(n_threads)` and `setGrainSize(grain_size)`. See [threads
+and
+reproducibility](https://jlmelville.github.io/rcpphnsw/articles/parameters-metrics-data-layout.html#use-multiple-threads).
+
+## Resize and delete
+
+We’ve filled the 100 spaces we asked for, but there are another 50 items
+in `iris`. To add those, we first need to make room with
+`resizeIndex(capacity)`. The new capacity must be at least one and at
+least `size()`, which includes deleted items.
+
+``` r
+
+ann$resizeIndex(nrow(items))
+ann$addItems(items[101:150, ])
 ann$size()
 ```
 
     ## [1] 150
 
-``` r
-
-result <- ann$getAllNNsList(data[1:5, ], 4, TRUE)
-dim(result$item)
-```
-
-    ## [1] 5 4
-
-``` r
-
-dim(result$distance)
-```
-
-    ## [1] 5 4
+`markDeleted(label)` hides an item from search and `getItems()`. The
+“mark” part of the name is doing some work here: the item still occupies
+space in the index. Deleting it doesn’t free memory or capacity, and
+`size()` still counts it:
 
 ``` r
 
@@ -195,11 +143,21 @@ ann$size()
 
     ## [1] 150
 
+If an insertion fails after it starts modifying the index, or a native
+resize fails, discard the index and rebuild or reload it. Invalid inputs
+rejected before modification leave the index usable.
+
+## Save and load an index
+
+Once you have an index you’re happy with, `ann$save(filename)` saves the
+graph, its items, capacity, and deletion state. Let’s save ours and load
+it into a new object:
+
 ``` r
 
 path <- tempfile(fileext = ".hnsw")
 ann$save(path)
-loaded <- new(HnswL2, item_dim, path)
+loaded <- new(HnswL2, dimension, path)
 loaded$setEf(50)
 loaded$size()
 ```
@@ -210,3 +168,18 @@ loaded$size()
 
 unlink(path)
 ```
+
+Use the original dimension and distance class when loading. `HnswL2` and
+`HnswEuclidean` can also load each other’s checkpoints. Search `ef`
+isn’t saved: loading resets it to 10, which is why we set it again
+above.
+
+To change capacity while loading, use
+`new(HnswL2, dimension, path, capacity)`. Omitting capacity restores the
+saved value. An explicit positive capacity takes effect when it is at
+least the stored item count; smaller values fall back to the saved
+capacity.
+
+These files use hnswlib’s raw format, and compatibility depends on the
+hnswlib version and platform. Keep the original data too, in case you
+need to rebuild the index elsewhere.

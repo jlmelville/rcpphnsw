@@ -60,8 +60,13 @@
 
     
     
+<p>If you want to add items to an index over time, delete them, or save
+the index for later, you can use the Rcpp Module classes directly. The
+usual <a href="../reference/hnsw_build.html"><code>hnsw_build()</code></a> and <a href="../reference/hnsw_search.html"><code>hnsw_search()</code></a>
+functions use these same classes, so an index you’ve already built with
+<code><a href="../reference/hnsw_build.html">hnsw_build()</a></code> has the methods described here too.</p>
 <div class="section level2">
-<h2 id="classes">Classes<a class="anchor" aria-label="anchor" href="#classes"></a>
+<h2 id="create-an-index">Create an index<a class="anchor" aria-label="anchor" href="#create-an-index"></a>
 </h2>
 <table class="table">
 <thead><tr class="header">
@@ -70,58 +75,44 @@
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td><code>HnswL2</code></td>
-<td>Squared L2, i.e. squared Euclidean.</td>
+<td><code>HnswEuclidean</code></td>
+<td>Euclidean</td>
 </tr>
 <tr class="even">
-<td><code>HnswEuclidean</code></td>
-<td>Euclidean.</td>
+<td><code>HnswL2</code></td>
+<td>Squared Euclidean</td>
 </tr>
 <tr class="odd">
 <td><code>HnswCosine</code></td>
-<td>One minus cosine similarity.</td>
+<td>One minus cosine similarity</td>
 </tr>
 <tr class="even">
 <td><code>HnswIp</code></td>
-<td>One minus inner product: <code>1 - sum(a * b)</code>.</td>
+<td>One minus inner product</td>
 </tr>
 </tbody>
 </table>
-<p>All four classes have the same constructors and methods.</p>
-</div>
-<div class="section level2">
-<h2 id="constructors">Constructors<a class="anchor" aria-label="anchor" href="#constructors"></a>
-</h2>
-<p>Rcpp Module arguments are matched by position. Supplying names does
-not make reordering safe. Use explanatory variables and pass them in the
-documented order, especially for constructors with several integer
-arguments:</p>
+<p>All four classes have the same constructors and methods. We’ll use
+<code>HnswL2</code> here and leave room for 100 items to begin with. The
+constructor takes the dimension, capacity, <code>M</code>, construction
+<code>ef</code>, and an optional random seed (default <code>100</code>),
+in that order. The order matters: Module arguments are matched by
+position, even if you give them names.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">dim</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
-<span><span class="va">num_elements</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://jlmelville.github.io/rcpphnsw/">RcppHNSW</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">items</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">dimension</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span>
+<span><span class="va">capacity</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">M</span> <span class="op">&lt;-</span> <span class="fl">16</span></span>
 <span><span class="va">ef_construction</span> <span class="op">&lt;-</span> <span class="fl">200</span></span>
-<span><span class="va">index</span> <span class="op">&lt;-</span> <span class="fu">new</span><span class="op">(</span><span class="va">HnswL2</span>, <span class="va">dim</span>, <span class="va">num_elements</span>, <span class="va">M</span>, <span class="va">ef_construction</span><span class="op">)</span></span></code></pre></div>
-<p>Replace <code>HnswL2</code> with any of the other classes in these
-signatures:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">new</span><span class="op">(</span><span class="va">HnswL2</span>, <span class="va">dim</span>, <span class="va">max_elements</span>, <span class="va">M</span>, <span class="va">ef_construction</span><span class="op">)</span></span>
-<span><span class="fu">new</span><span class="op">(</span><span class="va">HnswL2</span>, <span class="va">dim</span>, <span class="va">max_elements</span>, <span class="va">M</span>, <span class="va">ef_construction</span>, <span class="va">random_seed</span><span class="op">)</span></span>
-<span><span class="fu">new</span><span class="op">(</span><span class="va">HnswL2</span>, <span class="va">dim</span>, <span class="va">filename</span><span class="op">)</span></span>
-<span><span class="fu">new</span><span class="op">(</span><span class="va">HnswL2</span>, <span class="va">dim</span>, <span class="va">filename</span>, <span class="va">max_elements</span><span class="op">)</span></span></code></pre></div>
-<p>The first constructor creates a new index with <code>dim</code>
-dimensions and a maximum size of <code>max_elements</code> items.
-<code>M</code> and <code>ef_construction</code> determine the speed
-versus accuracy trade-off. The second form specifies the random seed;
-omitting <code>random_seed</code> uses hnswlib’s default of
-<code>100</code>.</p>
-<p>The filename constructors load a previously saved index with
-<code>dim</code> dimensions. The final form supplies a new maximum
-capacity. This is a way to increase the capacity of the index without a
-complete rebuild.</p>
+<span><span class="va">ann</span> <span class="op">&lt;-</span> <span class="fu">new</span><span class="op">(</span><span class="va">HnswL2</span>, <span class="va">dimension</span>, <span class="va">capacity</span>, <span class="va">M</span>, <span class="va">ef_construction</span>, <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="va">ann</span><span class="op">$</span><span class="fu">addItems</span><span class="op">(</span><span class="va">items</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, <span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<p>For help choosing <code>M</code>, construction <code>ef</code>, and
+the seed, see the <a href="parameters-metrics-data-layout.html">parameter guide</a>.</p>
 </div>
 <div class="section level2">
-<h2 id="method-lookup">Method lookup<a class="anchor" aria-label="anchor" href="#method-lookup"></a>
+<h2 id="add-and-retrieve-items">Add and retrieve items<a class="anchor" aria-label="anchor" href="#add-and-retrieve-items"></a>
 </h2>
 <table class="table">
 <colgroup>
@@ -129,216 +120,158 @@ complete rebuild.</p>
 <col width="50%">
 </colgroup>
 <thead><tr class="header">
-<th>Category</th>
-<th>Methods</th>
+<th>Method</th>
+<th>Input or result</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>Add and retrieve items</td>
-<td>
-<code>addItem()</code>, <code>addItems()</code>,
-<code>addItemsCol()</code>, <code>getItems()</code>
-</td>
+<td><code>addItem(v)</code></td>
+<td>Add one vector.</td>
 </tr>
 <tr class="even">
-<td>Search</td>
-<td>
-<code>getNNs()</code>, <code>getNNsList()</code>,
-<code>getAllNNs()</code>, <code>getAllNNsList()</code>,
-<code>getAllNNsCol()</code>, <code>getAllNNsListCol()</code>
-</td>
+<td><code>addItems(m)</code></td>
+<td>Add each row of a matrix.</td>
 </tr>
 <tr class="odd">
-<td>Search and parallel settings</td>
-<td>
-<code>setEf()</code>, <code>setNumThreads()</code>,
-<code>setGrainSize()</code>
-</td>
+<td><code>addItemsCol(m)</code></td>
+<td>Add each column of a matrix.</td>
 </tr>
 <tr class="even">
-<td>Index lifecycle</td>
-<td>
-<code>size()</code>, <code>markDeleted()</code>,
-<code>resizeIndex()</code>, <code>ann$save()</code>
-</td>
+<td><code>getItems(ids)</code></td>
+<td>Return one row per requested label, in the order supplied.</td>
 </tr>
 </tbody>
 </table>
-<div class="section level3">
-<h3 id="add-and-retrieve-items">Add and retrieve items<a class="anchor" aria-label="anchor" href="#add-and-retrieve-items"></a>
-</h3>
-<ul>
-<li>
-<code>addItem(v)</code> adds vector <code>v</code> to the
-index.</li>
-<li>
-<code>addItems(m)</code> adds the row vectors of the matrix
-<code>m</code> to the index. The number of threads specified by
-<code>setNumThreads()</code> is used for building the index.</li>
-<li>
-<code>addItemsCol(m)</code> is like <code>addItems()</code> but adds
-the <em>column</em> vectors of <code>m</code> to the index. Storing data
-column-wise makes copying the data for use by hnsw more efficient.</li>
-<li>
-<code>getItems(ids)</code> returns a matrix where each row is the
-data vector from the index associated with integer indices in the vector
-of <code>ids</code>. For cosine similarity, the L2 row-normalized
-vectors are returned.</li>
-</ul>
-<p>Internally, each item gets an increasing integer label, with the
-first item added getting the label <code>1</code>, the second
-<code>2</code> and so on. These labels are returned in search results to
-identify which vectors in the index are neighbors.
-<code>getItems()</code> identifiers are also one-indexed: to get the
-first and tenth vectors added to the index, use
-<code>getItems(c(1, 10))</code>, not <code>getItems(c(0, 9))</code>.</p>
-</div>
-<div class="section level3">
-<h3 id="search">Search<a class="anchor" aria-label="anchor" href="#search"></a>
-</h3>
-<ul>
-<li>
-<code>getNNs(v, k)</code> returns a vector of the labels of the
-<code>k</code>-nearest neighbors of vector <code>v</code>.</li>
-<li>
-<code>getNNsList(v, k, include_distances)</code> returns a list
-containing a vector named <code>item</code> with the labels of the
-<code>k</code>-nearest neighbors of vector <code>v</code>. If
-<code>include_distances = TRUE</code>, it also returns a vector named
-<code>distance</code>.</li>
-<li>
-<code>getAllNNs(m, k)</code> returns a matrix of the labels of the
-<code>k</code>-nearest neighbors of each row vector in
-<code>m</code>.</li>
-<li>
-<code>getAllNNsList(m, k, include_distances)</code> returns a list
-containing a matrix named <code>item</code> with the labels of the
-<code>k</code>-nearest neighbors of each row vector in <code>m</code>.
-If <code>include_distances = TRUE</code>, it also returns a matrix named
-<code>distance</code>.</li>
-<li>
-<code>getAllNNsCol(m, k)</code> is like <code>getAllNNs()</code> but
-each item to be searched in <code>m</code> is stored by <em>column</em>,
-not row. The returned matrix is also stored column-wise: its dimensions
-are <code>k x n</code>, where <code>n</code> is the number of columns in
-<code>m</code>.</li>
-<li>
-<code>getAllNNsListCol(m, k, include_distances)</code> is like
-<code>getAllNNsList()</code> but each item to be searched in
-<code>m</code> is stored by <em>column</em>. The matrices in the
-returned list are also stored column-wise, with dimensions
-<code>k x n</code>.</li>
-</ul>
-<p>The number of threads specified by <code>setNumThreads()</code> is
-used by the batch search methods. <code>k</code> must be positive and
-cannot exceed the active (not deleted) item count. If <code>k</code>
-neighbors cannot be found, an error is thrown. This can also mean that
-<code>ef</code> or <code>M</code> have been set too small.</p>
-</div>
-<div class="section level3">
-<h3 id="search-and-parallel-settings">Search and parallel settings<a class="anchor" aria-label="anchor" href="#search-and-parallel-settings"></a>
-</h3>
-<ul>
-<li>
-<code>setEf(ef)</code> sets search parameter <code>ef</code>.</li>
-<li>
-<code>setNumThreads(num_threads)</code> uses at most this number of
-threads when adding items via <code>addItems()</code> or
-<code>addItemsCol()</code> and searching via the batch search methods.
-Zero and one both select serial execution.</li>
-<li>
-<code>setGrainSize(grain_size)</code> sets the minimum amount of
-work to do per thread. Zero is treated as one. If there is not enough
-work for all the threads to process <code>grain_size</code> items per
-thread, fewer threads will be used.</li>
-</ul>
-<p>Parallel construction may be nondeterministic even with a fixed
-<code>random_seed</code>. R’s <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> does not control
-hnswlib.</p>
-</div>
-<div class="section level3">
-<h3 id="index-lifecycle">Index lifecycle<a class="anchor" aria-label="anchor" href="#index-lifecycle"></a>
-</h3>
-<ul>
-<li>
-<code>size()</code> returns the total number of items added to the
-index, including deleted items. It can therefore be larger than the
-maximum valid <code>k</code> after deletion.</li>
-<li>
-<code>markDeleted(i)</code> marks the item with label <code>i</code>
-as deleted. The item will not be returned in further searches and
-<code>getItems()</code> will no longer return it. Deletion does not
-reduce memory use or reclaim capacity, and <code>size()</code> still
-includes it.</li>
-<li>
-<code>resizeIndex(max_elements)</code> changes the maximum capacity
-of the index.</li>
-<li>
-<code>ann$save(filename)</code> saves a raw index checkpoint to
-<code>filename</code>.</li>
-</ul>
-<p>Coordinates are stored as single-precision floats. The package
-rejects non-finite or out-of-range coordinates and cosine vectors with
-zero norm after conversion. If an exception escapes after insertion has
-begun, the index becomes unusable and must be discarded and rebuilt or
-reloaded.</p>
-</div>
+<p>Items get labels in the order you add them, starting at one. So
+<code>ann$getItems(c(1, 10))</code> retrieves the first and tenth items.
+If you’re using a cosine index, the returned vectors have been
+normalized to unit length.</p>
+<p>Coordinates are stored in single precision; see <a href="../reference/RcppHnsw-package.html#numeric-limits">numeric
+limits</a> for the accepted range.</p>
 </div>
 <div class="section level2">
-<h2 id="raw-index-checkpoints">Raw index checkpoints<a class="anchor" aria-label="anchor" href="#raw-index-checkpoints"></a>
+<h2 id="search">Search<a class="anchor" aria-label="anchor" href="#search"></a>
 </h2>
-<p><code>ann$save()</code> uses hnswlib’s raw checkpoint format.
-Compatibility depends on the hnswlib version and platform. Load with the
-exact original dimension and normally the same class. Same-width
-<code>HnswL2</code> and <code>HnswEuclidean</code> checkpoints support
-cross-loading. Use matching classes for cosine and inner-product
-checkpoints.</p>
-<p>Checkpoints assume RcppHNSW’s contiguous insertion-order labels.
-Loading restores deletion state but resets search <code>ef</code> to 10,
-so call <code>setEf()</code> before direct Module search if another
-value is required. An optional load capacity may enlarge the index, but
-cannot be smaller than the stored item count.</p>
+<p>Set search <code>ef</code> with <code>ann$setEf(ef)</code>. As with
+<code><a href="../reference/hnsw_search.html">hnsw_search()</a></code>, increasing it usually finds more of the true
+nearest neighbors, but takes longer. <code>k</code> must be positive and
+no greater than the number of undeleted items. If a search cannot find
+<code>k</code> neighbors, try increasing <code>ef</code>; a poorly
+connected index may need rebuilding with a larger <code>M</code>.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>Method</th>
+<th>Query layout</th>
+<th>Result</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>getNNs(v, k)</code></td>
+<td>One vector</td>
+<td>Vector of labels</td>
+</tr>
+<tr class="even">
+<td><code>getAllNNs(m, k)</code></td>
+<td>One item per row</td>
+<td>
+<code>n × k</code> matrix of labels</td>
+</tr>
+<tr class="odd">
+<td><code>getAllNNsCol(m, k)</code></td>
+<td>One item per column</td>
+<td>
+<code>k × n</code> matrix of labels</td>
+</tr>
+</tbody>
+</table>
+<p>The corresponding <code>getNNsList()</code>,
+<code>getAllNNsList()</code>, and <code>getAllNNsListCol()</code>
+methods take a third argument, <code>include_distances</code>. They
+return labels as <code>item</code> and, when that argument is
+<code>TRUE</code>, distances as <code>distance</code>, with the same
+shapes as above.</p>
+<p>For example, here’s how to get both labels and distances for the
+first five items:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ann</span><span class="op">$</span><span class="fu">setEf</span><span class="op">(</span><span class="fl">50</span><span class="op">)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="va">ann</span><span class="op">$</span><span class="fu">getAllNNsList</span><span class="op">(</span><span class="va">items</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="op">]</span>, <span class="fl">4</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">result</span><span class="op">$</span><span class="va">item</span></span></code></pre></div>
+<pre><code><span><span class="co">##      [,1] [,2] [,3] [,4]</span></span>
+<span><span class="co">## [1,]    1   18    5   29</span></span>
+<span><span class="co">## [2,]    2   13   46   35</span></span>
+<span><span class="co">## [3,]    3   48    4    7</span></span>
+<span><span class="co">## [4,]    4   48   30   31</span></span>
+<span><span class="co">## [5,]    5    1   38   18</span></span></code></pre>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">result</span><span class="op">$</span><span class="va">distance</span></span></code></pre></div>
+<pre><code><span><span class="co">##      [,1]       [,2]       [,3]       [,4]</span></span>
+<span><span class="co">## [1,]    0 0.01000000 0.01999996 0.01999996</span></span>
+<span><span class="co">## [2,]    0 0.01999998 0.01999998 0.01999998</span></span>
+<span><span class="co">## [3,]    0 0.01999998 0.06000003 0.07000001</span></span>
+<span><span class="co">## [4,]    0 0.02000003 0.03000002 0.05000012</span></span>
+<span><span class="co">## [5,]    0 0.01999996 0.01999998 0.02999996</span></span></code></pre>
+<p>Batch insertion and search use the settings from
+<code>setNumThreads(n_threads)</code> and
+<code>setGrainSize(grain_size)</code>. See <a href="parameters-metrics-data-layout.html#use-multiple-threads">threads
+and reproducibility</a>.</p>
 </div>
 <div class="section level2">
-<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+<h2 id="resize-and-delete">Resize and delete<a class="anchor" aria-label="anchor" href="#resize-and-delete"></a>
 </h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://jlmelville.github.io/rcpphnsw/">RcppHNSW</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="va">item_dim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span>
-<span><span class="va">M</span> <span class="op">&lt;-</span> <span class="fl">16</span></span>
-<span><span class="va">ef_construction</span> <span class="op">&lt;-</span> <span class="fl">200</span></span>
-<span></span>
-<span><span class="va">ann</span> <span class="op">&lt;-</span> <span class="fu">new</span><span class="op">(</span><span class="va">HnswL2</span>, <span class="va">item_dim</span>, <span class="fl">100</span>, <span class="va">M</span>, <span class="va">ef_construction</span>, <span class="fl">100</span><span class="op">)</span></span>
-<span><span class="va">ann</span><span class="op">$</span><span class="fu">setNumThreads</span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="va">ann</span><span class="op">$</span><span class="fu">setGrainSize</span><span class="op">(</span><span class="fl">10</span><span class="op">)</span></span>
-<span><span class="va">ann</span><span class="op">$</span><span class="fu">addItems</span><span class="op">(</span><span class="va">data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, <span class="op">]</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">ann</span><span class="op">$</span><span class="fu">resizeIndex</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">ann</span><span class="op">$</span><span class="fu">addItems</span><span class="op">(</span><span class="va">data</span><span class="op">[</span><span class="fl">101</span><span class="op">:</span><span class="fl">150</span>, <span class="op">]</span><span class="op">)</span></span>
+<p>We’ve filled the 100 spaces we asked for, but there are another 50
+items in <code>iris</code>. To add those, we first need to make room
+with <code>resizeIndex(capacity)</code>. The new capacity must be at
+least one and at least <code>size()</code>, which includes deleted
+items.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ann</span><span class="op">$</span><span class="fu">resizeIndex</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">ann</span><span class="op">$</span><span class="fu">addItems</span><span class="op">(</span><span class="va">items</span><span class="op">[</span><span class="fl">101</span><span class="op">:</span><span class="fl">150</span>, <span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">ann</span><span class="op">$</span><span class="fu">size</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 150</span></span></code></pre>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="va">ann</span><span class="op">$</span><span class="fu">getAllNNsList</span><span class="op">(</span><span class="va">data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="op">]</span>, <span class="fl">4</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">item</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 5 4</span></span></code></pre>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">distance</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 5 4</span></span></code></pre>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<p><code>markDeleted(label)</code> hides an item from search and
+<code>getItems()</code>. The “mark” part of the name is doing some work
+here: the item still occupies space in the index. Deleting it doesn’t
+free memory or capacity, and <code>size()</code> still counts it:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ann</span><span class="op">$</span><span class="fu">markDeleted</span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">ann</span><span class="op">$</span><span class="fu">size</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 150</span></span></code></pre>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<p>If an insertion fails after it starts modifying the index, or a
+native resize fails, discard the index and rebuild or reload it. Invalid
+inputs rejected before modification leave the index usable.</p>
+</div>
+<div class="section level2">
+<h2 id="save-and-load-an-index">Save and load an index<a class="anchor" aria-label="anchor" href="#save-and-load-an-index"></a>
+</h2>
+<p>Once you have an index you’re happy with,
+<code>ann$save(filename)</code> saves the graph, its items, capacity,
+and deletion state. Let’s save ours and load it into a new object:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".hnsw"</span><span class="op">)</span></span>
 <span><span class="va">ann</span><span class="op">$</span><span class="fu">save</span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span>
-<span><span class="va">loaded</span> <span class="op">&lt;-</span> <span class="fu">new</span><span class="op">(</span><span class="va">HnswL2</span>, <span class="va">item_dim</span>, <span class="va">path</span><span class="op">)</span></span>
+<span><span class="va">loaded</span> <span class="op">&lt;-</span> <span class="fu">new</span><span class="op">(</span><span class="va">HnswL2</span>, <span class="va">dimension</span>, <span class="va">path</span><span class="op">)</span></span>
 <span><span class="va">loaded</span><span class="op">$</span><span class="fu">setEf</span><span class="op">(</span><span class="fl">50</span><span class="op">)</span></span>
 <span><span class="va">loaded</span><span class="op">$</span><span class="fu">size</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 150</span></span></code></pre>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span></code></pre></div>
+<p>Use the original dimension and distance class when loading.
+<code>HnswL2</code> and <code>HnswEuclidean</code> can also load each
+other’s checkpoints. Search <code>ef</code> isn’t saved: loading resets
+it to 10, which is why we set it again above.</p>
+<p>To change capacity while loading, use
+<code>new(HnswL2, dimension, path, capacity)</code>. Omitting capacity
+restores the saved value. An explicit positive capacity takes effect
+when it is at least the stored item count; smaller values fall back to
+the saved capacity.</p>
+<p>These files use hnswlib’s raw format, and compatibility depends on
+the hnswlib version and platform. Keep the original data too, in case
+you need to rebuild the index elsewhere.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

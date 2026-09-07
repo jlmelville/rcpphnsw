@@ -60,202 +60,175 @@
 
     
     
+<p>The defaults are a reasonable place to start, but you may want to
+trade a little more search time for better neighbors. This article goes
+through the parameters involved, then looks at distances, data layout,
+and getting repeatable results.</p>
 <div class="section level2">
-<h2 id="distance">Distance<a class="anchor" aria-label="anchor" href="#distance"></a>
+<h2 id="tune-speed-and-recall">Tune speed and recall<a class="anchor" aria-label="anchor" href="#tune-speed-and-recall"></a>
 </h2>
+<p>The first parameter to try is search <code>ef</code>: increasing it
+lets the search explore more candidates, which usually means finding
+more of the true nearest neighbors. The price is a slower search. To see
+whether the extra time is buying you anything, compare the results with
+an exact search on a sample of your data. The fraction of true nearest
+neighbors found is called <em>recall</em>.</p>
+<p>You can change search <code>ef</code> without rebuilding the index,
+which makes it a convenient place to experiment. If that isn’t enough,
+try rebuilding with a larger construction <code>ef</code> or
+<code>M</code>. Construction <code>ef</code> controls how thoroughly the
+graph is built. <code>M</code> controls how many connections each item
+has in the graph; increasing it also uses more memory.</p>
+<p>There are two different parameters called <code>ef</code>, which is a
+bit unfortunate. In <code><a href="../reference/hnsw_build.html">hnsw_build()</a></code> it controls construction;
+in <code><a href="../reference/hnsw_search.html">hnsw_search()</a></code> it controls search.
+<code><a href="../reference/hnsw_knn.html">hnsw_knn()</a></code> does both jobs, so it calls the construction
+parameter <code>ef_construction</code>. Here are the names and defaults
+together:</p>
 <table class="table">
-<colgroup>
-<col width="50%">
-<col width="50%">
-</colgroup>
 <thead><tr class="header">
-<th><code>distance</code></th>
-<th>Distance calculated</th>
+<th>Function</th>
+<th>Construction controls</th>
+<th>Search control</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td><code>"l2"</code></td>
-<td>Squared L2, i.e. squared Euclidean.</td>
+<td><code><a href="../reference/hnsw_knn.html">hnsw_knn()</a></code></td>
+<td>
+<code>M = 16</code>, <code>ef_construction = 200</code>
+</td>
+<td><code>ef = 10</code></td>
 </tr>
 <tr class="even">
-<td><code>"euclidean"</code></td>
-<td>Euclidean.</td>
+<td><code><a href="../reference/hnsw_build.html">hnsw_build()</a></code></td>
+<td>
+<code>M = 16</code>, <code>ef = 200</code>
+</td>
+<td>—</td>
 </tr>
 <tr class="odd">
-<td><code>"cosine"</code></td>
-<td>One minus cosine similarity.</td>
-</tr>
-<tr class="even">
-<td><code>"ip"</code></td>
-<td>One minus inner product: <code>1 - sum(a * b)</code>. Values can be
-negative and need not satisfy metric properties.</td>
+<td><code><a href="../reference/hnsw_search.html">hnsw_search()</a></code></td>
+<td>—</td>
+<td><code>ef = 10</code></td>
 </tr>
 </tbody>
 </table>
-<p>Coordinates are stored as single-precision floats. The package
-rejects non-finite or out-of-range coordinates and cosine vectors with
-zero norm after conversion.</p>
+<p>Search uses at least <code>k</code> candidates, even when
+<code>ef &lt; k</code>. Neither construction nor search <code>ef</code>
+is capped at the dataset size.</p>
+<p>Let’s build an index from the first 100 items in <code>iris</code>,
+then use a larger search <code>ef</code> to query it with the remaining
+50:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://jlmelville.github.io/rcpphnsw/">RcppHNSW</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">irism</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">ann</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hnsw_build.html">hnsw_build</a></span><span class="op">(</span><span class="va">irism</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, <span class="op">]</span>, M <span class="op">=</span> <span class="fl">16</span>, ef <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
+<span><span class="va">neighbors</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hnsw_search.html">hnsw_search</a></span><span class="op">(</span><span class="va">irism</span><span class="op">[</span><span class="fl">101</span><span class="op">:</span><span class="fl">150</span>, <span class="op">]</span>, <span class="va">ann</span>, k <span class="op">=</span> <span class="fl">5</span>, ef <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">neighbors</span><span class="op">$</span><span class="va">idx</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] 50  5</span></span></code></pre>
+<p>Each of the 50 query rows gets five neighbors. The returned indices
+refer to the first 100 rows, because those are the items we put in the
+index.</p>
 </div>
 <div class="section level2">
-<h2 id="data-layout-and-result-shape">Data layout and result shape<a class="anchor" aria-label="anchor" href="#data-layout-and-result-shape"></a>
+<h2 id="choose-a-distance">Choose a distance<a class="anchor" aria-label="anchor" href="#choose-a-distance"></a>
 </h2>
-<p>If <code>byrow = TRUE</code> (the default), the items to be processed
-in <code>X</code> are stored in each row of <code>X</code>. Otherwise,
-the items are stored in the columns of <code>X</code>. Storing items in
-each column reduces the overhead of copying data to a form that can be
-used by the <code>hnsw</code> library.</p>
-<p>The dimensions of the matrices respect the storage (row or
-column-based) of <code>X</code> as indicated by the <code>byrow</code>
-parameter.</p>
 <table class="table">
-<colgroup>
-<col width="25%">
-<col width="25%">
-<col width="25%">
-<col width="25%">
-</colgroup>
+<thead><tr class="header">
+<th><code>distance</code></th>
+<th>Calculation</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>
+<code>"euclidean"</code> (default)</td>
+<td>Euclidean distance</td>
+</tr>
+<tr class="even">
+<td><code>"l2"</code></td>
+<td>Squared Euclidean distance</td>
+</tr>
+<tr class="odd">
+<td><code>"cosine"</code></td>
+<td>One minus cosine similarity</td>
+</tr>
+<tr class="even">
+<td><code>"ip"</code></td>
+<td>One minus inner product: <code>1 - sum(a * b)</code>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Cosine distance compares directions, so vectors are normalized to
+unit length before indexing or searching. Inner-product distance also
+takes magnitude into account. Despite the name, it can be negative, and
+an item need not be its own nearest neighbor. That last point matters if
+you’re expecting to remove self-matches by dropping the first neighbor.
+With any of these distances, approximate search can miss a self-match
+too.</p>
+<p>Coordinates are stored in single precision. For very large values or
+zero cosine vectors, see the <a href="../reference/RcppHnsw-package.html#numeric-limits">numeric
+limits</a>.</p>
+</div>
+<div class="section level2">
+<h2 id="store-items-by-row-or-column">Store items by row or column<a class="anchor" aria-label="anchor" href="#store-items-by-row-or-column"></a>
+</h2>
+<p>By default, each row of <code>X</code> is an item, as is usual for
+data in R. R stores matrices by column, though, so putting each item in
+a column can reduce copying overhead for high-dimensional vectors. If
+your data is arranged that way, use <code>byrow = FALSE</code>. The
+results follow the query orientation:</p>
+<table class="table">
 <thead><tr class="header">
 <th><code>byrow</code></th>
 <th>Items in <code>X</code>
 </th>
-<th>Items in <code>idx</code> and <code>dist</code>
+<th>Dimensions of <code>idx</code> and <code>dist</code>
 </th>
-<th>Result dimensions</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
 <td><code>TRUE</code></td>
 <td>Rows</td>
-<td>Rows</td>
-<td><code>n x k</code></td>
+<td><code>n × k</code></td>
 </tr>
 <tr class="even">
 <td><code>FALSE</code></td>
 <td>Columns</td>
-<td>Columns</td>
-<td><code>k x n</code></td>
+<td><code>k × n</code></td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section level2">
-<h2 id="construction-and-search-parameters">Construction and search parameters<a class="anchor" aria-label="anchor" href="#construction-and-search-parameters"></a>
-</h2>
-<p>Some details on the parameters used for index construction and
-search, based on the <a href="https://github.com/nmslib/hnswlib/blob/master/ALGO_PARAMS.md" class="external-link">hnswlib
-algorithm parameters</a>:</p>
-<table class="table">
-<colgroup>
-<col width="50%">
-<col width="50%">
-</colgroup>
-<thead><tr class="header">
-<th>Parameter</th>
-<th>Used by</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>M</code></td>
-<td>Index construction in <code><a href="../reference/hnsw_knn.html">hnsw_knn()</a></code> and
-<code><a href="../reference/hnsw_build.html">hnsw_build()</a></code>.</td>
-</tr>
-<tr class="even">
-<td><code>ef_construction</code></td>
-<td>Index construction in <code><a href="../reference/hnsw_knn.html">hnsw_knn()</a></code>.</td>
-</tr>
-<tr class="odd">
-<td><code>ef</code></td>
-<td>Index construction in <code><a href="../reference/hnsw_build.html">hnsw_build()</a></code> and search in
-<code><a href="../reference/hnsw_knn.html">hnsw_knn()</a></code> and <code><a href="../reference/hnsw_search.html">hnsw_search()</a></code>.</td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li>
-<code>M</code> Controls the number of bi-directional links created
-for each element during index construction. Higher values lead to better
-results at the expense of memory consumption, which is around
-<code>M * 8-10</code> bytes per stored element. High intrinsic
-dimensionalities will require higher values of <code>M</code>. A range
-of <code>2 - 100</code> is typical, but <code>12 - 48</code> is ok for
-most use cases.</li>
-<li>
-<code>ef_construction</code> Size of the dynamic list used during
-construction. A larger value means a better quality index, but increases
-build time. It must be a positive whole number, but is not bounded by
-the size of the dataset. A typical range is <code>100 - 2000</code>.
-Beyond a certain point, increasing <code>ef_construction</code> has no
-effect. A sufficient value of <code>ef_construction</code> can be
-determined by searching with <code>ef = ef_construction</code>, and
-ensuring that the recall is at least 0.9.</li>
-<li>
-<code>ef</code> Size of the dynamic list used during index search.
-Can differ from <code>ef_construction</code>. The effective value is at
-least <code>k</code>, and it is not bounded by the number of elements in
-the index.</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="threads-and-grain-size">Threads and grain size<a class="anchor" aria-label="anchor" href="#threads-and-grain-size"></a>
-</h2>
-<p><code>n_threads</code> Maximum number of threads to use. Zero and one
-both select serial execution. For larger values, the exact number is
-determined by <code>grain_size</code> and the amount of work.</p>
-<p><code>grain_size</code> Minimum number of items in <code>X</code> to
-add or search per thread. Zero is treated as one. If the number of items
-in <code>X</code> isn’t sufficient, then fewer than
-<code>n_threads</code> will be used. This is useful in cases where the
-overhead of context switching with too many threads outweighs the gains
-due to parallelism.</p>
-</div>
-<div class="section level2">
-<h2 id="random-seed-reproducibility-and-approximation">Random seed, reproducibility, and approximation<a class="anchor" aria-label="anchor" href="#random-seed-reproducibility-and-approximation"></a>
-</h2>
-<p><code>random_seed</code> Seed passed to hnswlib for index
-construction. The default, <code>100</code>, is the underlying hnswlib
-default. This seed belongs to hnswlib: calling <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code>
-does not affect index construction.</p>
-<p>Parallel index construction may be nondeterministic even for a fixed
-<code>random_seed</code>. Use serial construction for repeatable
-reconstruction. Save the constructed index to reuse the exact graph.</p>
-<p>HNSW search is approximate. For L2, Euclidean, and cosine distance,
-an item queried against its source data has distance zero from itself,
-but it can be omitted when recall is insufficient. Under inner-product
-distance, an item need not be its own nearest neighbor.</p>
-</div>
-<div class="section level2">
-<h2 id="function-example">Function example<a class="anchor" aria-label="anchor" href="#function-example"></a>
-</h2>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">irism</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="op">-</span><span class="fl">5</span><span class="op">]</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># function interface returns results for all rows in n x k matrices</span></span>
-<span><span class="va">all_knn</span> <span class="op">&lt;-</span> <span class="fu">RcppHNSW</span><span class="fu">::</span><span class="fu"><a href="../reference/hnsw_knn.html">hnsw_knn</a></span><span class="op">(</span><span class="va">irism</span>, k <span class="op">=</span> <span class="fl">4</span>, distance <span class="op">=</span> <span class="st">"l2"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">all_knn</span><span class="op">$</span><span class="va">idx</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 150   4</span></span></code></pre>
+<p>Here <code>n</code> is the number of queries and <code>k</code> is
+the number of neighbors per query. For example, we can transpose our
+<code>iris</code> matrix and get four neighbors per item, now in
+columns:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># other distance options: "euclidean", "cosine" and "ip" (inner product distance)</span></span>
-<span></span>
-<span><span class="co"># for high-dimensional data you may see a speed-up if you store the data</span></span>
-<span><span class="co"># where each *column* is an item to be indexed and searched. Set byrow = FALSE</span></span>
-<span><span class="co"># for this.</span></span>
-<span><span class="co"># Admittedly, the iris dataset is *not* high-dimensional</span></span>
-<span><span class="va">iris_by_col</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">irism</span><span class="op">)</span></span>
-<span><span class="va">all_knn_by_col</span> <span class="op">&lt;-</span> <span class="fu">RcppHNSW</span><span class="fu">::</span><span class="fu"><a href="../reference/hnsw_knn.html">hnsw_knn</a></span><span class="op">(</span></span>
-<span>  <span class="va">iris_by_col</span>,</span>
-<span>  k <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>  distance <span class="op">=</span> <span class="st">"l2"</span>,</span>
-<span>  byrow <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">all_knn_by_col</span><span class="op">$</span><span class="va">idx</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">iris_by_col</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">irism</span><span class="op">)</span></span>
+<span><span class="va">neighbors_by_col</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hnsw_knn.html">hnsw_knn</a></span><span class="op">(</span><span class="va">iris_by_col</span>, k <span class="op">=</span> <span class="fl">4</span>, byrow <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">neighbors_by_col</span><span class="op">$</span><span class="va">idx</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1]   4 150</span></span></code></pre>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># process can be split into two steps, so you can build with one set of data</span></span>
-<span><span class="co"># and search with another</span></span>
-<span><span class="va">ann</span> <span class="op">&lt;-</span> <span class="fu">RcppHNSW</span><span class="fu">::</span><span class="fu"><a href="../reference/hnsw_build.html">hnsw_build</a></span><span class="op">(</span><span class="va">irism</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, <span class="op">]</span><span class="op">)</span></span>
-<span><span class="va">iris_nn</span> <span class="op">&lt;-</span> <span class="fu">RcppHNSW</span><span class="fu">::</span><span class="fu"><a href="../reference/hnsw_search.html">hnsw_search</a></span><span class="op">(</span><span class="va">irism</span><span class="op">[</span><span class="fl">101</span><span class="op">:</span><span class="fl">150</span>, <span class="op">]</span>, <span class="va">ann</span>, k <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">iris_nn</span><span class="op">$</span><span class="va">idx</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 50  5</span></span></code></pre>
+</div>
+<div class="section level2">
+<h2 id="use-multiple-threads">Use multiple threads<a class="anchor" aria-label="anchor" href="#use-multiple-threads"></a>
+</h2>
+<p>Set <code>n_threads</code> to the maximum number of threads to use
+for batch insertion or search. The default is zero, which runs serially,
+as does one. <code>grain_size</code> sets the minimum number of items
+per thread. For small batches, a larger grain size avoids spending time
+starting threads that have very little to do. A grain size of zero is
+treated as one.</p>
+</div>
+<div class="section level2">
+<h2 id="reproduce-an-index">Reproduce an index<a class="anchor" aria-label="anchor" href="#reproduce-an-index"></a>
+</h2>
+<p>For repeatable builds, keep <code>random_seed</code> fixed and use
+serial construction. R’s <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> won’t help here:
+hnswlib has its own random number generator. A fixed seed also doesn’t
+fix the order in which parallel threads insert items, so parallel builds
+can give different results. To reuse an existing graph, <a href="module-api-index-lifecycle.html#save-and-load-an-index">save the
+index</a>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

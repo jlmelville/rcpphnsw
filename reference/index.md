@@ -3,11 +3,11 @@
 ## High-level interface
 
 - [`hnsw_knn()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_knn.md)
-  : Find Nearest Neighbors and Distances
+  : Find approximate nearest neighbors
 - [`hnsw_build()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.md)
-  : Build an hnswlib nearest neighbor index
+  : Build a nearest neighbor index
 - [`hnsw_search()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.md)
-  : Search an hnswlib nearest neighbor index
+  : Search a nearest neighbor index
 
 ## Package and Module classes
 
@@ -22,5 +22,4 @@
   [`HnswEuclidean`](https://jlmelville.github.io/rcpphnsw/reference/RcppHnsw-package.md)
   [`Rcpp_HnswEuclidean-class`](https://jlmelville.github.io/rcpphnsw/reference/RcppHnsw-package.md)
   [`RcppHNSW-package`](https://jlmelville.github.io/rcpphnsw/reference/RcppHnsw-package.md)
-  : Rcpp bindings for the hnswlib C++ library for approximate nearest
-  neighbors.
+  : Approximate nearest neighbor search with hnswlib

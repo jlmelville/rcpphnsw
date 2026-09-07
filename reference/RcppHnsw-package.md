@@ -1,47 +1,56 @@
-# Rcpp bindings for the hnswlib C++ library for approximate nearest neighbors.
+# Approximate nearest neighbor search with hnswlib
 
-hnswlib is a library implementing the Hierarchical Navigable Small World
-method for approximate nearest neighbor search.
-
-## Details
-
-Details about hnswlib are available at the reference listed below.
-
-## Data and index contract
-
-RcppHNSW stores coordinates as single-precision floating-point values.
-The package rejects non-finite or out-of-range coordinates and cosine
-vectors with zero norm after conversion.
-
-Module indexes assign one-based labels in insertion order. `size()`
-reports the total number of items added, including items marked deleted.
-Deleted items remain allocated, are excluded from search, and cannot be
-returned by `getItems()`. Consequently, `k` must be positive and no
-larger than the active count: total items minus deleted items. If an
-exception escapes after insertion has begun, the index fails closed and
-must be discarded and rebuilt or reloaded.
-
-A thread setting of zero or one uses serial execution; zero grain size
-is an alias for one. Parallel construction may be nondeterministic even
-with a fixed hnswlib seed. R's
-[`set.seed()`](https://rdrr.io/r/base/Random.html) does not control
-hnswlib.
-
-## Raw index checkpoints
-
-The Module [`save()`](https://rdrr.io/r/base/save.html) method and
-filename constructors use hnswlib's raw index format. Compatibility
-depends on the hnswlib version and platform. Load with the exact
-original dimension and normally the same distance class. Same-width L2
-and Euclidean checkpoints support cross-loading. Use matching classes
-for cosine and inner-product checkpoints.
-
-Raw checkpoints assume the contiguous labels created by RcppHNSW.
-Loading restores deletion state but resets search `ef` to hnswlib's
-default of 10; call `setEf()` or
+RcppHNSW provides an R interface to hierarchical navigable small-world
+graphs. Use
+[`hnsw_knn()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_knn.md)
+for neighbors within one dataset, or
+[`hnsw_build()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.md)
+and
 [`hnsw_search()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.md)
-to select another value. An optional load capacity may enlarge the
-index, but cannot be smaller than the stored item count.
+to query new data against an existing index.
+
+## Module classes
+
+`HnswEuclidean`, `HnswL2`, `HnswCosine`, and `HnswIp` provide direct
+access to insertion, search, deletion, resizing, and saved indexes. They
+use Euclidean distance, squared Euclidean distance, one minus cosine
+similarity, and one minus inner product, respectively. An index returned
+by
+[`hnsw_build()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.md)
+is one of these objects, so you can use its methods directly too. See
+the [Module
+guide](https://jlmelville.github.io/rcpphnsw/articles/module-api-index-lifecycle.html)
+for constructors and methods.
+
+Labels start at one and follow insertion order. Deleted items are
+excluded from search and retrieval but still count towards `size()` and
+capacity. If insertion fails after modifying the index, or a native
+resize fails, discard the index and rebuild or reload it.
+
+## Numeric limits
+
+Coordinates are stored as single-precision floats and must be finite and
+representable in that format. Cosine vectors are normalized to unit
+length and must have a nonzero norm after conversion.
+
+To prevent distance overflow, each vector's sum of absolute coordinates
+is limited to approximately `4.6e18`, after conversion and cosine
+normalization. Loaded checkpoints must meet the same limit, including
+deleted items.
+
+## Saved indexes
+
+`ann$save()` writes hnswlib's raw checkpoint format, whose compatibility
+depends on the hnswlib version and platform. Load with the original
+dimension and distance class. You can also load an `HnswL2` checkpoint
+into `HnswEuclidean`, or vice versa.
+
+Loading restores items, deletion state, and capacity, but resets search
+`ef` to 10. Set `ef` again with `setEf()` or
+[`hnsw_search()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.md).
+An optional positive load capacity overrides the saved value when it is
+at least the stored item count; smaller values retain the saved
+capacity.
 
 ## References
 

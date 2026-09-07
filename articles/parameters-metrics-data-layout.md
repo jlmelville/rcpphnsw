@@ -1,130 +1,124 @@
 # Parameters, metrics, and data layout
 
-## Distance
+The defaults are a reasonable place to start, but you may want to trade
+a little more search time for better neighbors. This article goes
+through the parameters involved, then looks at distances, data layout,
+and getting repeatable results.
 
-| `distance` | Distance calculated |
-|----|----|
-| `"l2"` | Squared L2, i.e. squared Euclidean. |
-| `"euclidean"` | Euclidean. |
-| `"cosine"` | One minus cosine similarity. |
-| `"ip"` | One minus inner product: `1 - sum(a * b)`. Values can be negative and need not satisfy metric properties. |
+## Tune speed and recall
 
-Coordinates are stored as single-precision floats. The package rejects
-non-finite or out-of-range coordinates and cosine vectors with zero norm
-after conversion.
+The first parameter to try is search `ef`: increasing it lets the search
+explore more candidates, which usually means finding more of the true
+nearest neighbors. The price is a slower search. To see whether the
+extra time is buying you anything, compare the results with an exact
+search on a sample of your data. The fraction of true nearest neighbors
+found is called *recall*.
 
-## Data layout and result shape
+You can change search `ef` without rebuilding the index, which makes it
+a convenient place to experiment. If that isn’t enough, try rebuilding
+with a larger construction `ef` or `M`. Construction `ef` controls how
+thoroughly the graph is built. `M` controls how many connections each
+item has in the graph; increasing it also uses more memory.
 
-If `byrow = TRUE` (the default), the items to be processed in `X` are
-stored in each row of `X`. Otherwise, the items are stored in the
-columns of `X`. Storing items in each column reduces the overhead of
-copying data to a form that can be used by the `hnsw` library.
+There are two different parameters called `ef`, which is a bit
+unfortunate. In
+[`hnsw_build()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.md)
+it controls construction; in
+[`hnsw_search()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.md)
+it controls search.
+[`hnsw_knn()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_knn.md)
+does both jobs, so it calls the construction parameter
+`ef_construction`. Here are the names and defaults together:
 
-The dimensions of the matrices respect the storage (row or column-based)
-of `X` as indicated by the `byrow` parameter.
+| Function | Construction controls | Search control |
+|----|----|----|
+| [`hnsw_knn()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_knn.md) | `M = 16`, `ef_construction = 200` | `ef = 10` |
+| [`hnsw_build()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.md) | `M = 16`, `ef = 200` | — |
+| [`hnsw_search()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.md) | — | `ef = 10` |
 
-| `byrow` | Items in `X` | Items in `idx` and `dist` | Result dimensions |
-|---------|--------------|---------------------------|-------------------|
-| `TRUE`  | Rows         | Rows                      | `n x k`           |
-| `FALSE` | Columns      | Columns                   | `k x n`           |
+Search uses at least `k` candidates, even when `ef < k`. Neither
+construction nor search `ef` is capped at the dataset size.
 
-## Construction and search parameters
-
-Some details on the parameters used for index construction and search,
-based on the [hnswlib algorithm
-parameters](https://github.com/nmslib/hnswlib/blob/master/ALGO_PARAMS.md):
-
-| Parameter | Used by |
-|----|----|
-| `M` | Index construction in [`hnsw_knn()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_knn.md) and [`hnsw_build()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.md). |
-| `ef_construction` | Index construction in [`hnsw_knn()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_knn.md). |
-| `ef` | Index construction in [`hnsw_build()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_build.md) and search in [`hnsw_knn()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_knn.md) and [`hnsw_search()`](https://jlmelville.github.io/rcpphnsw/reference/hnsw_search.md). |
-
-- `M` Controls the number of bi-directional links created for each
-  element during index construction. Higher values lead to better
-  results at the expense of memory consumption, which is around
-  `M * 8-10` bytes per stored element. High intrinsic dimensionalities
-  will require higher values of `M`. A range of `2 - 100` is typical,
-  but `12 - 48` is ok for most use cases.
-- `ef_construction` Size of the dynamic list used during construction. A
-  larger value means a better quality index, but increases build time.
-  It must be a positive whole number, but is not bounded by the size of
-  the dataset. A typical range is `100 - 2000`. Beyond a certain point,
-  increasing `ef_construction` has no effect. A sufficient value of
-  `ef_construction` can be determined by searching with
-  `ef = ef_construction`, and ensuring that the recall is at least 0.9.
-- `ef` Size of the dynamic list used during index search. Can differ
-  from `ef_construction`. The effective value is at least `k`, and it is
-  not bounded by the number of elements in the index.
-
-## Threads and grain size
-
-`n_threads` Maximum number of threads to use. Zero and one both select
-serial execution. For larger values, the exact number is determined by
-`grain_size` and the amount of work.
-
-`grain_size` Minimum number of items in `X` to add or search per thread.
-Zero is treated as one. If the number of items in `X` isn’t sufficient,
-then fewer than `n_threads` will be used. This is useful in cases where
-the overhead of context switching with too many threads outweighs the
-gains due to parallelism.
-
-## Random seed, reproducibility, and approximation
-
-`random_seed` Seed passed to hnswlib for index construction. The
-default, `100`, is the underlying hnswlib default. This seed belongs to
-hnswlib: calling [`set.seed()`](https://rdrr.io/r/base/Random.html) does
-not affect index construction.
-
-Parallel index construction may be nondeterministic even for a fixed
-`random_seed`. Use serial construction for repeatable reconstruction.
-Save the constructed index to reuse the exact graph.
-
-HNSW search is approximate. For L2, Euclidean, and cosine distance, an
-item queried against its source data has distance zero from itself, but
-it can be omitted when recall is insufficient. Under inner-product
-distance, an item need not be its own nearest neighbor.
-
-## Function example
+Let’s build an index from the first 100 items in `iris`, then use a
+larger search `ef` to query it with the remaining 50:
 
 ``` r
+
+library(RcppHNSW)
 
 irism <- as.matrix(iris[, -5])
-
-# function interface returns results for all rows in n x k matrices
-all_knn <- RcppHNSW::hnsw_knn(irism, k = 4, distance = "l2")
-dim(all_knn$idx)
+ann <- hnsw_build(irism[1:100, ], M = 16, ef = 200)
+neighbors <- hnsw_search(irism[101:150, ], ann, k = 5, ef = 50)
+dim(neighbors$idx)
 ```
 
-    ## [1] 150   4
+    ## [1] 50  5
+
+Each of the 50 query rows gets five neighbors. The returned indices
+refer to the first 100 rows, because those are the items we put in the
+index.
+
+## Choose a distance
+
+| `distance`              | Calculation                               |
+|-------------------------|-------------------------------------------|
+| `"euclidean"` (default) | Euclidean distance                        |
+| `"l2"`                  | Squared Euclidean distance                |
+| `"cosine"`              | One minus cosine similarity               |
+| `"ip"`                  | One minus inner product: `1 - sum(a * b)` |
+
+Cosine distance compares directions, so vectors are normalized to unit
+length before indexing or searching. Inner-product distance also takes
+magnitude into account. Despite the name, it can be negative, and an
+item need not be its own nearest neighbor. That last point matters if
+you’re expecting to remove self-matches by dropping the first neighbor.
+With any of these distances, approximate search can miss a self-match
+too.
+
+Coordinates are stored in single precision. For very large values or
+zero cosine vectors, see the [numeric
+limits](https://jlmelville.github.io/rcpphnsw/reference/RcppHnsw-package.html#numeric-limits).
+
+## Store items by row or column
+
+By default, each row of `X` is an item, as is usual for data in R. R
+stores matrices by column, though, so putting each item in a column can
+reduce copying overhead for high-dimensional vectors. If your data is
+arranged that way, use `byrow = FALSE`. The results follow the query
+orientation:
+
+| `byrow` | Items in `X` | Dimensions of `idx` and `dist` |
+|---------|--------------|--------------------------------|
+| `TRUE`  | Rows         | `n × k`                        |
+| `FALSE` | Columns      | `k × n`                        |
+
+Here `n` is the number of queries and `k` is the number of neighbors per
+query. For example, we can transpose our `iris` matrix and get four
+neighbors per item, now in columns:
 
 ``` r
 
-# other distance options: "euclidean", "cosine" and "ip" (inner product distance)
-
-# for high-dimensional data you may see a speed-up if you store the data
-# where each *column* is an item to be indexed and searched. Set byrow = FALSE
-# for this.
-# Admittedly, the iris dataset is *not* high-dimensional
 iris_by_col <- t(irism)
-all_knn_by_col <- RcppHNSW::hnsw_knn(
-  iris_by_col,
-  k = 4,
-  distance = "l2",
-  byrow = FALSE
-)
-dim(all_knn_by_col$idx)
+neighbors_by_col <- hnsw_knn(iris_by_col, k = 4, byrow = FALSE)
+dim(neighbors_by_col$idx)
 ```
 
     ## [1]   4 150
 
-``` r
+## Use multiple threads
 
-# process can be split into two steps, so you can build with one set of data
-# and search with another
-ann <- RcppHNSW::hnsw_build(irism[1:100, ])
-iris_nn <- RcppHNSW::hnsw_search(irism[101:150, ], ann, k = 5)
-dim(iris_nn$idx)
-```
+Set `n_threads` to the maximum number of threads to use for batch
+insertion or search. The default is zero, which runs serially, as does
+one. `grain_size` sets the minimum number of items per thread. For small
+batches, a larger grain size avoids spending time starting threads that
+have very little to do. A grain size of zero is treated as one.
 
-    ## [1] 50  5
+## Reproduce an index
+
+For repeatable builds, keep `random_seed` fixed and use serial
+construction. R’s [`set.seed()`](https://rdrr.io/r/base/Random.html)
+won’t help here: hnswlib has its own random number generator. A fixed
+seed also doesn’t fix the order in which parallel threads insert items,
+so parallel builds can give different results. To reuse an existing
+graph, [save the
+index](https://jlmelville.github.io/rcpphnsw/articles/module-api-index-lifecycle.html#save-and-load-an-index).
