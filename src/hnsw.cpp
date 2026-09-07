@@ -153,6 +153,31 @@ template <typename dist_t> struct Normalizer<dist_t, true> {
   }
 };
 
+template <typename dist_t>
+void check_distance_magnitude(const dist_t *values, std::size_t size,
+                              const char *name, std::size_t item_number = 0) {
+  const double limit =
+      std::sqrt(static_cast<double>((std::numeric_limits<float>::max)())) / 4.0;
+  double absolute_sum = 0.0;
+  for (std::size_t i = 0; i < size; ++i) {
+    absolute_sum += std::abs(static_cast<double>(values[i]));
+  }
+  if (absolute_sum <= limit) {
+    return;
+  }
+
+  if (item_number == 0) {
+    Rcpp::stop(
+        "%s must have an absolute-coordinate sum no greater than %.17g for "
+        "finite single-precision distance calculations",
+        name, limit);
+  }
+  Rcpp::stop(
+      "%s: item %llu has an absolute-coordinate sum greater than "
+      "%.17g, the limit for finite single-precision distance calculations",
+      name, static_cast<unsigned long long>(item_number), limit);
+}
+
 struct NoDistanceProcess {
   template <typename dist_t>
   static void process_distances(std::vector<dist_t> &) {}
@@ -225,7 +250,7 @@ public:
     ensureCapacityFor(1);
     const std::size_t label = currentSize();
     try {
-      addItemImpl(item_copy, label);
+      addItemImpl(item_copy.data(), label);
     } catch (...) {
       usable = false;
       throw;
@@ -243,7 +268,7 @@ public:
 
     bool found_all = true;
     std::vector<hnswlib::labeltype> nbr_labels =
-        getNNsImpl(item_copy, checked_nnbrs, found_all);
+        getNNsImpl(item_copy.data(), checked_nnbrs, found_all);
     if (!found_all) {
       Rcpp::stop("Unable to find k results. Probably ef or M is too small");
     }
@@ -261,7 +286,7 @@ public:
     bool found_all = true;
     std::vector<dist_t> distances;
     std::vector<hnswlib::labeltype> nbr_labels =
-        getNNsImpl(item_copy, checked_nnbrs, checked_include_distances,
+        getNNsImpl(item_copy.data(), checked_nnbrs, checked_include_distances,
                    distances, found_all);
     if (!found_all) {
       Rcpp::stop("Unable to find k results. Probably ef or M is too small");
@@ -275,13 +300,13 @@ public:
     return nbr_list;
   }
 
-  auto getNNsImpl(std::vector<dist_t> &item, std::size_t nnbrs,
-                  bool include_distances, std::vector<dist_t> &distances,
-                  bool &found_all) -> std::vector<hnswlib::labeltype> {
+  auto getNNsImpl(const dist_t *item, std::size_t nnbrs, bool include_distances,
+                  std::vector<dist_t> &distances, bool &found_all)
+      -> std::vector<hnswlib::labeltype> {
     found_all = true;
 
     std::priority_queue<std::pair<dist_t, hnswlib::labeltype>> result =
-        appr_alg->searchKnn(item.data(), nnbrs);
+        appr_alg->searchKnn(item, nnbrs);
 
     const std::size_t nresults = result.size();
     if (nresults != nnbrs) {
@@ -315,7 +340,7 @@ public:
     return result_items;
   }
 
-  auto getNNsImpl(std::vector<dist_t> &item, std::size_t nnbrs, bool &found_all)
+  auto getNNsImpl(const dist_t *item, std::size_t nnbrs, bool &found_all)
       -> std::vector<hnswlib::labeltype> {
     std::vector<dist_t> distances;
     return getNNsImpl(item, nnbrs, false, distances, found_all);
@@ -406,9 +431,16 @@ public:
   void resizeIndex(SEXP value) {
     ensureUsable();
     const std::size_t total_count = currentSize();
+    const int minimum_size =
+        static_cast<int>((std::max)(total_count, static_cast<std::size_t>(1)));
     const std::size_t new_size =
-        check_whole_number(value, "new_size", static_cast<int>(total_count));
-    appr_alg->resizeIndex(new_size);
+        check_whole_number(value, "new_size", minimum_size);
+    try {
+      appr_alg->resizeIndex(new_size);
+    } catch (...) {
+      usable = false;
+      throw;
+    }
   }
 
 private:
@@ -430,11 +462,12 @@ private:
         appr_alg->getMaxElements() > static_cast<std::size_t>(R_INTEGER_MAX)) {
       Rcpp::stop("Loaded index capacity cannot be larger than INT_MAX");
     }
+    validateLoadedItems();
   }
 
   void ensureUsable() const {
     if (!usable) {
-      Rcpp::stop("Index is unusable after a failed insertion; discard it and "
+      Rcpp::stop("Index is unusable after a failed mutation; discard it and "
                  "rebuild or reload the index");
     }
   }
@@ -443,8 +476,17 @@ private:
     return appr_alg->cur_element_count;
   }
 
-  void addItemImpl(std::vector<dist_t> &item, std::size_t label) {
-    appr_alg->addPoint(item.data(), label);
+  void validateLoadedItems() const {
+    for (std::size_t i = 0; i < currentSize(); ++i) {
+      const auto *item = reinterpret_cast<const dist_t *>(
+          appr_alg->getDataByInternalId(static_cast<hnswlib::tableint>(i)));
+      check_distance_magnitude(item, static_cast<std::size_t>(dim),
+                               "Stored index", i + 1);
+    }
+  }
+
+  void addItemImpl(const dist_t *item, std::size_t label) {
+    appr_alg->addPoint(item, label);
   }
 
   static auto validateNewIndex(SEXP dim, SEXP max_elements, SEXP M,
@@ -487,6 +529,7 @@ private:
           static_cast<dist_t>(checked_float_at(item, i, name));
     }
     Normalizer<dist_t, DoNormalize>::normalize(result.data(), result.size());
+    check_distance_magnitude(result.data(), result.size(), name);
     return result;
   }
 
@@ -521,6 +564,9 @@ private:
       }
       Normalizer<dist_t, DoNormalize>::normalize(result.data() + output_offset,
                                                  dim);
+      check_distance_magnitude(result.data() + output_offset,
+                               static_cast<std::size_t>(dim), name,
+                               static_cast<std::size_t>(item) + 1);
     }
     return {nitems, std::move(result)};
   }
@@ -539,14 +585,13 @@ private:
     const std::size_t nitems = static_cast<std::size_t>(checked.nitems);
     ensureCapacityFor(nitems);
     const std::size_t index_start = currentSize();
-    auto data_begin = checked.data.cbegin();
+    const dist_t *data_begin = checked.data.data();
     std::atomic<bool> insertion_started{false};
     auto worker = [&](std::size_t begin, std::size_t end) {
       for (auto i = begin; i < end; i++) {
-        auto first = data_begin + static_cast<std::size_t>(dim) * i;
-        std::vector<dist_t> item_copy(first, first + dim);
+        const dist_t *item = data_begin + static_cast<std::size_t>(dim) * i;
         insertion_started.store(true, std::memory_order_relaxed);
-        addItemImpl(item_copy, index_start + i);
+        addItemImpl(item, index_start + i);
       }
     };
     std::size_t parallel_begin = 0;
@@ -586,16 +631,15 @@ private:
                      std::vector<hnswlib::labeltype> &idx_vec,
                      std::vector<dist_t> &dist_vec) -> bool {
     std::vector<unsigned char> chunk_status(nitems, 1);
-    auto data_begin = data.cbegin();
+    const dist_t *data_begin = data.data();
     auto worker = [&](std::size_t begin, std::size_t end,
                       std::size_t chunk_id) {
       std::vector<dist_t> distances;
       for (auto i = begin; i < end; i++) {
-        auto first = data_begin + static_cast<std::size_t>(dim) * i;
-        std::vector<dist_t> item_copy(first, first + dim);
+        const dist_t *item = data_begin + static_cast<std::size_t>(dim) * i;
         bool ok_row = true;
         std::vector<hnswlib::labeltype> nbr_labels =
-            getNNsImpl(item_copy, nnbrs, include_distances, distances, ok_row);
+            getNNsImpl(item, nnbrs, include_distances, distances, ok_row);
         if (!ok_row) {
           chunk_status[chunk_id] = 0;
           break;
@@ -618,10 +662,10 @@ private:
   auto getAllNNsListAdapter(SEXP items, SEXP nnbrs, SEXP include_distances,
                             bool by_row) -> Rcpp::List {
     ensureUsable();
-    CheckedItems checked = checkedItems(items, by_row, "Query items");
     const std::size_t checked_nnbrs = checkK(nnbrs);
     const bool checked_include_distances =
         check_logical(include_distances, "include_distances");
+    CheckedItems checked = checkedItems(items, by_row, "Query items");
     const std::size_t nitems = static_cast<std::size_t>(checked.nitems);
     const std::size_t result_size =
         checked_product(nitems, checked_nnbrs, "Nearest-neighbor result");
@@ -649,8 +693,8 @@ private:
   auto getAllNNsAdapter(SEXP items, SEXP nnbrs, bool by_row)
       -> Rcpp::IntegerMatrix {
     ensureUsable();
-    CheckedItems checked = checkedItems(items, by_row, "Query items");
     const std::size_t checked_nnbrs = checkK(nnbrs);
+    CheckedItems checked = checkedItems(items, by_row, "Query items");
     const std::size_t nitems = static_cast<std::size_t>(checked.nitems);
     const std::size_t result_size =
         checked_product(nitems, checked_nnbrs, "Nearest-neighbor result");

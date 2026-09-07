@@ -1,8 +1,8 @@
 /*
- * Modified by the RcppHNSW project on 2026-08-29.
+ * Modified by the RcppHNSW project through 2026-09-06.
  * Changes integrate RcppHNSW label/error handling and repair construction
- * races plus raw-index load/save safety. See the RcppHNSW COPYRIGHTS file and
- * the source package's tools/vendor/patches directory for exact changes.
+ * races plus index lifecycle safety. See the RcppHNSW COPYRIGHTS file and the
+ * source package's tools/vendor/patches directory for exact changes.
  */
 #pragma once
 
@@ -639,6 +639,8 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
 
 
     void resizeIndex(size_t new_max_elements) {
+        if (new_max_elements == 0)
+            throw std::runtime_error("Cannot resize, max element must be positive");
         if (new_max_elements < cur_element_count)
             throw std::runtime_error("Cannot resize, max element is less than the current number of elements");
 
@@ -749,7 +751,7 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         readBinaryPOD(input, cur_element_count);
 
         size_t max_elements = max_elements_i;
-        if (max_elements < cur_element_count)
+        if (max_elements == 0 || max_elements < cur_element_count)
             max_elements = max_elements_;
         max_elements_ = max_elements;
         readBinaryPOD(input, size_data_per_element_);

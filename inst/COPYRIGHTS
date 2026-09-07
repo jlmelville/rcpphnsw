@@ -16,12 +16,12 @@ License text: LICENSES/hnswlib-LICENSE-2.0.txt
 
 The pinned v0.9.0 source archive contains no NOTICE file.
 
-Locally modified file
----------------------
+Locally modified files
+----------------------
 
 Installed path: include/hnswalg.h
 Source path: inst/include/hnswalg.h
-Modification date: 2026-08-29
+Modification date: through 2026-09-06
 
 RcppHNSW changes to that file:
 
@@ -30,8 +30,20 @@ RcppHNSW changes to that file:
 * synchronize the shared random-level generator used during construction;
 * snapshot the entry point while hnswlib's global lock is held;
 * validate serialized offsets and coordinate payload width when loading;
-* report index-save open, write, flush, and close failures; and
+* report index-save open, write, flush, and close failures;
+* preserve saved capacity when loading an empty index without an override;
+* reject zero-capacity resize before reallocating storage; and
 * carry a prominent notice identifying these downstream modifications.
+
+Installed path: include/visited_list_pool.h
+Source path: inst/include/visited_list_pool.h
+Modification date: 2026-09-06
+
+RcppHNSW changes to that file:
+
+* hold each initial visited-list pool entry with temporary ownership until its
+  container insertion succeeds, preventing a leak if allocation fails; and
+* carry a prominent notice identifying the downstream modification.
 
 The exact changes are the ordered patches under tools/vendor/patches in the
 RcppHNSW source package. Package installation compiles the already-materialized

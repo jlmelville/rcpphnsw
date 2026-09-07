@@ -121,6 +121,62 @@ test_that("every Module class searches a loaded raw index", {
   }
 })
 
+test_that("raw checkpoint capacity selection covers empty and populated indexes", {
+  classes <- list(
+    l2 = RcppHNSW::HnswL2,
+    euclidean = RcppHNSW::HnswEuclidean,
+    cosine = RcppHNSW::HnswCosine,
+    ip = RcppHNSW::HnswIp
+  )
+  first <- c(1, 0)
+  second <- c(0, 1)
+  third <- c(1, 1)
+
+  for (name in names(classes)) {
+    empty_path <- tempfile(fileext = ".hnsw")
+    populated_path <- tempfile(fileext = ".hnsw")
+    paths <- c(empty_path, populated_path)
+    on.exit(unlink(paths), add = TRUE)
+
+    empty <- methods::new(classes[[name]], 2, 3, 16, 10)
+    empty$save(empty_path)
+
+    default_empty <- methods::new(classes[[name]], 2, empty_path)
+    expect_no_error(default_empty$addItems(rbind(first, second, third)))
+    expect_identical(default_empty$size(), 3, info = name)
+    expect_identical(default_empty$getNNs(third, 1), 3, info = name)
+
+    explicit_empty <- methods::new(classes[[name]], 2, empty_path, 1)
+    expect_no_error(explicit_empty$addItem(first))
+    expect_error(
+      explicit_empty$addItem(second),
+      "Index is too small",
+      info = name
+    )
+
+    populated <- methods::new(classes[[name]], 2, 3, 16, 10)
+    populated$addItems(rbind(first, second))
+    populated$save(populated_path)
+
+    default_populated <- methods::new(classes[[name]], 2, populated_path)
+    expect_no_error(default_populated$addItem(third))
+
+    explicit_populated <- methods::new(classes[[name]], 2, populated_path, 3)
+    expect_no_error(explicit_populated$addItem(third))
+
+    shrunk_populated <- methods::new(classes[[name]], 2, populated_path, 2)
+    expect_error(
+      shrunk_populated$addItem(third),
+      "Index is too small",
+      info = name
+    )
+
+    fallback_populated <- methods::new(classes[[name]], 2, populated_path, 1)
+    expect_no_error(fallback_populated$addItem(third))
+    expect_identical(fallback_populated$size(), 3, info = name)
+  }
+})
+
 test_that("L2 checkpoints retain Euclidean reinterpretation", {
   items <- rbind(
     c(1, 0, 0),
@@ -201,6 +257,46 @@ test_that("raw loading rejects missing, truncated, and corrupt files", {
   expect_error(
     methods::new(RcppHNSW::HnswL2, 3, invalid_width_path),
     "data size is incompatible with the requested space"
+  )
+})
+
+test_that("raw loading validates stored coordinates including deleted items", {
+  raw_uint <- function(bytes) {
+    values <- as.numeric(bytes)
+    if (identical(.Platform$endian, "big")) {
+      values <- rev(values)
+    }
+    sum(values * 256^(seq_along(values) - 1L))
+  }
+
+  path <- tempfile(fileext = ".hnsw")
+  on.exit(unlink(path), add = TRUE)
+  ann <- methods::new(RcppHNSW::HnswL2, 2, 2, 16, 10)
+  ann$addItems(diag(2))
+  ann$markDeleted(1)
+  ann$save(path)
+
+  serialized <- readBin(path, what = "raw", n = file.info(path)$size)
+  size_t_bytes <- .Machine$sizeof.pointer
+  size_data_offset <- 3L * size_t_bytes + seq_len(size_t_bytes)
+  data_offset_offset <- 5L * size_t_bytes + seq_len(size_t_bytes)
+  size_data_per_element <- raw_uint(serialized[size_data_offset])
+  data_offset <- raw_uint(serialized[data_offset_offset])
+  header_size <- 10L * size_t_bytes + 16L
+  first_coordinate <- header_size + data_offset + 1L
+  coordinate_bytes <- first_coordinate + 0:3
+  serialized[coordinate_bytes] <- writeBin(
+    1e19,
+    raw(),
+    size = 4L,
+    endian = .Platform$endian
+  )
+  expect_gt(size_data_per_element, data_offset + 4L)
+  writeBin(serialized, path)
+
+  expect_error(
+    methods::new(RcppHNSW::HnswL2, 2, path),
+    "Stored index: item 1.*absolute-coordinate sum"
   )
 })
 

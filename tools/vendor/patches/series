@@ -5,3 +5,6 @@
 0005-validate-loaded-data-width.patch
 0006-report-index-save-failures.patch
 0007-add-rcpphnsw-modification-notice.patch
+0008-preserve-empty-index-capacity-on-load.patch
+0009-reject-zero-capacity-resize.patch
+0010-make-visited-list-pool-construction-exception-safe.patch

@@ -1,0 +1,60 @@
+diff --git a/visited_list_pool.h b/visited_list_pool.h
+--- a/visited_list_pool.h
++++ b/visited_list_pool.h
+@@ -1,5 +1,12 @@
++/*
++ * Modified by the RcppHNSW project on 2026-09-06.
++ * Changes make initial visited-list pool construction exception-safe. See the
++ * RcppHNSW COPYRIGHTS file and the source package's tools/vendor/patches
++ * directory for exact changes.
++ */
+ #pragma once
+ 
++#include <memory>
+ #include <mutex>
+ #include <string.h>
+ #include <deque>
+@@ -40,11 +47,27 @@ class VisitedListPool {
+     std::mutex poolguard;
+     int numelements;
+ 
++    void clearPool() noexcept {
++        while (pool.size()) {
++            VisitedList *rez = pool.front();
++            pool.pop_front();
++            delete rez;
++        }
++    }
++
+  public:
+     VisitedListPool(int initmaxpools, int numelements1) {
+         numelements = numelements1;
+-        for (int i = 0; i < initmaxpools; i++)
+-            pool.push_front(new VisitedList(numelements));
++        try {
++            for (int i = 0; i < initmaxpools; i++) {
++                std::unique_ptr<VisitedList> visited_list(new VisitedList(numelements));
++                pool.push_front(visited_list.get());
++                visited_list.release();
++            }
++        } catch (...) {
++            clearPool();
++            throw;
++        }
+     }
+ 
+     VisitedList *getFreeVisitedList() {
+@@ -67,12 +90,6 @@ class VisitedListPool {
+         pool.push_front(vl);
+     }
+ 
+-    ~VisitedListPool() {
+-        while (pool.size()) {
+-            VisitedList *rez = pool.front();
+-            pool.pop_front();
+-            delete rez;
+-        }
+-    }
++    ~VisitedListPool() { clearPool(); }
+ };
+ }  // namespace hnswlib

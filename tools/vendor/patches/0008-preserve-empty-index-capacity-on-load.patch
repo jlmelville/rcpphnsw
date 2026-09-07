@@ -1,0 +1,12 @@
+diff --git a/hnswalg.h b/hnswalg.h
+--- a/hnswalg.h
++++ b/hnswalg.h
+@@ -749,7 +749,7 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
+         readBinaryPOD(input, cur_element_count);
+ 
+         size_t max_elements = max_elements_i;
+-        if (max_elements < cur_element_count)
++        if (max_elements == 0 || max_elements < cur_element_count)
+             max_elements = max_elements_;
+         max_elements_ = max_elements;
+         readBinaryPOD(input, size_data_per_element_);

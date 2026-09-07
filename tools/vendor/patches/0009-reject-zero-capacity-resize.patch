@@ -1,0 +1,12 @@
+diff --git a/hnswalg.h b/hnswalg.h
+--- a/hnswalg.h
++++ b/hnswalg.h
+@@ -639,6 +639,8 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
+ 
+ 
+     void resizeIndex(size_t new_max_elements) {
++        if (new_max_elements == 0)
++            throw std::runtime_error("Cannot resize, max element must be positive");
+         if (new_max_elements < cur_element_count)
+             throw std::runtime_error("Cannot resize, max element is less than the current number of elements");
+ 

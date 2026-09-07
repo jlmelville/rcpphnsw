@@ -235,6 +235,7 @@ test_that("Module deletion rejects labels on an empty index", {
 test_that("row-wise Module batch methods require numeric matrices", {
   ann <- methods::new(RcppHNSW::HnswL2, 3, 2, 16, 10)
   item <- c(1, 0, 0)
+  ann$addItem(item)
 
   expect_error(ann$addItems(item), "must be a numeric matrix", fixed = TRUE)
   expect_error(ann$getAllNNs(item, 1), "must be a numeric matrix", fixed = TRUE)
@@ -309,6 +310,99 @@ test_that("all Module data paths reject invalid float coordinates", {
     ann$getAllNNs(matrix(overflow, nrow = 1), 1),
     "representable"
   )
+})
+
+test_that("all Module data paths reject unsafe float distance magnitudes", {
+  safe <- c(1, 0, 0)
+  unsafe <- c(1e19, 0, 0)
+  invalid_rows <- rbind(safe, unsafe)
+  invalid_columns <- t(invalid_rows)
+  ann <- methods::new(RcppHNSW::HnswL2, 3, 2, 16, 10)
+  ann$addItems(rbind(safe, c(0, 1, 0)))
+  add_ann <- methods::new(RcppHNSW::HnswL2, 3, 2, 16, 10)
+  calls <- list(
+    addItem = function() add_ann$addItem(unsafe),
+    addItems = function() add_ann$addItems(invalid_rows),
+    addItemsCol = function() add_ann$addItemsCol(invalid_columns),
+    getNNs = function() ann$getNNs(unsafe, 1),
+    getNNsList = function() ann$getNNsList(unsafe, 1, TRUE),
+    getAllNNs = function() ann$getAllNNs(invalid_rows, 1),
+    getAllNNsList = function() ann$getAllNNsList(invalid_rows, 1, TRUE),
+    getAllNNsCol = function() ann$getAllNNsCol(invalid_columns, 1),
+    getAllNNsListCol = function() {
+      ann$getAllNNsListCol(invalid_columns, 1, TRUE)
+    }
+  )
+
+  for (name in names(calls)) {
+    expect_error(calls[[name]](), "absolute-coordinate sum", info = name)
+  }
+  expect_identical(add_ann$size(), 0)
+})
+
+test_that("every unnormalized metric enforces the float distance range", {
+  ordinary <- rbind(c(1, 0), c(0, 1))
+  unsafe <- c(1e19, 0)
+  classes <- list(
+    l2 = RcppHNSW::HnswL2,
+    euclidean = RcppHNSW::HnswEuclidean,
+    ip = RcppHNSW::HnswIp
+  )
+
+  for (name in names(classes)) {
+    ann <- methods::new(classes[[name]], 2, 2, 16, 10)
+    ann$addItems(ordinary)
+    expect_error(ann$getNNs(unsafe, 1), "absolute-coordinate sum", info = name)
+
+    empty_ann <- methods::new(classes[[name]], 2, 1, 16, 10)
+    expect_error(
+      empty_ann$addItem(unsafe),
+      "absolute-coordinate sum",
+      info = name
+    )
+    expect_identical(empty_ann$size(), 0, info = name)
+  }
+
+  for (metric in c("l2", "euclidean", "ip")) {
+    expect_error(
+      hnsw_build(rbind(ordinary[1, ], unsafe), distance = metric),
+      "absolute-coordinate sum",
+      info = paste("build", metric)
+    )
+    expect_error(
+      hnsw_knn(rbind(ordinary[1, ], unsafe), k = 1, distance = metric),
+      "absolute-coordinate sum",
+      info = paste("knn", metric)
+    )
+    ann <- hnsw_build(ordinary, distance = metric)
+    expect_error(
+      hnsw_search(matrix(unsafe, nrow = 1), ann, k = 1),
+      "absolute-coordinate sum",
+      info = paste("search", metric)
+    )
+  }
+})
+
+test_that("safe large vectors retain finite distances", {
+  large <- c(4e18, 0)
+  opposite <- -large
+  classes <- list(
+    l2 = RcppHNSW::HnswL2,
+    euclidean = RcppHNSW::HnswEuclidean,
+    ip = RcppHNSW::HnswIp
+  )
+
+  for (name in names(classes)) {
+    ann <- methods::new(classes[[name]], 2, 1, 16, 10)
+    expect_no_error(ann$addItem(large))
+    result <- ann$getNNsList(opposite, 1, TRUE)
+    expect_true(is.finite(result$distance), info = name)
+  }
+
+  cosine <- methods::new(RcppHNSW::HnswCosine, 2, 1, 16, 10)
+  expect_no_error(cosine$addItem(c(1e30, 1e30)))
+  result <- cosine$getNNsList(c(-1e30, -1e30), 1, TRUE)
+  expect_true(is.finite(result$distance))
 })
 
 test_that("high-level paths reject non-finite and float-overflow values", {
