@@ -47,7 +47,7 @@ jobs:
 
     steps:
     # No checkout is needed to resolve the matrix.
-    - uses: r-hub/actions/setup@cf6c8eff3145ef225104294e6b0c023de4bba9c6 # v1.7.7
+    - uses: r-hub/actions/setup@02be5ffbeae2b0d553da66acded089da11a1fb8f # v1.8.1
       with:
         config: ${{ github.event_name == 'schedule' && 'ubuntu-clang,gcc16' || github.event.inputs.config }}
       id: rhub-setup
