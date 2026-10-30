@@ -2,6 +2,7 @@ url: https://jlmelville.github.io/rcpphnsw/
 
 template:
   bootstrap: 5
+  math-rendering: katex
 
 reference:
 - title: High-level interface
