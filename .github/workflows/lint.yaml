@@ -30,8 +30,14 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2.14.0
         with:
-          extra-packages: any::lintr, local::.
+          extra-packages: any::lintr@3.4.0, local::.
           needs: lint
 
       - name: Lint
-        run: Rscript -e 'lints <- lintr::lint_package(); print(lints); quit(status = if (length(lints) > 0) 1L else 0L)'
+        run: |
+          stopifnot(as.character(utils::packageVersion("lintr")) == "3.4.0")
+          message("Linting with lintr ", utils::packageVersion("lintr"))
+          lints <- lintr::lint_package()
+          print(lints)
+          quit(status = if (length(lints) > 0L) 1L else 0L)
+        shell: Rscript {0}
