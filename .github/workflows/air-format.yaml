@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Air
-        uses: posit-dev/setup-air@cf390573ff4fe0f198f35df3a642b1409328d859 # v1.0.1
+        uses: posit-dev/setup-air@482cb5912394878ab5a63b75db0f9d19cc6df5ba # v1.0.3
         with:
           version: "0.13.0"
 
